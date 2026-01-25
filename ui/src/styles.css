@@ -331,3 +331,70 @@ button.danger {
   border-top: 1px solid var(--border);
   background: rgba(8, 12, 18, 0.65);
 }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 10px 18px 0;
+}
+
+.tab {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.25);
+  color: inherit;
+  cursor: pointer;
+}
+
+.tab.active {
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.06);
+}
+
+.grid.single {
+  grid-template-columns: 1fr !important;
+}
+
+.dashTop {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.healthGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.healthItem {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(0,0,0,0.18);
+}
+
+.plotsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 12px;
+}
+
+.plotCard {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(0,0,0,0.25);
+}
+
+.plotTitle {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-bottom: 8px;
+}
+
+.plotInner {
+  height: 260px;
+}
