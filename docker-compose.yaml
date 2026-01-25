@@ -7,7 +7,7 @@ services:
     ports:
       - "8080:80"
     environment:
-      - MQTT_WS_URL=ws://pulsar-core-mosquitto:9001
+      - MQTT_WS_URL=ws://pulsarpi.local:9001
       - MQTT_TOPIC=pulsar/+/telemetry/#
     restart: unless-stopped
     networks: [pulsar_net]
