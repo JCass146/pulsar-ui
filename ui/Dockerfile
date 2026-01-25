@@ -6,7 +6,7 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 COPY . .
-RUN npm run build
+RUN node ./node_modules/vite/bin/vite.js build
 
 # ---- runtime stage ----
 FROM nginx:1.27-alpine
