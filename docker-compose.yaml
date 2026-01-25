@@ -1,0 +1,20 @@
+services:
+  pulsar-ui:
+    build:
+      context: ./ui
+    image: pulsar/pulsar-ui:latest
+    container_name: pulsar-ui
+    ports:
+      - "8080:80"
+    environment:
+      # Optional override. Default is ws://<current-host>:9001
+      - VITE_MQTT_WS_URL=
+      - VITE_MQTT_TOPIC=pulsar/+/telemetry/#
+    restart: unless-stopped
+    networks: [pulsar_net]
+
+networks:
+  pulsar_net:
+    external: true
+    name: pulsar_net
+    driver: bridge
