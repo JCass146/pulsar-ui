@@ -1,0 +1,4 @@
+{
+  "mqttWsUrl": "${MQTT_WS_URL}",
+  "mqttTopic": "${MQTT_TOPIC}"
+}
