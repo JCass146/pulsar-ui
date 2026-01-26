@@ -100,7 +100,7 @@ export default function App() {
       if (dev) set.add(dev);
     }
     return Array.from(set).sort();
-  }, [plotTick]);
+  }, [chartTick]);
 
   // Keep selectedDevice valid
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function App() {
       if (dev === selectedDevice && field) set.add(field);
     }
     return Array.from(set).sort();
-  }, [plotTick, selectedDevice]);
+  }, [chartTick, selectedDevice]);
 
   function ingestForPlots(topic, parsed) {
     if (parsed.kind !== "json" || !parsed.json) return;
