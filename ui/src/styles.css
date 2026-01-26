@@ -367,6 +367,7 @@ button.danger {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  margin-top: 8px;
 }
 
 .healthItem {
@@ -397,4 +398,31 @@ button.danger {
 
 .plotInner {
   height: 260px;
+}
+
+input, select, textarea {
+  background: rgba(0,0,0,0.35);
+  color: inherit;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  font: inherit;
+}
+
+select[multiple] {
+  padding: 8px;
+}
+
+select option {
+  background: #0b0f14;
+  color: #e8edf4;
+}
+
+.dash {
+  padding: 0 18px 18px;
+}
+
+.dashTop .card h2 {
+  margin-top: 0;
 }

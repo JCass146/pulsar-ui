@@ -56,6 +56,11 @@ export default function App() {
 
   const [status, setStatus] = useState({ status: "loading", url: "" });
   const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
   const [messages, setMessages] = useState([]);
 
   // Tabs
@@ -70,10 +75,9 @@ export default function App() {
   const [selectedFields, setSelectedFields] = useState(["pressure_psi"]);
   const [maxPoints, setMaxPoints] = useState(1500);
 
-  // Throttle chart re-rendering (10 fps)
-  const [plotTick, setPlotTick] = useState(0);
+  const [chartTick, setChartTick] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setPlotTick((x) => x + 1), 100);
+    const id = setInterval(() => setChartTick((x) => x + 1), 200); // 5 fps is plenty
     return () => clearInterval(id);
   }, []);
 
@@ -150,7 +154,7 @@ export default function App() {
     // Always ingest for plots even if raw is paused (so dashboard continues)
     ingestForPlots(topic, parsed);
 
-    if (paused) return;
+    if (pausedRef.current) return;
 
     const entry = {
       id: crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
