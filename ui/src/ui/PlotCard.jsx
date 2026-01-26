@@ -9,7 +9,7 @@ import {
   Legend
 } from "recharts";
 
-export default function PlotCard({ seriesRef, seriesKey }) {
+function PlotCard({ seriesRef, seriesKey }) {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -44,3 +44,5 @@ export default function PlotCard({ seriesRef, seriesKey }) {
     </div>
   );
 }
+
+export default React.memo(PlotCard);

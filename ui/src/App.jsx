@@ -294,6 +294,7 @@ export default function App() {
     upsertDeviceFromMessage(topic, parsed);
     bumpDeviceTick();
 
+    if (tab !== "raw") return;
     if (pausedRef.current) return;
 
     const entry = {
