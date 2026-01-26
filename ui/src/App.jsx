@@ -56,7 +56,8 @@ export default function App() {
 
   const [status, setStatus] = useState({ status: "loading", url: "" });
   const [paused, setPaused] = useState(false);
-
+  const pausedRef = useRef(false);
+  
   useEffect(() => {
     pausedRef.current = paused;
   }, [paused]);
