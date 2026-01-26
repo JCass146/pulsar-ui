@@ -626,6 +626,7 @@ export default function App() {
             selectedDevice={selectedDevice}
             setSelectedDevice={setSelectedDevice}
             plotDevices={plotDevices}
+            deviceList={deviceList}   // ✅ add this
             availableFields={availableFields}
             selectedFields={selectedFields}
             setSelectedFields={setSelectedFields}

@@ -1,171 +1,153 @@
 import React from "react";
 import PlotCard from "./PlotCard.jsx";
+import DeviceList from "./DeviceList.jsx";
+import LiveMetrics from "./LiveMetrics.jsx";
 
 export default function DashboardView({
   // selection + plot config
   selectedDevice,
   setSelectedDevice,
   plotDevices,
+  deviceList,
   availableFields,
   selectedFields,
   setSelectedFields,
   maxPoints,
   setMaxPoints,
-
-  // data stores
   devicesRef,
   latestRef,
   seriesRef,
-
-  // helpers
   getDeviceRole
 }) {
   const dev = selectedDevice ? devicesRef.current.get(selectedDevice) : null;
   const latest = selectedDevice ? latestRef.current.get(selectedDevice) : null;
 
-  const health = {
-    role: dev ? getDeviceRole(dev) : "—",
-    online: dev?.online,
-    stale: dev?.stale,
-    lastSeen: dev?.lastSeenMs ? new Date(dev.lastSeenMs).toLocaleTimeString() : "—",
-    pending: dev?.pendingCommands?.size || 0,
+  const role = dev ? getDeviceRole(dev) : "—";
+  const online = dev?.online;
+  const stale = dev?.stale;
+  const lastSeen = dev?.lastSeenMs ? new Date(dev.lastSeenMs).toLocaleTimeString() : "—";
+  const pending = dev?.pendingCommands?.size || 0;
 
-    time_ok: latest?.time_ok,
-    rssi_dbm: latest?.rssi_dbm ?? latest?.fields?.rssi_dbm,
-    heap_free: latest?.heap_free ?? latest?.fields?.heap_free,
-    uptime_ms: latest?.uptime_ms ?? latest?.ts_uptime_ms ?? latest?.fields?.uptime_ms,
-    seq: latest?.seq,
-    ts_unix_ms: latest?.ts_unix_ms ?? latest?.t_ms
-  };
+  const rssi = latest?.rssi_dbm ?? latest?.fields?.rssi_dbm;
+  const uptime = latest?.uptime_ms ?? latest?.ts_uptime_ms ?? latest?.fields?.uptime_ms;
+  const seq = latest?.seq;
 
   return (
-    <div className="dash">
-      <div className="dashTop">
-        <section className="card">
-          <h2>Dashboard</h2>
+    <div className="dashDense">
+      {/* LEFT RAIL */}
+      <aside className="dashLeft">
+        <section className="card controls">
+          <h2>Fleet</h2>
+          <DeviceList
+            title="Devices"
+            devices={deviceList}
+            selectedDevice={selectedDevice}
+            onSelect={(id) => setSelectedDevice(id)}
+            compact={false}
+            groupByRole
+          />
+        </section>
 
-          <div className="form">
-            <label>
-              Device
-              <select value={selectedDevice} onChange={(e) => setSelectedDevice(e.target.value)}>
-                {plotDevices.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </label>
+        <section className="card controls" style={{ marginTop: 12 }}>
+          <h2>Status</h2>
+          <div className="statusStrip">
+            <span className={`pillTag2 ${online ? (stale ? "warn" : "ok") : "bad"}`}>
+              {online ? (stale ? "STALE" : "LIVE") : "OFFLINE"}
+            </span>
+            <span className="pillTag2">{role}</span>
+            <span className="pillTag2 mono">{selectedDevice || "—"}</span>
+            <span className="pillTag2">pending {pending}</span>
+            <span className="pillTag2">last {lastSeen}</span>
+            {rssi !== undefined ? <span className="pillTag2 mono">rssi {rssi}</span> : null}
+            {uptime !== undefined ? <span className="pillTag2 mono">up {uptime}</span> : null}
+            {seq !== undefined ? <span className="pillTag2 mono">seq {seq}</span> : null}
+          </div>
+        </section>
+      </aside>
 
-            <label>
-              Fields to plot (multi-select)
-              <select
-                multiple
-                value={selectedFields}
-                onChange={(e) => {
-                  const vals = Array.from(e.target.selectedOptions).map((o) => o.value);
-                  setSelectedFields(vals.length ? vals : []);
-                }}
-                size={Math.min(10, Math.max(5, availableFields.length))}
-              >
-                {availableFields.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </select>
-              <div className="hint">Hold Ctrl (Windows) / Cmd (Mac) to select multiple.</div>
-            </label>
+      {/* CENTER */}
+      <section className="dashCenter">
+        <section className="card controls">
+          <div className="dashControlsRow">
+            <div className="dashTitleBlock">
+              <div className="dashTitle">Dashboard</div>
+              <div className="muted" style={{ fontSize: 12 }}>
+                Select fields, then watch trends. Pin metrics on the right rail.
+              </div>
+            </div>
 
-            <label>
-              Max points per series
-              <input
-                type="number"
-                min="200"
-                max="20000"
-                step="100"
-                value={maxPoints}
-                onChange={(e) => setMaxPoints(Number(e.target.value || 1500))}
-              />
-              <div className="hint">This caps memory + controls history length.</div>
-            </label>
+            <div className="dashControls">
+              <label>
+                Device
+                <select value={selectedDevice} onChange={(e) => setSelectedDevice(e.target.value)}>
+                  {plotDevices.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Fields
+                <select
+                  multiple
+                  value={selectedFields}
+                  onChange={(e) => {
+                    const vals = Array.from(e.target.selectedOptions).map((o) => o.value);
+                    setSelectedFields(vals.length ? vals : []);
+                  }}
+                  size={6}
+                >
+                  {availableFields.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Max points
+                <input
+                  type="number"
+                  min="200"
+                  max="20000"
+                  step="100"
+                  value={maxPoints}
+                  onChange={(e) => setMaxPoints(Number(e.target.value || 1500))}
+                />
+              </label>
+            </div>
           </div>
         </section>
 
-        <section className="card">
-          <h2>Device status</h2>
+        <div className="plotsGrid" style={{ marginTop: 12 }}>
+          {selectedDevice && selectedFields.length ? (
+            selectedFields.map((field) => {
+              const seriesKey = `${selectedDevice}:${field}`;
+              return <PlotCard key={seriesKey} seriesRef={seriesRef} seriesKey={seriesKey} />;
+            })
+          ) : (
+            <div className="card controls">
+              <div className="emptyTitle">No plot selection</div>
+              <div className="muted">Select a device and one or more fields to plot.</div>
+            </div>
+          )}
+        </div>
+      </section>
 
-          <div className="healthGrid">
-            <div className="healthItem">
-              <div className="muted">role</div>
-              <div className="mono">{health.role}</div>
-            </div>
-            <div className="healthItem">
-              <div className="muted">online</div>
-              <div className="mono">
-                {health.online === undefined ? "—" : health.online ? "true" : "false"}
-              </div>
-            </div>
-            <div className="healthItem">
-              <div className="muted">stale</div>
-              <div className="mono">
-                {health.stale === undefined ? "—" : health.stale ? "true" : "false"}
-              </div>
-            </div>
-            <div className="healthItem">
-              <div className="muted">last_seen</div>
-              <div className="mono">{health.lastSeen}</div>
-            </div>
-            <div className="healthItem">
-              <div className="muted">pending_cmds</div>
-              <div className="mono">{health.pending}</div>
-            </div>
-
-            <div className="healthItem">
-              <div className="muted">rssi_dbm</div>
-              <div className="mono">{health.rssi_dbm ?? "—"}</div>
-            </div>
-            <div className="healthItem">
-              <div className="muted">heap_free</div>
-              <div className="mono">{health.heap_free ?? "—"}</div>
-            </div>
-            <div className="healthItem">
-              <div className="muted">uptime_ms</div>
-              <div className="mono">{health.uptime_ms ?? "—"}</div>
-            </div>
-            <div className="healthItem">
-              <div className="muted">seq</div>
-              <div className="mono">{health.seq ?? "—"}</div>
-            </div>
-            <div className="healthItem">
-              <div className="muted">ts_unix_ms</div>
-              <div className="mono">{health.ts_unix_ms ?? "—"}</div>
-            </div>
-            <div className="healthItem">
-              <div className="muted">time_ok</div>
-              <div className="mono">{health.time_ok === undefined ? "—" : String(health.time_ok)}</div>
-            </div>
-          </div>
-
-          <div className="hint" style={{ marginTop: 10 }}>
-            Best practice: publish retained <span className="mono">pulsar/&lt;device&gt;/status</span> with LWT.
-            Stale is derived from last seen activity.
-          </div>
+      {/* RIGHT RAIL */}
+      <aside className="dashRight">
+        <section className="card controls">
+          <LiveMetrics
+            deviceId={selectedDevice}
+            devicesRef={devicesRef}
+            latestRef={latestRef}
+            seriesRef={seriesRef}
+          />
         </section>
-      </div>
-
-      <div className="plotsGrid">
-        {selectedDevice && selectedFields.length ? (
-          selectedFields.map((field) => {
-            const seriesKey = `${selectedDevice}:${field}`;
-            return <PlotCard key={seriesKey} seriesRef={seriesRef} seriesKey={seriesKey} />;
-          })
-        ) : (
-          <div className="card">
-            <div className="emptyTitle">No plot selection</div>
-            <div className="muted">Select a device and one or more fields to plot.</div>
-          </div>
-        )}
-      </div>
+      </aside>
     </div>
   );
 }

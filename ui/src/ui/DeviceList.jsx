@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 
 function formatAgo(ms) {
   if (!ms) return "—";
@@ -21,24 +21,156 @@ function statusClass(d) {
   return "online";
 }
 
+const FAV_KEY = "pulsarui:favDevices:v1";
+
+function loadFavs() {
+  try {
+    const raw = localStorage.getItem(FAV_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr.map(String) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveFavs(set) {
+  try {
+    localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(set)));
+  } catch {
+    /* noop */
+  }
+}
+
 export default function DeviceList({
   devices,
   selectedDevice,
   onSelect,
   title = "Devices",
   compact = false,
-  showSearch = true
+  showSearch = true,
+  groupByRole = true
 }) {
   const [q, setQ] = useState("");
+  const [filter, setFilter] = useState("all"); // all | online | stale | offline | pending
+  const [favs, setFavs] = useState(() => loadFavs());
+  const [collapsed, setCollapsed] = useState(() => new Set()); // role strings
+
+  useEffect(() => {
+    saveFavs(favs);
+  }, [favs]);
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
-    if (!query) return devices;
-    return devices.filter((d) => {
-      const hay = `${d.id} ${d.role}`.toLowerCase();
-      return hay.includes(query);
+
+    let list = devices;
+
+    // filter chips
+    if (filter === "online") list = list.filter((d) => d.online && !d.stale);
+    else if (filter === "stale") list = list.filter((d) => d.online && d.stale);
+    else if (filter === "offline") list = list.filter((d) => !d.online);
+    else if (filter === "pending") list = list.filter((d) => (d.pending || 0) > 0);
+
+    // search
+    if (query) {
+      list = list.filter((d) => {
+        const hay = `${d.id} ${d.role}`.toLowerCase();
+        return hay.includes(query);
+      });
+    }
+
+    // sort favorites first, then existing sort semantics
+    const arr = [...list];
+    arr.sort((a, b) => {
+      const af = favs.has(a.id);
+      const bf = favs.has(b.id);
+      if (af !== bf) return af ? -1 : 1;
+
+      if (a.online !== b.online) return a.online ? -1 : 1;
+      if (a.stale !== b.stale) return a.stale ? 1 : -1;
+      return a.id.localeCompare(b.id);
     });
-  }, [devices, q]);
+    return arr;
+  }, [devices, q, filter, favs]);
+
+  const groups = useMemo(() => {
+    if (!groupByRole) return null;
+    const m = new Map();
+    for (const d of filtered) {
+      const r = d.role || "unknown";
+      if (!m.has(r)) m.set(r, []);
+      m.get(r).push(d);
+    }
+    // stable group order: favored roles first if they contain favs, then alpha
+    const entries = Array.from(m.entries());
+    entries.sort(([ra, a], [rb, b]) => {
+      const aFavCount = a.reduce((n, d) => n + (favs.has(d.id) ? 1 : 0), 0);
+      const bFavCount = b.reduce((n, d) => n + (favs.has(d.id) ? 1 : 0), 0);
+      if (aFavCount !== bFavCount) return bFavCount - aFavCount;
+      return ra.localeCompare(rb);
+    });
+    return entries;
+  }, [filtered, groupByRole, favs]);
+
+  function toggleFav(id) {
+    setFavs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      saveFavs(next);
+      return next;
+    });
+  }
+
+  function toggleCollapse(role) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(role)) next.delete(role);
+      else next.add(role);
+      return next;
+    });
+  }
+
+  const listClass = compact ? "deviceList compact" : "deviceList";
+
+  function renderRow(d) {
+    const s = statusClass(d);
+    const active = d.id === selectedDevice;
+    const fav = favs.has(d.id);
+
+    return (
+      <button
+        key={d.id}
+        className={active ? "deviceRow active" : "deviceRow"}
+        onClick={() => onSelect?.(d.id)}
+        title={`${d.role} • ${s} • pending=${d.pending}`}
+        type="button"
+      >
+        <span className={`dot ${s}`} />
+        <span className="deviceMain">
+          <span className="mono deviceId">{d.id}</span>
+          <span className="muted deviceRole">{d.role}</span>
+        </span>
+
+        <span className="deviceRight">
+          {d.pending ? <span className="pillTag">{d.pending} pending</span> : null}
+          <span className="muted mono deviceSeen">{formatAgo(d.lastSeenMs)}</span>
+
+          <button
+            type="button"
+            className={fav ? "favBtn fav" : "favBtn"}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleFav(d.id);
+            }}
+            title="Favorite"
+          >
+            {fav ? "★" : "☆"}
+          </button>
+        </span>
+      </button>
+    );
+  }
 
   return (
     <div className="devicePanel">
@@ -61,38 +193,57 @@ export default function DeviceList({
         ) : null}
       </div>
 
-      <div className={compact ? "deviceList compact" : "deviceList"}>
-        {filtered.map((d) => {
-          const s = statusClass(d);
-          const active = d.id === selectedDevice;
-          return (
-            <button
-              key={d.id}
-              className={active ? "deviceRow active" : "deviceRow"}
-              onClick={() => onSelect?.(d.id)}
-              title={`${d.role} • ${s} • pending=${d.pending}`}
-              type="button"
-            >
-              <span className={`dot ${s}`} />
-              <span className="deviceMain">
-                <span className="mono deviceId">{d.id}</span>
-                <span className="muted deviceRole">{d.role}</span>
-              </span>
-
-              <span className="deviceRight">
-                {d.pending ? <span className="pillTag">{d.pending} pending</span> : null}
-                <span className="muted mono deviceSeen">{formatAgo(d.lastSeenMs)}</span>
-              </span>
-            </button>
-          );
-        })}
-
-        {filtered.length === 0 ? (
-          <div className="muted" style={{ padding: 10 }}>
-            No devices match “{q}”.
-          </div>
-        ) : null}
+      <div className="filterRow">
+        {[
+          ["all", "All"],
+          ["online", "Online"],
+          ["stale", "Stale"],
+          ["offline", "Offline"],
+          ["pending", "Pending"]
+        ].map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            className={filter === k ? "chipBtn active" : "chipBtn"}
+            onClick={() => setFilter(k)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
+
+      {!groupByRole ? (
+        <div className={listClass}>
+          {filtered.map(renderRow)}
+          {filtered.length === 0 ? (
+            <div className="muted" style={{ padding: 10 }}>
+              No devices match “{q}”.
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className={listClass}>
+          {groups.map(([role, arr]) => {
+            const isCollapsed = collapsed.has(role);
+            return (
+              <div key={role} className="deviceGroup">
+                <button type="button" className="groupHdr" onClick={() => toggleCollapse(role)}>
+                  <span className="mono">{role}</span>
+                  <span className="muted">{arr.length}</span>
+                  <span className="muted">{isCollapsed ? "▸" : "▾"}</span>
+                </button>
+                {!isCollapsed ? <div className="groupBody">{arr.map(renderRow)}</div> : null}
+              </div>
+            );
+          })}
+
+          {filtered.length === 0 ? (
+            <div className="muted" style={{ padding: 10 }}>
+              No devices match “{q}”.
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
