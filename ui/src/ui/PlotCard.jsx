@@ -26,7 +26,7 @@ export default function PlotCard({ seriesRef, seriesKey }) {
     <div className="plotCard">
       <div className="plotTitle mono">{seriesKey}</div>
       <div className="plotInner">
-        <ResponsiveContainer width="100%" height="100%" minHeight={260}>
+        <ResponsiveContainer width="100%" height={260}>
           <LineChart data={data}>
             <XAxis
               dataKey="t"

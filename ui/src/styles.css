@@ -418,7 +418,6 @@ button.danger {
 
 .plotInner {
   height: 260px;
-  min-height: 260px;
   min-width: 0;
 }
 
