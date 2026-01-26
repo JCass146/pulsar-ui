@@ -206,10 +206,9 @@ export default function App() {
     dev.stale = !last || Date.now() - last > staleAfterMs;
   }
 
-  function ingestForPlots(topic, parsed) {
+  function ingestForPlotsWithTp(tp, parsed) {
     if (parsed.kind !== "json" || !parsed.json) return;
 
-    const tp = parsePulsarTopic(topic);
     const device = tp.device || "unknown";
     const obj = parsed.json;
 
@@ -218,6 +217,7 @@ export default function App() {
       (isFiniteNumber(obj.t_ms) && obj.t_ms) ||
       Date.now();
 
+    // ✅ Now "latestRef" truly means "latest telemetry/event"
     latestRef.current.set(device, obj);
 
     const pairs = extractNumericFields(obj);
@@ -313,28 +313,28 @@ export default function App() {
 
   function handleIncoming(topic, payload) {
     const parsed = tryParsePayload(payload);
+    const tp = parsePulsarTopic(topic);
 
-    ingestForPlots(topic, parsed);
+    // Only telemetry/event should drive "latest" + timeseries
+    if (tp?.isPulsar && (tp.kind === "telemetry" || tp.kind === "event")) {
+      ingestForPlotsWithTp(tp, parsed);
+    }
+
     upsertDeviceFromMessage(topic, parsed);
 
-    bumpDeviceTick(); // throttled (~10 Hz)
+    bumpDeviceTick(); // (throttled recommended)
 
+    // Persist raw feed (ref)
     if (!pausedRef.current) {
       messagesRef.current.unshift({
         id: newId(),
         t: nowIsoMs(),
         topic,
-        topicParsed: parsePulsarTopic(topic),
+        topicParsed: tp,
         payloadLen: payload?.length ?? payload?.byteLength ?? 0,
         parsed
       });
-
       if (messagesRef.current.length > 2000) messagesRef.current.length = 2000;
-    }
-
-    // Cap history (ring buffer)
-    if (messagesRef.current.length > 2000) {
-      messagesRef.current.length = 2000;
     }
   }
 
