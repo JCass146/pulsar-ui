@@ -1,4 +1,15 @@
 {
   "mqttWsUrl": "${MQTT_WS_URL}",
-  "mqttTopic": "${MQTT_TOPIC}"
+
+  "subscribeTopics": [
+    "pulsar/+/telemetry",
+    "pulsar/+/status",
+    "pulsar/+/state/#",
+    "pulsar/+/meta/#",
+    "pulsar/+/ack/#",
+    "pulsar/+/event/#"
+  ],
+
+  "staleAfterMs": 5000,
+  "commandTimeoutMs": 2000
 }

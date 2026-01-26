@@ -7,24 +7,53 @@ function defaultWsUrl() {
 export async function loadRuntimeConfig() {
   // Hard defaults if config fetch fails
   const defaults = {
-    mqttWsUrl: "",
-    mqttTopic: "pulsar/+/telemetry/#"
+    mqttWsUrl: defaultWsUrl(),
+
+    // Pulsar Topic Contract v1 — UI listens broadly
+    subscribeTopics: [
+      "pulsar/+/telemetry",
+      "pulsar/+/status",
+      "pulsar/+/state/#",
+      "pulsar/+/meta/#",
+      "pulsar/+/ack/#",
+      "pulsar/+/event/#"
+    ],
+
+    staleAfterMs: 5000,
+    commandTimeoutMs: 2000
   };
 
   try {
     const res = await fetch("/config.json", { cache: "no-store" });
-    if (!res.ok) return { ...defaults, mqttWsUrl: defaultWsUrl() };
+    if (!res.ok) return defaults;
 
     const cfg = await res.json();
 
     const mqttWsUrl =
-      (cfg?.mqttWsUrl && String(cfg.mqttWsUrl).trim()) || defaultWsUrl();
+      (cfg?.mqttWsUrl && String(cfg.mqttWsUrl).trim()) || defaults.mqttWsUrl;
 
-    const mqttTopic =
-      (cfg?.mqttTopic && String(cfg.mqttTopic).trim()) || defaults.mqttTopic;
+    // Optional overrides
+    const subscribeTopics = Array.isArray(cfg?.subscribeTopics)
+      ? cfg.subscribeTopics.map(String).filter(Boolean)
+      : defaults.subscribeTopics;
 
-    return { mqttWsUrl, mqttTopic };
+    const staleAfterMs =
+      Number.isFinite(cfg?.staleAfterMs) && cfg.staleAfterMs > 0
+        ? cfg.staleAfterMs
+        : defaults.staleAfterMs;
+
+    const commandTimeoutMs =
+      Number.isFinite(cfg?.commandTimeoutMs) && cfg.commandTimeoutMs > 0
+        ? cfg.commandTimeoutMs
+        : defaults.commandTimeoutMs;
+
+    return {
+      mqttWsUrl,
+      subscribeTopics,
+      staleAfterMs,
+      commandTimeoutMs
+    };
   } catch {
-    return { ...defaults, mqttWsUrl: defaultWsUrl() };
+    return defaults;
   }
 }
