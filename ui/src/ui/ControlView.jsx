@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import DeviceList from "./DeviceList.jsx";
 
 function safeJsonStringify(v) {
   try {
@@ -72,26 +73,16 @@ export default function ControlView({
           </label>
         </div>
 
-        <h3>All devices</h3>
-        <div className="chips">
-          {deviceList.slice(0, 50).map((d) => {
-            const label = d.online ? (d.stale ? "stale" : "online") : "offline";
-            return (
-              <span
-                key={d.id}
-                className="chip"
-                onClick={() => setSelectedDevice(d.id)}
-                style={{ cursor: "pointer" }}
-                title={`${d.role} • ${label} • pending=${d.pending}`}
-              >
-                <span className="mono">{d.id}</span>
-                <span className="muted mono">{d.role}</span>
-                <span className="muted mono">{label}</span>
-              </span>
-            );
-          })}
-          {deviceList.length === 0 && <span className="muted">No device IDs detected yet.</span>}
-        </div>
+        <DeviceList
+          title="Quick select"
+          devices={deviceList}
+          selectedDevice={rawDeviceFilter !== "all" ? rawDeviceFilter : null}
+          onSelect={(id) => {
+            setRawDeviceFilter(id);
+            setSelectedDevice(id);
+          }}
+          compact
+        />
       </section>
 
       <section className="card feed">

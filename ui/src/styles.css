@@ -429,3 +429,119 @@ button.danger {
   border-top: 1px solid var(--border);
   background: rgba(8, 12, 18, 0.65);
 }
+
+/* DeviceList v1 */
+.devicePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.devicePanelTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.devicePanelTitle {
+  font-weight: 700;
+}
+
+.devicePanelSub {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.deviceSearch {
+  width: min(320px, 100%);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.25);
+  color: inherit;
+}
+
+.deviceList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.deviceList.compact {
+  max-height: 240px;
+}
+
+.deviceRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.deviceRow:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.deviceRow.active {
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.08);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.06) inset;
+}
+
+.dot.online { background: rgba(0, 255, 140, 0.9); }
+.dot.stale  { background: rgba(255, 200, 0, 0.95); }
+.dot.offline{ background: rgba(255, 80, 80, 0.9); }
+
+.deviceMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.deviceId {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deviceRole {
+  font-size: 12px;
+}
+
+.deviceRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.deviceSeen {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.pillTag {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.22);
+}
