@@ -134,10 +134,26 @@ export default function App() {
     pausedRef.current = paused;
   }, [paused]);
 
-  const [messages, setMessages] = useState([]);
-
   // Tabs
   const [tab, setTab] = useState("dashboard"); // dashboard | control | raw
+
+  const tabRef = useRef(tab);
+  useEffect(() => {
+    tabRef.current = tab;
+  }, [tab]);
+
+  const messagesRef = useRef([]);
+  const [rawTick, setRawTick] = useState(0); // UI refresh trigger
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (tabRef.current === "raw") {
+        setRawTick((x) => x + 1);
+      }
+    }, 200); // 5 Hz UI refresh is plenty
+
+    return () => clearInterval(id);
+  }, []);
 
   // Device registry
   const devicesRef = useRef(new Map());
@@ -167,8 +183,16 @@ export default function App() {
 
   const controllerRef = useRef(null);
 
+  const bumpQueuedRef = useRef(false);
+
   function bumpDeviceTick() {
-    setDeviceTick((x) => (x + 1) % 1_000_000);
+    if (bumpQueuedRef.current) return;
+    bumpQueuedRef.current = true;
+
+    setTimeout(() => {
+      bumpQueuedRef.current = false;
+      setDeviceTick((x) => (x + 1) % 1_000_000);
+    }, 100); // ~10 Hz max UI refresh
   }
 
   function getDeviceRole(dev) {
@@ -292,21 +316,26 @@ export default function App() {
 
     ingestForPlots(topic, parsed);
     upsertDeviceFromMessage(topic, parsed);
-    bumpDeviceTick();
 
-    if (tab !== "raw") return;
-    if (pausedRef.current) return;
+    bumpDeviceTick(); // throttled (~10 Hz)
 
-    const entry = {
-      id: newId(),
-      t: nowIsoMs(),
-      topic,
-      topicParsed: parsePulsarTopic(topic),
-      payloadLen: payload?.length ?? payload?.byteLength ?? 0,
-      parsed
-    };
+    if (!pausedRef.current) {
+      messagesRef.current.unshift({
+        id: newId(),
+        t: nowIsoMs(),
+        topic,
+        topicParsed: parsePulsarTopic(topic),
+        payloadLen: payload?.length ?? payload?.byteLength ?? 0,
+        parsed
+      });
 
-    setMessages((prev) => [entry, ...prev].slice(0, 600));
+      if (messagesRef.current.length > 2000) messagesRef.current.length = 2000;
+    }
+
+    // Cap history (ring buffer)
+    if (messagesRef.current.length > 2000) {
+      messagesRef.current.length = 2000;
+    }
   }
 
   // Periodic stale recompute
@@ -381,7 +410,9 @@ export default function App() {
     if (!ctl) return;
 
     ctl.end();
-    setMessages([]);
+    messagesRef.current = [];
+    setRawTick((x) => x + 1);
+
     setStatus({ status: "reconnecting", url: "" });
 
     const newCtl = connectMqtt({
@@ -400,7 +431,8 @@ export default function App() {
   }
 
   function clearMessages() {
-    setMessages([]);
+    messagesRef.current = [];
+    setRawTick((x) => x + 1);
   }
 
   // Devices list for UI
@@ -581,14 +613,23 @@ export default function App() {
     setCalAutoSync(true);
   }
 
+  const rawMessagesSnapshot = useMemo(() => {
+    // Snapshot updates when rawTick changes
+    return messagesRef.current;
+  }, [rawTick]);
+
   const filteredMessages = useMemo(() => {
-    if (rawDeviceFilter === "all" && rawFamilyFilter === "all") return messages;
-    return messages.filter((m) => {
-      const devOk = rawDeviceFilter === "all" ? true : (m.topicParsed?.device || "") === rawDeviceFilter;
-      const famOk = rawFamilyFilter === "all" ? true : (m.topicParsed?.kind || "") === rawFamilyFilter;
+    if (rawDeviceFilter === "all" && rawFamilyFilter === "all") return rawMessagesSnapshot;
+
+    return rawMessagesSnapshot.filter((m) => {
+      const devOk =
+        rawDeviceFilter === "all" ? true : (m.topicParsed?.device || "") === rawDeviceFilter;
+      const famOk =
+        rawFamilyFilter === "all" ? true : (m.topicParsed?.kind || "") === rawFamilyFilter;
       return devOk && famOk;
     });
-  }, [messages, rawDeviceFilter, rawFamilyFilter]);
+  }, [rawMessagesSnapshot, rawDeviceFilter, rawFamilyFilter]);
+
 
   const devicesSeenCount = deviceList.length;
 
@@ -674,7 +715,7 @@ export default function App() {
           paused={paused}
           setPaused={setPaused}
           clearMessages={clearMessages}
-          messagesCount={messages.length}
+          messagesCount={messagesRef.current.length}
           devicesSeenCount={devicesSeenCount}
           rawDeviceFilter={rawDeviceFilter}
           setRawDeviceFilter={setRawDeviceFilter}
