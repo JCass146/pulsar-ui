@@ -76,13 +76,11 @@ export default function ControlView({
         <DeviceList
           title="Quick select"
           devices={deviceList}
-          selectedDevice={rawDeviceFilter !== "all" ? rawDeviceFilter : null}
-          onSelect={(id) => {
-            setRawDeviceFilter(id);
-            setSelectedDevice(id);
-          }}
+          selectedDevice={selectedDevice}
+          onSelect={(id) => setSelectedDevice(id)}
           compact
         />
+
       </section>
 
       <section className="card feed">
