@@ -7,12 +7,15 @@
   --border: #1b2a3a;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   --radius: 14px;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
-    "Segoe UI Emoji";
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -22,7 +25,12 @@ body {
   padding: 0;
   height: 100%;
   font-family: var(--sans);
-  background: radial-gradient(1200px 800px at 20% 0%, #0e1a2a 0%, var(--bg) 55%, #070a0f 100%);
+  background: radial-gradient(
+    1200px 800px at 20% 0%,
+    #0e1a2a 0%,
+    var(--bg) 55%,
+    #070a0f 100%
+  );
   color: var(--text);
 }
 
@@ -33,6 +41,8 @@ body {
 .muted {
   color: var(--muted);
 }
+
+/* ---------- App layout ---------- */
 
 .app {
   min-height: 100vh;
@@ -102,6 +112,8 @@ body {
   border-color: rgba(255, 64, 120, 0.45);
 }
 
+/* ---------- Grid ---------- */
+
 .grid {
   flex: 1;
   display: grid;
@@ -109,6 +121,10 @@ body {
   padding: 16px;
   grid-template-columns: 380px 1fr;
   align-items: start;
+}
+
+.grid.single {
+  grid-template-columns: 1fr;
 }
 
 @media (max-width: 980px) {
@@ -120,8 +136,14 @@ body {
   }
 }
 
+/* ---------- Cards ---------- */
+
 .card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.015)
+  );
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -129,12 +151,14 @@ body {
 }
 
 .controls {
-  padding: 14px 14px 10px;
+  padding: 14px;
 }
 
 .feed {
   padding: 14px;
 }
+
+/* ---------- Typography ---------- */
 
 h2 {
   margin: 0 0 12px;
@@ -149,6 +173,8 @@ h3 {
   color: #cfe1f7;
 }
 
+/* ---------- Forms ---------- */
+
 .form {
   display: grid;
   gap: 10px;
@@ -161,24 +187,45 @@ label {
   color: #cfe1f7;
 }
 
-input {
+input,
+select,
+textarea {
   width: 100%;
-  padding: 10px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.35);
   color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
   outline: none;
+  font: inherit;
 }
 
-input:focus {
+input:focus,
+select:focus,
+textarea:focus {
   border-color: rgba(46, 231, 255, 0.35);
+}
+
+select {
+  appearance: none;
+}
+
+select[multiple] {
+  appearance: auto;
+  padding: 8px;
+}
+
+select option {
+  background: #0b0f14;
+  color: #e8edf4;
 }
 
 .hint {
   font-size: 11px;
   color: var(--muted);
 }
+
+/* ---------- Buttons ---------- */
 
 .row {
   display: flex;
@@ -207,8 +254,10 @@ button.secondary {
 
 button.danger {
   background: rgba(255, 46, 136, 0.12);
-  border-color: rgba(255, 46, 136, 0.20);
+  border-color: rgba(255, 46, 136, 0.2);
 }
+
+/* ---------- Stats ---------- */
 
 .stats {
   display: grid;
@@ -234,23 +283,7 @@ button.danger {
   margin-top: 4px;
 }
 
-.chips {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-bottom: 4px;
-}
-
-.chip {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.18);
-  font-size: 12px;
-}
+/* ---------- Message feed ---------- */
 
 .feedList {
   display: grid;
@@ -264,7 +297,6 @@ button.danger {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.18);
-  overflow: hidden;
 }
 
 .msgMeta {
@@ -294,7 +326,6 @@ button.danger {
   line-height: 1.35;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #e9f2ff;
 }
 
 .msgFooter {
@@ -314,23 +345,7 @@ button.danger {
   color: var(--muted);
 }
 
-.empty {
-  padding: 22px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  text-align: center;
-}
-
-.emptyTitle {
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
-  background: rgba(8, 12, 18, 0.65);
-}
+/* ---------- Dashboard ---------- */
 
 .tabs {
   display: flex;
@@ -341,19 +356,18 @@ button.danger {
 .tab {
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.25);
-  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
   cursor: pointer;
 }
 
 .tab.active {
-  border-color: rgba(255,255,255,0.22);
-  background: rgba(255,255,255,0.06);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.grid.single {
-  grid-template-columns: 1fr !important;
+.dash {
+  padding: 0 18px 18px;
 }
 
 .dashTop {
@@ -367,15 +381,16 @@ button.danger {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 8px;
 }
 
 .healthItem {
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
   padding: 10px;
-  background: rgba(0,0,0,0.18);
+  background: rgba(0, 0, 0, 0.18);
 }
+
+/* ---------- Plots ---------- */
 
 .plotsGrid {
   display: grid;
@@ -383,11 +398,16 @@ button.danger {
   gap: 12px;
 }
 
+.plotsGrid > * {
+  min-width: 0;
+}
+
 .plotCard {
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 10px;
-  background: rgba(0,0,0,0.25);
+  background: rgba(0, 0, 0, 0.25);
+  min-width: 0;
 }
 
 .plotTitle {
@@ -398,31 +418,14 @@ button.danger {
 
 .plotInner {
   height: 260px;
+  min-height: 260px;
+  min-width: 0;
 }
 
-input, select, textarea {
-  background: rgba(0,0,0,0.35);
-  color: inherit;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 10px;
-  padding: 10px 12px;
-  outline: none;
-  font: inherit;
-}
+/* ---------- Footer ---------- */
 
-select[multiple] {
-  padding: 8px;
-}
-
-select option {
-  background: #0b0f14;
-  color: #e8edf4;
-}
-
-.dash {
-  padding: 0 18px 18px;
-}
-
-.dashTop .card h2 {
-  margin-top: 0;
+.footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(8, 12, 18, 0.65);
 }

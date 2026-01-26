@@ -2,11 +2,16 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { connectMqtt } from "./mqtt.js";
 import { parsePulsarTopic, formatBytes } from "./topic.js";
 import { loadRuntimeConfig } from "./config.js";
-import { pushPoint, getSeries } from "./timeseries.js";
+import { pushPoint } from "./timeseries.js";
 
 import {
   ResponsiveContainer,
-  LineChart, Line, XAxis, YAxis, Tooltip, Legend
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend
 } from "recharts";
 
 function nowIsoMs() {
@@ -50,6 +55,45 @@ function isFiniteNumber(v) {
   return typeof v === "number" && Number.isFinite(v);
 }
 
+/**
+ * Chart-only component: re-renders on a timer so the rest of the UI stays clickable.
+ */
+function PlotCard({ seriesRef, seriesKey }) {
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setTick((x) => x + 1), 250); // ~4 fps
+    return () => clearInterval(id);
+  }, []);
+
+  const data = useMemo(() => {
+    const arr = seriesRef.current.get(seriesKey) || [];
+    return arr.map((p) => ({ t: p.t, v: p.v }));
+  }, [tick, seriesKey, seriesRef]);
+
+  return (
+    <div className="plotCard">
+      <div className="plotTitle mono">{seriesKey}</div>
+      <div className="plotInner">
+        <ResponsiveContainer width="100%" height="100%" minHeight={260}>
+          <LineChart data={data}>
+            <XAxis
+              dataKey="t"
+              type="number"
+              domain={["auto", "auto"]}
+              tickFormatter={(ms) => new Date(ms).toLocaleTimeString()}
+            />
+            <YAxis />
+            <Tooltip labelFormatter={(ms) => new Date(ms).toLocaleTimeString()} />
+            <Legend />
+            <Line dataKey="v" dot={false} isAnimationActive={false} type="monotone" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [wsUrl, setWsUrl] = useState("");
   const [subTopic, setSubTopic] = useState("pulsar/+/telemetry/#");
@@ -57,7 +101,7 @@ export default function App() {
   const [status, setStatus] = useState({ status: "loading", url: "" });
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(false);
-  
+
   useEffect(() => {
     pausedRef.current = paused;
   }, [paused]);
@@ -76,12 +120,6 @@ export default function App() {
   const [selectedFields, setSelectedFields] = useState(["pressure_psi"]);
   const [maxPoints, setMaxPoints] = useState(1500);
 
-  const [chartTick, setChartTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setChartTick((x) => x + 1), 200); // 5 fps is plenty
-    return () => clearInterval(id);
-  }, []);
-
   const controllerRef = useRef(null);
 
   const devices = useMemo(() => {
@@ -93,15 +131,13 @@ export default function App() {
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
   }, [messages]);
 
-  // Devices known for dashboard (derived from series keys too, in case you pause raw feed)
+  // Devices list for dashboard (stable)
   const plotDevices = useMemo(() => {
     const set = new Set();
-    for (const k of seriesRef.current.keys()) {
-      const [dev] = k.split(":");
-      if (dev) set.add(dev);
-    }
+    for (const [dev] of devices) set.add(dev);
+    for (const dev of latestRef.current.keys()) set.add(dev);
     return Array.from(set).sort();
-  }, [chartTick]);
+  }, [devices]);
 
   // Keep selectedDevice valid
   useEffect(() => {
@@ -109,24 +145,24 @@ export default function App() {
       const first = plotDevices[0] || devices[0]?.[0];
       if (first) setSelectedDevice(first);
     } else {
-      const stillExists = plotDevices.includes(selectedDevice) || devices.some(([d]) => d === selectedDevice);
+      const stillExists = plotDevices.includes(selectedDevice);
       if (!stillExists) {
         const first = plotDevices[0] || devices[0]?.[0];
         if (first) setSelectedDevice(first);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plotDevices, devices]);
+  }, [plotDevices]);
 
+  // Field list is derived from *latest payload only* so it doesn't jump around
   const availableFields = useMemo(() => {
     if (!selectedDevice) return [];
-    const set = new Set();
-    for (const k of seriesRef.current.keys()) {
-      const [dev, field] = k.split(":");
-      if (dev === selectedDevice && field) set.add(field);
-    }
-    return Array.from(set).sort();
-  }, [chartTick, selectedDevice]);
+    const latest = latestRef.current.get(selectedDevice);
+    if (!latest) return [];
+    return Object.keys(latest)
+      .filter((k) => isFiniteNumber(latest[k]))
+      .sort();
+  }, [selectedDevice]);
 
   function ingestForPlots(topic, parsed) {
     if (parsed.kind !== "json" || !parsed.json) return;
@@ -138,10 +174,10 @@ export default function App() {
     // choose timestamp: prefer device time if present, else browser time
     const t = isFiniteNumber(obj.ts_unix_ms) ? obj.ts_unix_ms : Date.now();
 
-    // latest snapshot for health
+    // latest snapshot for health/fields
     latestRef.current.set(device, obj);
 
-    // store every numeric field (simple + flexible)
+    // store numeric fields
     for (const [k, v] of Object.entries(obj)) {
       if (!isFiniteNumber(v)) continue;
       const key = `${device}:${k}`;
@@ -152,7 +188,7 @@ export default function App() {
   function handleIncoming(topic, payload) {
     const parsed = tryParsePayload(payload);
 
-    // Always ingest for plots even if raw is paused (so dashboard continues)
+    // Always ingest for plots even if raw is paused
     ingestForPlots(topic, parsed);
 
     if (pausedRef.current) return;
@@ -204,7 +240,6 @@ export default function App() {
     const ctl = controllerRef.current;
     if (!ctl) return;
 
-    // simplest reliable way: end + reconnect
     ctl.end();
 
     setMessages([]);
@@ -245,12 +280,11 @@ export default function App() {
             <div className="form">
               <label>
                 Device
-                <select
-                  value={selectedDevice}
-                  onChange={(e) => setSelectedDevice(e.target.value)}
-                >
-                  {[...new Set([...plotDevices, ...devices.map(([d]) => d)])].map((d) => (
-                    <option key={d} value={d}>{d}</option>
+                <select value={selectedDevice} onChange={(e) => setSelectedDevice(e.target.value)}>
+                  {plotDevices.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -267,7 +301,9 @@ export default function App() {
                   size={Math.min(10, Math.max(5, availableFields.length))}
                 >
                   {availableFields.map((f) => (
-                    <option key={f} value={f}>{f}</option>
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
                   ))}
                 </select>
                 <div className="hint">Hold Ctrl (Windows) / Cmd (Mac) to select multiple.</div>
@@ -327,35 +363,8 @@ export default function App() {
         <div className="plotsGrid">
           {selectedDevice && selectedFields.length ? (
             selectedFields.map((field) => {
-              const key = `${selectedDevice}:${field}`;
-              const data = getSeries(seriesRef.current, key).map((p) => ({ t: p.t, v: p.v }));
-
-              return (
-                <div className="plotCard" key={key}>
-                  <div className="plotTitle mono">{key}</div>
-                  <div className="plotInner">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={data}>
-                        <XAxis
-                          dataKey="t"
-                          type="number"
-                          domain={["auto", "auto"]}
-                          tickFormatter={(ms) => new Date(ms).toLocaleTimeString()}
-                        />
-                        <YAxis />
-                        <Tooltip labelFormatter={(ms) => new Date(ms).toLocaleTimeString()} />
-                        <Legend />
-                        <Line
-                          dataKey="v"
-                          dot={false}
-                          isAnimationActive={false}
-                          type="monotone"
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              );
+              const seriesKey = `${selectedDevice}:${field}`;
+              return <PlotCard key={seriesKey} seriesRef={seriesRef} seriesKey={seriesKey} />;
             })
           ) : (
             <div className="card">
@@ -386,16 +395,10 @@ export default function App() {
       </header>
 
       <div className="tabs">
-        <button
-          className={tab === "dashboard" ? "tab active" : "tab"}
-          onClick={() => setTab("dashboard")}
-        >
+        <button className={tab === "dashboard" ? "tab active" : "tab"} onClick={() => setTab("dashboard")}>
           Dashboard
         </button>
-        <button
-          className={tab === "raw" ? "tab active" : "tab"}
-          onClick={() => setTab("raw")}
-        >
+        <button className={tab === "raw" ? "tab active" : "tab"} onClick={() => setTab("raw")}>
           Raw
         </button>
       </div>
