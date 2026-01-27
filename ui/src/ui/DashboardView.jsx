@@ -110,7 +110,10 @@ export default function DashboardView({
   devicesRef,
   latestRef,
   seriesRef,
-  getDeviceRole
+  getDeviceRole,
+  getDeviceRole,
+  notifItems,
+  clearNotifs
 }) {
   // Watched fields (no multi-select dropdown needed)
   const [watchedFields, setWatchedFields] = useState(() => loadWatchedFields());
@@ -235,6 +238,37 @@ export default function DashboardView({
                 Applies to all timeseries buffers.
               </div>
             </label>
+          </div>
+        </section>
+
+        <section className="card controls" style={{ marginTop: 12 }}>
+          <div className="row" style={{ alignItems: "center", justifyContent: "space-between" }}>
+            <h2 style={{ margin: 0 }}>Notifications</h2>
+            <button type="button" className="secondary" onClick={clearNotifs}>
+              Clear
+            </button>
+          </div>
+
+          <div className="notifList">
+            {notifItems && notifItems.length ? (
+              notifItems.map((n) => (
+                <div key={n.id} className={`notifRow ${n.level || "info"}`}>
+                  <div className="notifTop">
+                    <span className="mono notifTitle">{n.title}</span>
+                    <span className="mono muted" style={{ fontSize: 11 }}>
+                      {new Date(n.t_ms).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  {n.detail ? <div className="muted notifDetail">{n.detail}</div> : null}
+                </div>
+              ))
+            ) : (
+              <div className="muted">No notifications yet.</div>
+            )}
+          </div>
+
+          <div className="hint" style={{ marginTop: 8 }}>
+            Full packet history lives in <span className="mono">Raw</span>.
           </div>
         </section>
       </aside>

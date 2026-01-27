@@ -117,6 +117,35 @@ function extractNumericFields(obj) {
 }
 
 export default function App() {
+  // --- Notifications ---
+  const notifsRef = useRef([]);
+  const [notifTick, setNotifTick] = useState(0);
+
+  function pushNotif(level, title, detail = "", device = "") {
+    notifsRef.current.unshift({
+      id: newId(),
+      t_ms: Date.now(),
+      level,           // "info" | "ok" | "warn" | "bad"
+      title,
+      detail,
+      device
+    });
+    if (notifsRef.current.length > 400) notifsRef.current.length = 400;
+
+    // low cost UI bump; you can throttle if needed
+    setNotifTick((x) => (x + 1) % 1_000_000);
+  }
+
+  function clearNotifs() {
+    notifsRef.current.length = 0;
+    setNotifTick((x) => (x + 1) % 1_000_000);
+  }
+
+  const notifItems = useMemo(() => {
+    // show last 40 in dashboard panel
+    return notifsRef.current.slice(0, 40);
+  }, [notifTick]);
+
   // Connection/config
   const [wsUrl, setWsUrl] = useState("");
   const [subTopic, setSubTopic] = useState("pulsar/+/telemetry/#");
@@ -241,6 +270,13 @@ export default function App() {
     pending.status = ackJson.ok === false ? "failed" : "acked";
     pending.error = ackJson.err || ackJson.error || null;
 
+    pushNotif(
+      pending.status === "acked" ? "ok" : "bad",
+      `${deviceId} • ${pending.action || ackAction}`,
+      pending.status === "acked" ? "ack" : `failed: ${pending.error || "unknown"}`,
+      deviceId
+    );
+
     setCmdHistory((prev) =>
       [
         {
@@ -338,19 +374,67 @@ export default function App() {
     }
   }
 
-  // Periodic stale recompute
+  // Periodic stale/offline recompute + transition notifications
   useEffect(() => {
     const id = setInterval(() => {
       let changed = false;
+
+      const now = Date.now();
       for (const dev of devicesRef.current.values()) {
-        const prev = dev.stale;
-        computeStale(dev);
-        if (prev !== dev.stale) changed = true;
+        const prevStale = !!dev.stale;
+        const prevOnline = !!dev.online;
+
+        // stale is purely time-based
+        dev.stale = !dev.lastSeenMs || (now - dev.lastSeenMs) > staleAfterMs;
+
+        // offline policy:
+        // - if device explicitly said online:false (from retained/LWT), keep it false
+        // - else treat "seen recently" as online=true, and if it's *very* old, mark offline
+        //
+        // Choose an "offlineAfter" a bit longer than staleAfter so you can be stale-but-online.
+        const offlineAfterMs = Math.max(staleAfterMs * 3, 15000);
+
+        const statusOnline =
+          typeof dev.latestStatus?.online === "boolean" ? dev.latestStatus.online : null;
+
+        if (statusOnline === false) {
+          dev.online = false;
+        } else if (!dev.lastSeenMs) {
+          dev.online = false;
+        } else if ((now - dev.lastSeenMs) > offlineAfterMs) {
+          dev.online = false;
+        } else {
+          dev.online = true;
+        }
+
+        // Transition notifications (only when flipping)
+        if (prevStale !== dev.stale) {
+          pushNotif(
+            dev.stale ? "warn" : "ok",
+            `${dev.id}`,
+            dev.stale ? "stale" : "fresh",
+            dev.id
+          );
+          changed = true;
+        }
+
+        if (prevOnline !== dev.online) {
+          pushNotif(
+            dev.online ? "ok" : "bad",
+            `${dev.id}`,
+            dev.online ? "online" : "offline",
+            dev.id
+          );
+          changed = true;
+        }
       }
+
       if (changed) bumpDeviceTick();
     }, 500);
+
     return () => clearInterval(id);
   }, [staleAfterMs]);
+
 
   // Load runtime config, then connect
   useEffect(() => {
@@ -382,7 +466,14 @@ export default function App() {
 
       const ctl = connectMqtt({
         url: mqttWs,
-        onState: (s) => setStatus(s),
+        onState: (s) => {
+          setStatus(s);
+          // Only notify on meaningful transitions
+          const st = String(s?.status || "");
+          if (st === "connected") pushNotif("ok", "MQTT connected", s?.url || "");
+          else if (st === "reconnecting") pushNotif("warn", "MQTT reconnecting", s?.url || "");
+          else if (st === "disconnected") pushNotif("bad", "MQTT disconnected", s?.url || "");
+        },
         onMessage: (topic, payload) => handleIncoming(topic, payload)
       });
 
@@ -514,6 +605,12 @@ export default function App() {
     if (dev) {
       const timeoutId = setTimeout(() => {
         const pending = dev.pendingCommands.get(id);
+        pushNotif(
+          "warn",
+          `${deviceId} • ${action}`,
+          `timeout after ${commandTimeoutMs} ms`,
+          deviceId
+        );
         if (pending) {
           dev.pendingCommands.delete(id);
           setCmdHistory((prev) =>
@@ -678,6 +775,8 @@ export default function App() {
             latestRef={latestRef}
             seriesRef={seriesRef}
             getDeviceRole={getDeviceRole}
+            notifItems={notifItems}
+            clearNotifs={clearNotifs}
           />
         </main>
       ) : tab === "control" ? (

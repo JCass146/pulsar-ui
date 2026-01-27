@@ -825,3 +825,59 @@ button.danger {
   border-color: rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.04);
 }
+
+/* ---- Notifications panel ---- */
+.notifList {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.notifRow {
+  border-radius: 12px;
+  padding: 10px 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+}
+
+.notifTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notifTitle {
+  font-weight: 900;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notifDetail {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.notifRow.ok {
+  border-color: rgba(0,255,140,0.28);
+  background: rgba(0,255,140,0.10);
+}
+.notifRow.warn {
+  border-color: rgba(255,200,0,0.30);
+  background: rgba(255,200,0,0.10);
+}
+.notifRow.bad {
+  border-color: rgba(255,80,80,0.35);
+  background: rgba(255,80,80,0.12);
+}
+.notifRow.info {
+  border-color: rgba(120,160,255,0.22);
+  background: rgba(120,160,255,0.08);
+}
