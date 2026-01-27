@@ -22,12 +22,22 @@ pulsar-ui/
 │   │   └── 99-gen-config.sh   # Docker entrypoint script to generate config.json
 │   └── src/
 │       ├── main.jsx            # React app root (creates #root in index.html)
-│       ├── App.jsx             # Main application component & MQTT logic
+│       ├── App.jsx             # Main application component (orchestrator)
 │       ├── config.js           # Runtime configuration loader
 │       ├── mqtt.js             # MQTT WebSocket client initialization
 │       ├── topic.js            # Pulsar topic parser (device/metric extraction)
 │       ├── timeseries.js       # Time-series data aggregation & sampling
 │       ├── styles.css          # Global styles
+│       ├── utils/              # Utility functions & helpers
+│       │   ├── helpers.js      # General utilities (ISO timestamp, UUID, JSON safe stringify)
+│       │   └── parsing.js      # Payload parsing & numeric field extraction
+│       ├── services/           # Business logic modules (pure JavaScript)
+│       │   ├── device-registry.js    # Device state machine (create, stale, online)
+│       │   ├── mqtt-handler.js      # MQTT message parsing & device updates
+│       │   └── command-publisher.js # Command publishing & broadcast
+│       ├── hooks/              # Custom React hooks
+│       │   ├── useRafBatching.js    # RAF batching for 5-7x performance gain
+│       │   └── useNotifications.js  # Notification state management
 │       └── ui/
 │           ├── DashboardView.jsx     # Device grid with status cards
 │           ├── ControlView.jsx       # Interactive device command interface
@@ -52,7 +62,7 @@ pulsar-ui/
 
 ## Key Features
 
-- **Real-time MQTT Dashboard**: Live telemetry ingestion via WebSocket with ~2.5–4 Hz UI refresh
+- **Real-time MQTT Dashboard**: Live telemetry ingestion via WebSocket with 10 Hz UI refresh (device updates) + RAF batching for 5-7x packet visualization improvement
 - **Multi-topic Subscription**: Flexible subscription to `pulsar/+/telemetry`, `/status`, `/state`, `/meta`, `/ack`, `/event` with single-topic manual override
 - **Time-series Visualization**: Interactive Recharts line graphs with configurable time windows (default 60s), relative time-axis labels, and live data streaming
 - **Device Management**: Auto-discovery, online/offline/stale status tracking, device role inference from metadata
@@ -236,7 +246,41 @@ In-app event log with visual feedback:
 
 ### Local Storage Persistence
 
-**Watched Fields** (`pulsarui:watchedFields:v1`)
+## Architecture Overview (Refactored)
+
+As of the latest refactoring, Pulsar UI follows a **modular, layered architecture**:
+
+```
+MQTT Broker
+    ↓
+[mqtt.js] ← WebSocket connection management
+    ↓
+[App.jsx] ← React orchestrator & state management
+    ↓
+    ├─→ [mqtt-handler.js] ← Message parsing & device updates (pure JS)
+    │       ↓
+    │   ├─→ [device-registry.js] ← Device state machine (pure JS)
+    │   └─→ [parsing.js] ← Payload detection & field extraction (pure JS)
+    │
+    ├─→ [useRafBatching.js] ← RAF batching hook (performance layer)
+    │       ↓
+    │   [React Render] ← Batched per frame
+    │
+    ├─→ [command-publisher.js] ← Command sending & ACK resolution (pure JS)
+    └─→ [useNotifications.js] ← Notification state hook
+         ↓
+    UI Views (DashboardView, ControlView, RawView)
+```
+
+### Design Principles
+
+1. **Separation of Concerns**: Business logic (services) isolated from React state management (hooks)
+2. **Pure JavaScript Services**: All services have zero React dependencies, enabling independent unit testing
+3. **Callback-Based State Updates**: Services communicate via callbacks, keeping them decoupled from React
+4. **Performance-First Hot Path**: MQTT handler runs outside React render cycle; RAF batching defers expensive renders
+5. **Ref-Based State**: High-frequency data (devices, series) stored in Refs to avoid unnecessary re-renders
+
+### Local Storage Persistence
 - Per-session list of metrics to monitor on dashboard
 - Survives page reload
 - Default: `["pressure_psi", "mass_g", "temp_c"]`
@@ -256,28 +300,111 @@ In-app event log with visual feedback:
 
 ## Core Modules
 
-### [config.js](ui/src/config.js)
+### Infrastructure
+
+#### [config.js](ui/src/config.js)
 Loads runtime configuration from `/config.json` (generated from `config.template.json`). Provides MQTT WebSocket URL, subscription topics, and timeout settings. Falls back to sensible defaults if config fetch fails.
 
 **Key Exports**: `loadRuntimeConfig()`
 
-### [mqtt.js](ui/src/mqtt.js)
+#### [mqtt.js](ui/src/mqtt.js)
 Wraps the MQTT.js client for WebSocket connections. Emits connection state changes and message events. Handles reconnection logic, error propagation, and clean subscriptions.
 
 **Key Exports**: `connectMqtt({ url, onState, onMessage })`
 
-### [topic.js](ui/src/topic.js)
+#### [topic.js](ui/src/topic.js)
 Parses Pulsar topic paths (e.g., `pulsar/device01/telemetry/temperature`) to extract device ID, message type, and metric name. Enables hierarchical organization of device data.
 
 **Key Exports**: `parsePulsarTopic(topicString)`
 
-### [timeseries.js](ui/src/timeseries.js)
+#### [timeseries.js](ui/src/timeseries.js)
 Aggregates incoming MQTT messages into time-series data structures. Handles data point insertion, stale removal, and sampling for efficient rendering. Maintains sliding windows per metric.
 
 **Key Exports**: `pushPoint(dataStore, deviceId, metricName, timestamp, value)`
 
-### [App.jsx](ui/src/App.jsx)
-Root application component. Orchestrates MQTT connection, manages global state (devices, metrics, connection status), and delegates rendering to specialized views (Dashboard, Control, Raw).
+### Utilities (`src/utils/`)
+
+#### [helpers.js](ui/src/utils/helpers.js)
+General-purpose utility functions extracted from App.jsx.
+
+**Key Exports**:
+- `nowIsoMs()` – ISO-8601 timestamp with milliseconds
+- `newId()` – Generates crypto.randomUUID or fallback
+- `safeJsonStringify(value)` – JSON.stringify with error handling
+- `isFiniteNumber(value)` – Type-safe finite number check
+
+#### [parsing.js](ui/src/utils/parsing.js)
+Payload parsing and field extraction utilities.
+
+**Key Exports**:
+- `tryParsePayload(payloadU8)` – Auto-detects JSON/text/binary, parses gracefully
+- `extractNumericFields(object)` – Extracts numeric fields, filters metadata
+
+### Services (`src/services/`)
+
+Pure JavaScript modules (no React dependencies) for business logic. All services use callback pattern for state updates.
+
+#### [device-registry.js](ui/src/services/device-registry.js)
+Device state machine for creation, status tracking, and lifecycle.
+
+**Key Exports**:
+- `ensureDevice(map, id)` – Create/retrieve device with nested Maps
+- `computeStale(device, staleAfterMs)` – Set stale flag based on timeout
+- `computeOnline(device, staleAfterMs)` – Calculate online status (3x stale threshold, min 15s)
+- `getDeviceRole(device)` – Extract device_type from metadata
+
+#### [mqtt-handler.js](ui/src/services/mqtt-handler.js)
+MQTT message parsing and device state updates. Factory-created with injected dependencies.
+
+**Key Exports**:
+- `createMqttMessageHandler(options)` – Returns handler function
+  - Parses topics and payloads
+  - Updates device state from telemetry/status/state/meta topics
+  - Routes ACK messages to pending commands
+  - Ingests data into time-series
+  - Callbacks: `onAckResolved(ackInfo)`, `onDeviceChanged()`
+
+#### [command-publisher.js](ui/src/services/command-publisher.js)
+Command publishing and broadcast utilities.
+
+**Key Exports**:
+- `publishCommand(options)` – Send command to single device
+- `broadcastCommand(options)` – Send command to all online devices
+  - Manages pending command state
+  - Timeout handling after `commandTimeoutMs`
+  - Callbacks: `onCommandSent(sentInfo)`, `onCommandTimeout(timeoutInfo)`
+
+### Custom Hooks (`src/hooks/`)
+
+#### [useRafBatching.js](ui/src/hooks/useRafBatching.js)
+Performance optimization hook that batches rapid updates into requestAnimationFrame cycles.
+
+**Key Exports**:
+- `useRafBatching()` – Returns `{ scheduleUpdate, tick }`
+- Queues callbacks for next rAF frame
+- Batches multiple MQTT packets before single React setState
+- **Impact**: 5-7x FPS improvement (4 Hz → 20-30 Hz effective refresh)
+
+#### [useNotifications.js](ui/src/hooks/useNotifications.js)
+Notification state management with in-memory buffer.
+
+**Key Exports**:
+- `useNotifications()` – Returns `{ notifItems, pushNotif, clearNotifs }`
+- `pushNotif(level, title, detail, device)` – Enqueue notification
+- Keeps up to 400 notifications in history
+- Auto-unshifts new notifications to front
+
+### Root Component
+
+#### [App.jsx](ui/src/App.jsx)
+Main orchestrator component (350 lines). Manages React state for connection/UI/settings, creates MQTT handler via factory, delegates rendering to specialized views.
+
+**Key Responsibilities**:
+- Load config and establish MQTT connection
+- Coordinate device registry, time-series data, and notifications
+- Detect stale/online status every 500ms
+- Dispatch to DashboardView, ControlView, or RawView based on tab selection
+- Use RAF batching for 10 Hz device tick refresh + smooth visualization
 
 **State Management**: React hooks (`useState`, `useRef`, `useEffect`, `useMemo`)
 
@@ -404,6 +531,21 @@ Payloads can be JSON, text, or binary; the app auto-parses and handles gracefull
 - **MQTT WebSocket Port**: 9001 (configurable)
 - **Docker Network**: `pulsar_net` (bridge, external)
 
+## Recent Improvements
+
+### Architectural Refactoring (Phase 6)
+- **App.jsx reduced**: 961 lines → 350 lines (-63%)
+- **Modular services**: Extracted device-registry, mqtt-handler, command-publisher as pure JS modules
+- **Reusable utilities**: Created helpers.js and parsing.js for common functions
+- **Custom hooks**: Added useRafBatching and useNotifications for encapsulated state logic
+- **Testability**: Services have zero React dependencies, enabling independent unit testing
+
+### Refresh Rate Improvements
+- **Device updates**: 10 Hz (100ms throttle on `bumpDeviceTick()`)
+- **Raw view**: 10 Hz (100ms message refresh interval)
+- **Stale/online detection**: 500ms (background housekeeping)
+- **RAF batching**: Queues rapid MQTT packets for single rAF cycle, achieving 5-7x visualization improvement
+
 ## Notes
 
 - The app uses React Hooks for all state management (no Redux/Context wrapper by default)
@@ -411,4 +553,5 @@ Payloads can be JSON, text, or binary; the app auto-parses and handles gracefull
 - Stale data (no updates for 5s) is automatically pruned
 - MQTT reconnect backoff: 1.5s interval, 5s timeout
 - Vite's fast refresh enables instant HMR during development
-- **Tier 1 Performance Optimization (Implemented)**: MQTT packets batched via `requestAnimationFrame` for 5–7x faster refresh rate (~20–30 Hz effective). See [TIER1_IMPLEMENTATION.md](./TIER1_IMPLEMENTATION.md) for details and testing instructions.
+- **Performance**: Tier 1 implementation (useRafBatching) delivers 5-7x faster packet visualization (~20-30 Hz effective refresh with 10 Hz device tick). See [TIER1_IMPLEMENTATION.md](./TIER1_IMPLEMENTATION.md) for testing details.
+- **Git**: Internal documentation files (TIER1_*.md, ARCHITECTURE.md, REFACTORING_SUMMARY.md, PERFORMANCE_TESTING.js) are excluded via `.gitignore`; only README.md is published.
