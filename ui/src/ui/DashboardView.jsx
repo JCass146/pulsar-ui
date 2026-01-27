@@ -234,6 +234,8 @@ export default function DashboardView({
             onSelect={(id) => setSelectedDevice(id)}
             compact={false}
             groupByRole
+            showTags={true}
+            devicesRef={devicesRef}
           />
         </section>
 

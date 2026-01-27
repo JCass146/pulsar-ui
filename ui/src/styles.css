@@ -11,6 +11,21 @@
     "Courier New", monospace;
   --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
     "Apple Color Emoji", "Segoe UI Emoji";
+  
+  /* Theme-aware overlay and glass colors */
+  --glass-bg: rgba(8, 12, 18, 0.65);
+  --glass-light: rgba(255, 255, 255, 0.04);
+  --glass-medium: rgba(255, 255, 255, 0.06);
+  --glass-strong: rgba(255, 255, 255, 0.12);
+  --overlay-bg: rgba(0, 0, 0, 0.25);
+  --overlay-light: rgba(0, 0, 0, 0.18);
+  --card-gradient-start: rgba(255, 255, 255, 0.03);
+  --card-gradient-end: rgba(255, 255, 255, 0.015);
+  --heading-color: #cfe1f7;
+  
+  /* Background gradient colors */
+  --bg-gradient-start: #0e1a2a;
+  --bg-gradient-end: #070a0f;
 }
 
 /* Light theme variables */
@@ -21,7 +36,22 @@
   --text: #1a202c;
   --muted: #718096;
   --border: #e2e8f0;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  
+  /* Light theme overlay and glass colors */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-light: rgba(0, 0, 0, 0.03);
+  --glass-medium: rgba(0, 0, 0, 0.05);
+  --glass-strong: rgba(0, 0, 0, 0.08);
+  --overlay-bg: rgba(0, 0, 0, 0.04);
+  --overlay-light: rgba(0, 0, 0, 0.03);
+  --card-gradient-start: rgba(0, 0, 0, 0.01);
+  --card-gradient-end: rgba(0, 0, 0, 0.02);
+  --heading-color: #2d3748;
+  
+  /* Light background gradient colors */
+  --bg-gradient-start: #e8ecf2;
+  --bg-gradient-end: #f5f7fa;
 }
 
 /* Dark theme variables (default) */
@@ -33,6 +63,21 @@
   --muted: #9bb0c6;
   --border: #1b2a3a;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  
+  /* Dark theme overlay and glass colors */
+  --glass-bg: rgba(8, 12, 18, 0.65);
+  --glass-light: rgba(255, 255, 255, 0.04);
+  --glass-medium: rgba(255, 255, 255, 0.06);
+  --glass-strong: rgba(255, 255, 255, 0.12);
+  --overlay-bg: rgba(0, 0, 0, 0.25);
+  --overlay-light: rgba(0, 0, 0, 0.18);
+  --card-gradient-start: rgba(255, 255, 255, 0.03);
+  --card-gradient-end: rgba(255, 255, 255, 0.015);
+  --heading-color: #cfe1f7;
+  
+  /* Dark background gradient colors */
+  --bg-gradient-start: #0e1a2a;
+  --bg-gradient-end: #070a0f;
 }
 
 *,
@@ -49,9 +94,9 @@ body {
   font-family: var(--sans);
   background: radial-gradient(
     1200px 800px at 20% 0%,
-    #0e1a2a 0%,
+    var(--bg-gradient-start) 0%,
     var(--bg) 55%,
-    #070a0f 100%
+    var(--bg-gradient-end) 100%
   );
   color: var(--text);
 }
@@ -78,7 +123,7 @@ body {
   justify-content: space-between;
   padding: 18px 22px;
   border-bottom: 1px solid var(--border);
-  background: rgba(8, 12, 18, 0.65);
+  background: var(--glass-bg);
   backdrop-filter: blur(10px);
 }
 
@@ -118,7 +163,7 @@ body {
   padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--glass-light);
   font-size: 12px;
   text-transform: lowercase;
 }
@@ -163,8 +208,8 @@ body {
 .card {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.03),
-    rgba(255, 255, 255, 0.015)
+    var(--card-gradient-start),
+    var(--card-gradient-end)
   );
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -186,13 +231,13 @@ h2 {
   margin: 0 0 12px;
   font-size: 14px;
   letter-spacing: 0.2px;
-  color: #cfe1f7;
+  color: var(--heading-color);
 }
 
 h3 {
   margin: 14px 0 10px;
   font-size: 13px;
-  color: #cfe1f7;
+  color: var(--heading-color);
 }
 
 /* ---------- Forms ---------- */
@@ -206,16 +251,16 @@ label {
   display: grid;
   gap: 6px;
   font-size: 12px;
-  color: #cfe1f7;
+  color: var(--heading-color);
 }
 
 input,
 select,
 textarea {
   width: 100%;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--overlay-bg);
   color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--glass-strong);
   border-radius: 10px;
   padding: 10px 12px;
   outline: none;
@@ -238,8 +283,8 @@ select[multiple] {
 }
 
 select option {
-  background: #0b0f14;
-  color: #e8edf4;
+  background: var(--panel);
+  color: var(--text);
 }
 
 .hint {
@@ -258,15 +303,15 @@ select option {
 button {
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-medium);
   color: var(--text);
   cursor: pointer;
   font-weight: 600;
 }
 
 button:hover {
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--glass-strong);
 }
 
 button.secondary {
@@ -292,7 +337,7 @@ button.danger {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--overlay-light);
 }
 
 .statLabel {
@@ -318,7 +363,7 @@ button.danger {
 .msg {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--overlay-light);
 }
 
 .msgMeta {
@@ -326,7 +371,7 @@ button.danger {
   gap: 10px;
   align-items: center;
   padding: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--glass-light);
   font-size: 12px;
 }
 
@@ -355,15 +400,15 @@ button.danger {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--glass-light);
 }
 
 .badge {
   font-size: 11px;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-medium);
+  background: var(--glass-light);
   color: var(--muted);
 }
 
@@ -378,14 +423,14 @@ button.danger {
 .tab {
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-bg);
   cursor: pointer;
 }
 
 .tab.active {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border);
+  background: var(--glass-medium);
 }
 
 .dash {
@@ -406,10 +451,10 @@ button.danger {
 }
 
 .healthItem {
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-medium);
   border-radius: 10px;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--overlay-light);
 }
 
 /* ---------- Plots ---------- */
@@ -425,10 +470,10 @@ button.danger {
 }
 
 .plotCard {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-strong);
   border-radius: 12px;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--overlay-bg);
   min-width: 0;
 }
 
@@ -448,7 +493,7 @@ button.danger {
 .footer {
   padding: 12px 16px;
   border-top: 1px solid var(--border);
-  background: rgba(8, 12, 18, 0.65);
+  background: var(--glass-bg);
 }
 
 /* DeviceList v1 */
@@ -478,8 +523,8 @@ button.danger {
   width: min(320px, 100%);
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-bg);
   color: inherit;
 }
 
@@ -502,20 +547,20 @@ button.danger {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   color: inherit;
   cursor: pointer;
   text-align: left;
 }
 
 .deviceRow:hover {
-  background: rgba(255,255,255,0.06);
+  background: var(--glass-medium);
 }
 
 .deviceRow.active {
-  border-color: rgba(255,255,255,0.22);
-  background: rgba(255,255,255,0.08);
+  border-color: var(--border);
+  background: var(--glass-strong);
 }
 
 .dot {
@@ -523,7 +568,7 @@ button.danger {
   height: 10px;
   border-radius: 999px;
   display: inline-block;
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.06) inset;
+  box-shadow: 0 0 0 2px var(--glass-medium) inset;
 }
 
 .dot.online { background: rgba(0, 255, 140, 0.9); }
@@ -563,8 +608,8 @@ button.danger {
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(0,0,0,0.22);
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-light);
 }
 
 /* ---- Dense dashboard 3-column layout ---- */
@@ -601,7 +646,7 @@ button.danger {
   flex-wrap: wrap;
 }
 
-.dashTitle { font-size: 14px; font-weight: 800; color: #cfe1f7; }
+.dashTitle { font-size: 14px; font-weight: 800; color: var(--heading-color); }
 .dashControls {
   display: flex;
   gap: 10px;
@@ -619,8 +664,8 @@ button.danger {
   font-size: 12px;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(0,0,0,0.22);
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-light);
 }
 
 .pillTag2.ok   { border-color: rgba(0,255,140,0.35); }
@@ -634,7 +679,7 @@ button.danger {
   justify-content: space-between;
   margin-bottom: 10px;
 }
-.panelTitle { font-weight: 800; color: #cfe1f7; }
+.panelTitle { font-weight: 800; color: var(--heading-color); }
 
 .metricStack {
   display: grid;
@@ -642,13 +687,13 @@ button.danger {
 }
 
 .metricCard {
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid var(--glass-strong);
   border-radius: 12px;
   padding: 10px;
-  background: rgba(0,0,0,0.25);
+  background: var(--overlay-bg);
 }
 
-.metricCard.ok { border-color: rgba(255,255,255,0.10); }
+.metricCard.ok { border-color: var(--glass-strong); }
 .metricCard.stale { border-color: rgba(255,200,0,0.45); }
 .metricCard.offline { border-color: rgba(255,80,80,0.55); }
 
@@ -688,15 +733,15 @@ button.danger {
 
 /* pin buttons */
 .pinBtn {
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   border-radius: 10px;
   padding: 6px 8px;
   font-weight: 800;
   line-height: 1;
 }
-.pinBtn:hover { background: rgba(255,255,255,0.08); }
-.pinBtn.pinned { border-color: rgba(255,255,255,0.22); }
+.pinBtn:hover { background: var(--glass-strong); }
+.pinBtn.pinned { border-color: var(--border); }
 
 /* device list extras */
 .filterRow {
@@ -709,8 +754,8 @@ button.danger {
 .chipBtn {
   padding: 8px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.22);
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-light);
   font-weight: 700;
 }
 .chipBtn.active {
@@ -726,8 +771,8 @@ button.danger {
   gap: 10px;
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   text-align: left;
 }
 .groupBody { display: grid; gap: 6px; margin-top: 6px; }
@@ -735,11 +780,11 @@ button.danger {
 .favBtn {
   padding: 6px 8px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   font-weight: 900;
 }
-.favBtn.fav { border-color: rgba(255,255,255,0.22); }
+.favBtn.fav { border-color: var(--border); }
 
 /* ---- Plot header instrumentation ---- */
 .plotHdr {
@@ -784,9 +829,9 @@ button.danger {
 }
 
 .deviceStatusCard {
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid var(--glass-strong);
   border-radius: 14px;
-  background: rgba(0,0,0,0.22);
+  background: var(--overlay-light);
   padding: 12px;
 }
 
@@ -801,13 +846,13 @@ button.danger {
 .deviceStatusName {
   padding: 6px 10px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   font-weight: 900;
 }
 
 .deviceStatusName:hover {
-  background: rgba(255,255,255,0.08);
+  background: var(--glass-strong);
 }
 
 .statusBtnGrid {
@@ -819,8 +864,8 @@ button.danger {
 .statusBtn {
   border-radius: 12px;
   padding: 10px 10px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -844,8 +889,8 @@ button.danger {
 }
 
 .statusBtn.neutral {
-  border-color: rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  border-color: var(--glass-strong);
+  background: var(--glass-light);
 }
 
 /* ---- Notifications panel ---- */
@@ -862,8 +907,8 @@ button.danger {
 .notifRow {
   border-radius: 12px;
   padding: 10px 10px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
 }
 
 .notifTop {
@@ -908,8 +953,8 @@ button.danger {
 .plotGear {
   opacity: 0;
   pointer-events: none;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   border-radius: 10px;
   padding: 6px 8px;
   font-size: 12px;
@@ -922,7 +967,7 @@ button.danger {
 }
 
 .plotGear:hover {
-  background: rgba(255,255,255,0.08);
+  background: var(--glass-strong);
 }
 
 .plotOrigin {
@@ -933,8 +978,8 @@ button.danger {
   opacity: 0.65;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-bg);
 }
 
 /* ---- Loading & Error States ---- */
@@ -1062,8 +1107,8 @@ button.danger {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
 }
 
 .tcbRelayState {
@@ -1085,8 +1130,8 @@ button.danger {
   background: rgba(255,80,80,0.12);
 }
 .tcbRelayBtn.neutral {
-  border-color: rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  border-color: var(--glass-strong);
+  background: var(--glass-light);
 }
 
 /* ---- MILESTONE 1: Live Metrics Rail (1.1) ---- */
@@ -1094,7 +1139,7 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+  background: linear-gradient(180deg, var(--card-gradient-start), var(--card-gradient-end));
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
@@ -1114,8 +1159,8 @@ button.danger {
 .railCollapseBtn {
   padding: 6px 8px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   font-size: 10px;
   line-height: 1;
 }
@@ -1123,7 +1168,7 @@ button.danger {
 .railTitle {
   font-size: 14px;
   font-weight: 800;
-  color: #cfe1f7;
+  color: var(--heading-color);
   margin: 0;
   flex: 1;
 }
@@ -1138,7 +1183,7 @@ button.danger {
   font-weight: 700;
   padding: 3px 7px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.08);
+  background: var(--glass-strong);
 }
 
 .statusCount.ok { color: rgba(0,255,140,0.9); }
@@ -1148,7 +1193,7 @@ button.danger {
 
 /* Quick pin section */
 .quickPinSection {
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--glass-medium);
   padding-top: 10px;
 }
 
@@ -1168,12 +1213,12 @@ button.danger {
   font-size: 11px;
   padding: 5px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
 }
 
 .quickPinChip:hover {
-  background: rgba(255,255,255,0.08);
+  background: var(--glass-strong);
 }
 
 .quickPinChip.pinned {
@@ -1204,13 +1249,13 @@ button.danger {
 
 /* Pinned metric tile */
 .pinnedMetric {
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid var(--glass-strong);
   border-radius: 12px;
   padding: 10px;
-  background: rgba(0,0,0,0.22);
+  background: var(--overlay-light);
 }
 
-.pinnedMetric.ok { border-color: rgba(255,255,255,0.10); }
+.pinnedMetric.ok { border-color: var(--glass-strong); }
 .pinnedMetric.warn { border-color: rgba(255,200,0,0.45); background: rgba(255,200,0,0.05); }
 .pinnedMetric.critical { border-color: rgba(255,80,80,0.55); background: rgba(255,80,80,0.08); }
 .pinnedMetric.stale { border-color: rgba(150,150,150,0.35); opacity: 0.7; }
@@ -1245,7 +1290,7 @@ button.danger {
 .unpinBtn {
   padding: 4px 6px;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid var(--glass-strong);
   background: transparent;
   font-size: 10px;
   opacity: 0.6;
@@ -1320,8 +1365,8 @@ button.danger {
   margin-top: 8px;
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   font-size: 12px;
   width: 100%;
 }
@@ -1353,7 +1398,7 @@ button.danger {
   flex-wrap: wrap;
   gap: 8px;
   padding: 10px;
-  background: rgba(0,0,0,0.22);
+  background: var(--overlay-light);
   border-radius: 10px;
   margin-bottom: 12px;
 }
@@ -1385,7 +1430,7 @@ button.danger {
 .fleetStatDivider {
   width: 1px;
   height: 32px;
-  background: rgba(255,255,255,0.10);
+  background: var(--glass-strong);
   margin: 0 4px;
 }
 
@@ -1395,7 +1440,7 @@ button.danger {
 
 /* Device detail section */
 .rsbDeviceDetail {
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--glass-medium);
   padding-top: 12px;
 }
 
@@ -1430,12 +1475,12 @@ button.danger {
   gap: 4px;
   padding: 10px 8px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
 }
 
 .relayBtn:hover:not(:disabled) {
-  background: rgba(255,255,255,0.08);
+  background: var(--glass-strong);
 }
 
 .relayBtn:disabled {
@@ -1459,8 +1504,8 @@ button.danger {
 }
 
 .relayBtn.off {
-  border-color: rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.22);
+  border-color: var(--glass-strong);
+  background: var(--overlay-light);
 }
 
 .relayBtn.unknown {
@@ -1481,8 +1526,8 @@ button.danger {
   justify-content: space-between;
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(0,0,0,0.18);
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-light);
 }
 
 .rsbStateKey {
@@ -1571,7 +1616,7 @@ button.danger {
   gap: 10px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: rgba(0,0,0,0.25);
+  background: var(--overlay-bg);
   margin-bottom: 6px;
 }
 
@@ -1618,12 +1663,12 @@ button.danger {
   font-weight: 700;
   padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-strong);
 }
 
 .stickyFaultDismiss:hover {
-  background: rgba(255,255,255,0.15);
+  background: var(--glass-medium);
 }
 
 /* Category filters */
@@ -1639,8 +1684,8 @@ button.danger {
   gap: 4px;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
   font-size: 11px;
   opacity: 0.5;
 }
@@ -1694,7 +1739,7 @@ button.danger {
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.08);
+  background: var(--glass-strong);
   margin-top: 4px;
 }
 
@@ -1705,7 +1750,429 @@ button.danger {
 
 .notifFooter {
   padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--glass-medium);
   text-align: center;
   font-size: 11px;
+}
+
+/* ---- MILESTONE 2: Global Status Bar (2.1) ---- */
+.globalStatusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 22px;
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+}
+
+.globalStatusBar.ok {
+  border-bottom-color: rgba(0,255,140,0.25);
+}
+
+.globalStatusBar.info {
+  border-bottom-color: rgba(46,231,255,0.25);
+}
+
+.globalStatusBar.warn {
+  border-bottom-color: rgba(255,200,0,0.35);
+  background: rgba(255,200,0,0.03);
+}
+
+.globalStatusBar.critical {
+  border-bottom-color: rgba(255,80,80,0.45);
+  background: rgba(255,80,80,0.05);
+}
+
+.gsbSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gsbLeft { flex: 0 0 auto; }
+.gsbCenter { flex: 1; justify-content: center; }
+.gsbRight { flex: 0 0 auto; }
+
+/* MQTT Status */
+.gsbMqttStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-bg);
+}
+
+.gsbMqttStatus.ok {
+  border-color: rgba(0,255,140,0.35);
+}
+
+.gsbMqttStatus.warn {
+  border-color: rgba(255,200,0,0.40);
+}
+
+.gsbMqttStatus.critical {
+  border-color: rgba(255,80,80,0.50);
+}
+
+.gsbMqttIcon {
+  font-size: 10px;
+}
+
+.gsbMqttStatus.ok .gsbMqttIcon { color: rgba(0,255,140,0.9); }
+.gsbMqttStatus.warn .gsbMqttIcon { color: rgba(255,200,0,0.9); }
+.gsbMqttStatus.critical .gsbMqttIcon { color: rgba(255,80,80,0.9); }
+
+.gsbMqttText {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.gsbMqttUrl {
+  font-size: 11px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fleet counts */
+.gsbFleetCounts {
+  display: flex;
+  gap: 8px;
+}
+
+.gsbCountBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-light);
+}
+
+.gsbCountBadge.ok { border-color: rgba(0,255,140,0.30); }
+.gsbCountBadge.warn { border-color: rgba(255,200,0,0.35); }
+.gsbCountBadge.bad { border-color: rgba(255,80,80,0.40); }
+.gsbCountBadge.info { border-color: rgba(46,231,255,0.30); }
+
+.gsbCountNum {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.gsbCountBadge.ok .gsbCountNum { color: rgba(0,255,140,0.9); }
+.gsbCountBadge.warn .gsbCountNum { color: rgba(255,200,0,0.95); }
+.gsbCountBadge.bad .gsbCountNum { color: rgba(255,80,80,0.95); }
+.gsbCountBadge.info .gsbCountNum { color: rgba(46,231,255,0.9); }
+
+.gsbCountLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* System state indicators */
+.gsbStateIndicators {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.gsbStateChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gsbStateChip.armed {
+  background: rgba(255,200,0,0.15);
+  border: 1px solid rgba(255,200,0,0.40);
+  color: rgba(255,200,0,0.95);
+}
+
+.gsbStateChip.fault {
+  background: rgba(255,80,80,0.15);
+  border: 1px solid rgba(255,80,80,0.45);
+  color: rgba(255,80,80,0.95);
+  animation: pulse-fault 1.5s ease-in-out infinite;
+}
+
+.gsbStateChip.inhibit {
+  background: rgba(150,150,150,0.12);
+  border: 1px solid rgba(150,150,150,0.35);
+  color: rgba(200,200,200,0.9);
+}
+
+@keyframes pulse-fault {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.gsbStateIcon { font-size: 12px; }
+.gsbStateCount { opacity: 0.8; }
+
+/* Pause button */
+.gsbPauseBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-medium);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gsbPauseBtn:hover {
+  background: var(--glass-strong);
+}
+
+.gsbPauseBtn.paused {
+  border-color: rgba(255,200,0,0.40);
+  background: rgba(255,200,0,0.12);
+  color: rgba(255,200,0,0.95);
+}
+
+/* Health indicator */
+.gsbHealthIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.gsbHealthIndicator.ok {
+  background: rgba(0,255,140,0.12);
+  border: 1px solid rgba(0,255,140,0.30);
+  color: rgba(0,255,140,0.9);
+}
+
+.gsbHealthIndicator.info {
+  background: rgba(46,231,255,0.10);
+  border: 1px solid rgba(46,231,255,0.25);
+  color: rgba(46,231,255,0.9);
+}
+
+.gsbHealthIndicator.warn {
+  background: rgba(255,200,0,0.12);
+  border: 1px solid rgba(255,200,0,0.35);
+  color: rgba(255,200,0,0.95);
+}
+
+.gsbHealthIndicator.critical {
+  background: rgba(255,80,80,0.15);
+  border: 1px solid rgba(255,80,80,0.45);
+  color: rgba(255,80,80,0.95);
+}
+
+.gsbHealthIcon { font-size: 10px; }
+
+/* ---- MILESTONE 2: Device Tags (2.3) ---- */
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.tagChip:hover {
+  background: var(--glass-strong);
+}
+
+.tagChip.active {
+  border-color: rgba(46,231,255,0.40);
+  background: rgba(46,231,255,0.12);
+}
+
+.tagChip.auto {
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.tagChipCount {
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.tagChipRemove {
+  margin-left: 2px;
+  font-size: 10px;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.tagChipRemove:hover {
+  opacity: 1;
+  color: rgba(255,80,80,0.9);
+}
+
+/* Tag filter section in DeviceList */
+.tagFilterSection {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--glass-medium);
+}
+
+.tagFilterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tagFilterLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.tagFilterClear {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-strong);
+  background: transparent;
+}
+
+.tagFilterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Device row tags */
+.deviceRowWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deviceTagsRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px 6px;
+  flex-wrap: wrap;
+}
+
+.deviceTag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-light);
+}
+
+.deviceTag.auto {
+  font-style: italic;
+  opacity: 0.75;
+}
+
+.deviceTag.manual {
+  border-color: rgba(46,231,255,0.25);
+}
+
+.deviceTag.editable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deviceTagMore {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.deviceTagEditBtn {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-strong);
+  background: transparent;
+  opacity: 0.5;
+}
+
+.deviceTagEditBtn:hover {
+  opacity: 1;
+  background: var(--glass-medium);
+}
+
+.deviceTagRemoveBtn {
+  font-size: 8px;
+  padding: 0 2px;
+  background: transparent;
+  border: none;
+  opacity: 0.6;
+}
+
+.deviceTagRemoveBtn:hover {
+  opacity: 1;
+  color: rgba(255,80,80,0.9);
+}
+
+/* Tag editor inline */
+.deviceTagEditor {
+  padding: 6px 12px;
+  background: var(--overlay-light);
+  border-radius: 8px;
+  margin: 0 8px 6px;
+}
+
+.deviceTagEditorTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.deviceTagEditorInput {
+  display: flex;
+  gap: 6px;
+}
+
+.deviceTagEditorInput input {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+.deviceTagEditorInput button {
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+/* Tag selector in TopControlBar */
+.tcbTagSelector {
+  margin-bottom: 4px;
+}
+
+.tcbTagSelect {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-bg);
+  font-size: 12px;
+  min-width: 160px;
+}
+
+.tcbTagIndicator {
+  color: rgba(46,231,255,0.8);
 }

@@ -1,4 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
+import {
+  getAllTags,
+  getAllUniqueTags,
+  filterDevicesByTag,
+} from "../services/device-registry.js";
 
 function toBoolish(v) {
   if (typeof v === "boolean") return v;
@@ -45,34 +50,83 @@ function unionRelayKeys(onlineDevices) {
   return Array.from(keys);
 }
 
+/**
+ * Tag selector dropdown for broadcast targeting
+ */
+function TagBroadcastSelector({ tags, selectedTag, onSelectTag, deviceCount }) {
+  return (
+    <div className="tcbTagSelector">
+      <select
+        value={selectedTag}
+        onChange={(e) => onSelectTag(e.target.value)}
+        className="tcbTagSelect"
+      >
+        <option value="">All online ({deviceCount})</option>
+        {tags.map((tag) => (
+          <option key={tag} value={tag}>
+            {tag}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function TopControlBar({
   deviceList,
   devicesRef,
   broadcastCommand,
+  broadcastToDevices, // New: broadcast to specific device list
   defaultRelayKeys = ["1", "2", "3", "4"]
 }) {
+  const [broadcastTag, setBroadcastTag] = useState(""); // Empty = all online
+
+  // Get all unique tags for the selector
+  const allTags = useMemo(() => {
+    return getAllUniqueTags(devicesRef.current);
+  }, [devicesRef, deviceList]); // Re-compute when device list changes
+
   const onlineDeviceIds = useMemo(
     () => deviceList.filter((d) => d.online).map((d) => d.id),
     [deviceList]
   );
 
-  const onlineDevices = useMemo(
-    () => onlineDeviceIds.map((id) => devicesRef.current.get(id)).filter(Boolean),
-    [onlineDeviceIds, devicesRef]
+  // Get target devices based on tag filter
+  const targetDeviceIds = useMemo(() => {
+    if (!broadcastTag) {
+      return onlineDeviceIds;
+    }
+
+    // Filter by tag
+    const taggedDevices = filterDevicesByTag(devicesRef.current, broadcastTag);
+    return taggedDevices
+      .filter((d) => d.online)
+      .map((d) => d.id);
+  }, [onlineDeviceIds, broadcastTag, devicesRef]);
+
+  const targetDevices = useMemo(
+    () => targetDeviceIds.map((id) => devicesRef.current.get(id)).filter(Boolean),
+    [targetDeviceIds, devicesRef]
   );
 
   const relayKeys = useMemo(() => {
-    const u = unionRelayKeys(onlineDevices);
+    const u = unionRelayKeys(targetDevices);
     // if nothing retained yet, use defaults
     return (u.length ? u : defaultRelayKeys).map(String);
-  }, [onlineDevices, defaultRelayKeys]);
+  }, [targetDevices, defaultRelayKeys]);
 
   function setRelayAll(relayKey, state01) {
-    broadcastCommand("relay.set", { relay: relayKey, state: state01 });
+    if (broadcastToDevices && targetDeviceIds.length > 0) {
+      // Use targeted broadcast if available
+      broadcastToDevices(targetDeviceIds, "relay.set", { relay: relayKey, state: state01 });
+    } else {
+      // Fall back to global broadcast
+      broadcastCommand("relay.set", { relay: relayKey, state: state01 });
+    }
   }
 
   function toggleRelayAll(relayKey) {
-    const agg = computeRelayAggregate(onlineDevices, relayKey);
+    const agg = computeRelayAggregate(targetDevices, relayKey);
     // If ANY on (including mixed), turn all OFF. Else turn all ON.
     const next = agg.anyOn ? 0 : 1;
     setRelayAll(relayKey, next);
@@ -87,22 +141,32 @@ export default function TopControlBar({
       <div className="tcbLeft">
         <div className="tcbTitle">Controls</div>
         <div className="muted" style={{ fontSize: 12 }}>
-          Broadcast to <span className="mono">{onlineDeviceIds.length}</span> online device(s)
+          Broadcast to <span className="mono">{targetDeviceIds.length}</span> device(s)
+          {broadcastTag && <span className="tcbTagIndicator"> • tag: {broadcastTag}</span>}
         </div>
       </div>
 
       <div className="tcbMid">
-        <div className="tcbGroupLabel muted mono">RELAYS</div>
+        <div className="tcbGroupLabel muted mono">TARGET</div>
+        <TagBroadcastSelector
+          tags={allTags}
+          selectedTag={broadcastTag}
+          onSelectTag={setBroadcastTag}
+          deviceCount={onlineDeviceIds.length}
+        />
+
+        <div className="tcbGroupLabel muted mono" style={{ marginTop: 8 }}>RELAYS</div>
         <div className="tcbRelays">
           {relayKeys.map((k) => {
-            const agg = computeRelayAggregate(onlineDevices, k);
+            const agg = computeRelayAggregate(targetDevices, k);
             return (
               <button
                 key={k}
                 type="button"
                 className={`tcbRelayBtn ${agg.tone}`}
                 onClick={() => toggleRelayAll(k)}
-                title={`Relay ${k} across fleet: ${agg.label}. Click to ${agg.anyOn ? "turn OFF" : "turn ON"} all.`}
+                title={`Relay ${k} across ${broadcastTag || "fleet"}: ${agg.label}. Click to ${agg.anyOn ? "turn OFF" : "turn ON"} all.`}
+                disabled={targetDeviceIds.length === 0}
               >
                 <span className="mono">R{k}</span>
                 <span className="tcbRelayState mono">{agg.label}</span>
@@ -113,7 +177,13 @@ export default function TopControlBar({
       </div>
 
       <div className="tcbRight">
-        <button type="button" className="danger" onClick={allOff} title="Turn ALL relays OFF on all online devices">
+        <button
+          type="button"
+          className="danger"
+          onClick={allOff}
+          title={`Turn ALL relays OFF on ${broadcastTag ? `"${broadcastTag}" devices` : "all online devices"}`}
+          disabled={targetDeviceIds.length === 0}
+        >
           ALL OFF
         </button>
       </div>

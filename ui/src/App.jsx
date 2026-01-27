@@ -21,6 +21,7 @@ import DashboardView from "./ui/DashboardView.jsx";
 import ControlView from "./ui/ControlView.jsx";
 import RawView from "./ui/RawView.jsx";
 import ThemeToggle from "./ui/ThemeToggle.jsx";
+import GlobalStatusBar from "./ui/GlobalStatusBar.jsx";
 
 export default function App() {
   // --- RAF Batching ---
@@ -471,6 +472,16 @@ export default function App() {
           <ThemeToggle />
         </div>
       </header>
+
+      {/* Global Status Bar (Milestone 2.1) */}
+      <GlobalStatusBar
+        mqttStatus={status.status}
+        mqttUrl={status.url}
+        deviceList={deviceList}
+        devicesRef={devicesRef}
+        paused={paused}
+        onTogglePause={() => setPaused((p) => !p)}
+      />
 
       <div className="tabs">
         <button className={tab === "dashboard" ? "tab active" : "tab"} onClick={() => setTab("dashboard")}>
