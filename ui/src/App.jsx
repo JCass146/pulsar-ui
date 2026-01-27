@@ -54,7 +54,7 @@ export default function App() {
   useEffect(() => {
     const id = setInterval(() => {
       if (tabRef.current === "raw") setRawTick((x) => x + 1);
-    }, 200);
+    }, 100);
     return () => clearInterval(id);
   }, []);
 
