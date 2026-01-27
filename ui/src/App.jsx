@@ -5,6 +5,7 @@ import { loadRuntimeConfig } from "./config.js";
 import { pushPoint } from "./timeseries.js";
 import { useRafBatching } from "./hooks/useRafBatching.js";
 import { useNotifications } from "./hooks/useNotifications.js";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 
 // Utilities
 import { isFiniteNumber, newId, nowIsoMs, safeJsonStringify } from "./utils/helpers.js";
@@ -18,6 +19,7 @@ import { publishCommand, broadcastCommand } from "./services/command-publisher.j
 import DashboardView from "./ui/DashboardView.jsx";
 import ControlView from "./ui/ControlView.jsx";
 import RawView from "./ui/RawView.jsx";
+import ThemeToggle from "./ui/ThemeToggle.jsx";
 
 export default function App() {
   // --- RAF Batching ---
@@ -54,11 +56,14 @@ export default function App() {
   const messagesRef = useRef([]);
   const [rawTick, setRawTick] = useState(0);
   useEffect(() => {
+    // Only run interval when viewing raw tab to avoid unnecessary polling
+    if (tab !== "raw") return;
+
     const id = setInterval(() => {
-      if (tabRef.current === "raw") setRawTick((x) => x + 1);
+      setRawTick((x) => x + 1);
     }, 100);
     return () => clearInterval(id);
-  }, []);
+  }, [tab]);
 
   // Device & data storage
   const devicesRef = useRef(new Map());
@@ -139,6 +144,31 @@ export default function App() {
     bumpDeviceTick();
   }
 
+  // Check device stale/online status (called periodically and when device changes)
+  function checkDeviceStatus() {
+    let changed = false;
+
+    for (const dev of devicesRef.current.values()) {
+      const prevStale = !!dev.stale;
+      const prevOnline = !!dev.online;
+
+      computeStale(dev, staleAfterMs);
+      dev.online = computeOnline(dev, staleAfterMs);
+
+      if (prevStale !== dev.stale) {
+        pushNotif(dev.stale ? "warn" : "ok", dev.id, dev.stale ? "stale" : "fresh", dev.id);
+        changed = true;
+      }
+
+      if (prevOnline !== dev.online) {
+        pushNotif(dev.online ? "ok" : "bad", dev.id, dev.online ? "online" : "offline", dev.id);
+        changed = true;
+      }
+    }
+
+    if (changed) bumpDeviceTick();
+  }
+
   // Handle command sent
   function handleCommandSent(sentInfo) {
     const { id, deviceId, action, t, payload } = sentInfo;
@@ -166,33 +196,9 @@ export default function App() {
     });
   }, [maxPoints]);
 
-  // Periodic stale/offline recompute
+  // Periodic stale/offline recompute (background housekeeping)
   useEffect(() => {
-    const id = setInterval(() => {
-      let changed = false;
-      const now = Date.now();
-
-      for (const dev of devicesRef.current.values()) {
-        const prevStale = !!dev.stale;
-        const prevOnline = !!dev.online;
-
-        computeStale(dev, staleAfterMs);
-        dev.online = computeOnline(dev, staleAfterMs);
-
-        if (prevStale !== dev.stale) {
-          pushNotif(dev.stale ? "warn" : "ok", dev.id, dev.stale ? "stale" : "fresh", dev.id);
-          changed = true;
-        }
-
-        if (prevOnline !== dev.online) {
-          pushNotif(dev.online ? "ok" : "bad", dev.id, dev.online ? "online" : "offline", dev.id);
-          changed = true;
-        }
-      }
-
-      if (changed) bumpDeviceTick();
-    }, 500);
-
+    const id = setInterval(checkDeviceStatus, 500);
     return () => clearInterval(id);
   }, [staleAfterMs]);
 
@@ -457,6 +463,9 @@ export default function App() {
         <div className="status">
           <span className={`pill ${status.status || "idle"}`}>{status.status || "idle"}</span>
           <span className="muted mono">{status.url || "(url pending)"}</span>
+        </div>
+        <div className="topbar-actions">
+          <ThemeToggle />
         </div>
       </header>
 

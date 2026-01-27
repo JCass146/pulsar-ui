@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * useRafBatching
@@ -22,6 +22,7 @@ import { useCallback, useRef, useState } from "react";
  * - React render synced to 60 Hz frame boundary
  * - Effective refresh rate: ~20–30 Hz (vs. 4 Hz without batching)
  * - Zero packet loss, just deferred React updates
+ * - Automatic cleanup prevents memory leaks on unmount
  *
  * @returns {{ scheduleUpdate: (fn: () => void) => void, tick: number }}
  */
@@ -56,6 +57,18 @@ export function useRafBatching() {
       // Notify React: single re-render for all updates
       setTick((t) => (t + 1) % 1_000_000);
     });
+  }, []);
+
+  // Cleanup: cancel pending RAF frame on unmount
+  useEffect(() => {
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      // Clear any pending updates to prevent memory leaks
+      updateQueueRef.current = [];
+    };
   }, []);
 
   return { scheduleUpdate, tick };

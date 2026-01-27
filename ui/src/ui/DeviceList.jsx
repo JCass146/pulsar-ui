@@ -36,8 +36,13 @@ function loadFavs() {
 function saveFavs(set) {
   try {
     localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(set)));
-  } catch {
-    /* noop */
+  } catch (err) {
+    // Handle storage quota exceeded or other localStorage errors
+    if (err.name === "QuotaExceededError") {
+      console.warn("localStorage quota exceeded: cannot save favorite devices");
+    } else {
+      console.error("localStorage error when saving favorite devices:", err);
+    }
   }
 }
 

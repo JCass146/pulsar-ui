@@ -13,6 +13,28 @@
     "Apple Color Emoji", "Segoe UI Emoji";
 }
 
+/* Light theme variables */
+[data-theme="light"] {
+  --bg: #f5f7fa;
+  --panel: #ffffff;
+  --panel2: #f0f2f5;
+  --text: #1a202c;
+  --muted: #718096;
+  --border: #e2e8f0;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme variables (default) */
+[data-theme="dark"] {
+  --bg: #0b0f14;
+  --panel: #0f1621;
+  --panel2: #0c121b;
+  --text: #e7eef7;
+  --muted: #9bb0c6;
+  --border: #1b2a3a;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
 *,
 *::before,
 *::after {

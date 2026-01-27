@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useDebounce } from "../hooks/useDebounce.js";
+import { APP_CONFIG } from "../config-constants.js";
 import PlotCard from "./PlotCard.jsx";
 import DeviceList from "./DeviceList.jsx";
+import VirtualizedDeviceList from "./VirtualizedDeviceList.jsx";
+import VirtualizedNotifications from "./VirtualizedNotifications.jsx";
 import TopControlBar from "./TopControlBar.jsx";
 
 function pillClassForBool(v) {
@@ -92,11 +96,22 @@ function loadWatchedFields() {
   return ["pressure_psi", "mass_g", "temp_c"];
 }
 
-function saveWatchedFields(fields) {
+function saveWatchedFields(fields, onNotify) {
   try {
     localStorage.setItem(WATCH_KEY, JSON.stringify(fields));
-  } catch {
-    /* noop */
+  } catch (err) {
+    // Handle storage quota exceeded or other localStorage errors
+    if (err.name === "QuotaExceededError") {
+      console.warn("localStorage quota exceeded: cannot save watched fields");
+      if (onNotify) {
+        onNotify("warn", "Storage Full", "Could not save watched fields - localStorage quota exceeded", null);
+      }
+    } else {
+      console.error("localStorage error:", err);
+      if (onNotify) {
+        onNotify("bad", "Storage Error", "Could not save watched fields", null);
+      }
+    }
   }
 }
 
@@ -125,6 +140,25 @@ export default function DashboardView({
     // keep text in sync if loaded
     setWatchedText(watchedFields.join(", "));
   }, []); // once
+
+  // Debounce watched field changes to avoid excessive localStorage writes
+  useDebounce(watchedText, APP_CONFIG.DEBOUNCE_INPUT_MS, (debouncedText) => {
+    const next = debouncedText
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const uniq = [];
+    const seen = new Set();
+    for (const f of next) {
+      if (seen.has(f)) continue;
+      seen.add(f);
+      uniq.push(f);
+    }
+    const final = uniq.length ? uniq : ["pressure_psi"];
+    setWatchedFields(final);
+    saveWatchedFields(final);
+  });
 
   // Pick a stable device order: online first, then stale, then offline
   const devicesOrdered = useMemo(() => {
@@ -157,24 +191,6 @@ export default function DashboardView({
     }
     return out;
   }, [devicesOrdered, watchedFields, latestRef]);
-
-  function applyWatched() {
-    const next = watchedText
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    const uniq = [];
-    const seen = new Set();
-    for (const f of next) {
-      if (seen.has(f)) continue;
-      seen.add(f);
-      uniq.push(f);
-    }
-    const final = uniq.length ? uniq : ["pressure_psi"];
-    setWatchedFields(final);
-    saveWatchedFields(final);
-  }
 
   const selectedDevObj = selectedDevice ? devicesRef.current.get(selectedDevice) : null;
   const selectedRole = selectedDevObj ? getDeviceRole(selectedDevObj) : "—";
@@ -250,23 +266,7 @@ export default function DashboardView({
             </button>
           </div>
 
-          <div className="notifList">
-            {notifItems && notifItems.length ? (
-              notifItems.map((n) => (
-                <div key={n.id} className={`notifRow ${n.level || "info"}`}>
-                  <div className="notifTop">
-                    <span className="mono notifTitle">{n.title}</span>
-                    <span className="mono muted" style={{ fontSize: 11 }}>
-                      {new Date(n.t_ms).toLocaleTimeString()}
-                    </span>
-                  </div>
-                  {n.detail ? <div className="muted notifDetail">{n.detail}</div> : null}
-                </div>
-              ))
-            ) : (
-              <div className="muted">No notifications yet.</div>
-            )}
-          </div>
+          <VirtualizedNotifications notifItems={notifItems} clearNotifs={clearNotifs} />
 
           <div className="hint" style={{ marginTop: 8 }}>
             Full packet history lives in <span className="mono">Raw</span>.

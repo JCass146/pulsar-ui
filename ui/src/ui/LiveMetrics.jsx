@@ -50,8 +50,13 @@ function loadPins(deviceId) {
 function savePins(deviceId, pins) {
   try {
     localStorage.setItem(pinKey(deviceId), JSON.stringify(pins));
-  } catch {
-    /* noop */
+  } catch (err) {
+    // Handle storage quota exceeded or other localStorage errors
+    if (err.name === "QuotaExceededError") {
+      console.warn("localStorage quota exceeded: cannot save pinned fields");
+    } else {
+      console.error("localStorage error when saving pinned fields:", err);
+    }
   }
 }
 
