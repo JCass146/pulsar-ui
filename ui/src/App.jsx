@@ -5,7 +5,6 @@ import { loadRuntimeConfig } from "./config.js";
 import { pushPoint } from "./timeseries.js";
 import { useRafBatching } from "./hooks/useRafBatching.js";
 import { useNotifications } from "./hooks/useNotifications.js";
-import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { APP_CONFIG } from "./config-constants.js";
 import { errorHandler } from "./services/error-handler.js";
 
