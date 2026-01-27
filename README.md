@@ -411,3 +411,4 @@ Payloads can be JSON, text, or binary; the app auto-parses and handles gracefull
 - Stale data (no updates for 5s) is automatically pruned
 - MQTT reconnect backoff: 1.5s interval, 5s timeout
 - Vite's fast refresh enables instant HMR during development
+- **Tier 1 Performance Optimization (Implemented)**: MQTT packets batched via `requestAnimationFrame` for 5–7x faster refresh rate (~20–30 Hz effective). See [TIER1_IMPLEMENTATION.md](./TIER1_IMPLEMENTATION.md) for details and testing instructions.

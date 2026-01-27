@@ -3,157 +3,35 @@ import { connectMqtt } from "./mqtt.js";
 import { parsePulsarTopic } from "./topic.js";
 import { loadRuntimeConfig } from "./config.js";
 import { pushPoint } from "./timeseries.js";
+import { useRafBatching } from "./hooks/useRafBatching.js";
+import { useNotifications } from "./hooks/useNotifications.js";
+
+// Utilities
+import { isFiniteNumber, newId, nowIsoMs, safeJsonStringify } from "./utils/helpers.js";
+import { tryParsePayload, extractNumericFields } from "./utils/parsing.js";
+
+// Services
+import { ensureDevice, computeStale, computeOnline, getDeviceRole } from "./services/device-registry.js";
+import { createMqttMessageHandler } from "./services/mqtt-handler.js";
+import { publishCommand, broadcastCommand } from "./services/command-publisher.js";
 
 import DashboardView from "./ui/DashboardView.jsx";
 import ControlView from "./ui/ControlView.jsx";
 import RawView from "./ui/RawView.jsx";
 
-function nowIsoMs() {
-  return new Date().toISOString();
-}
-
-function tryParsePayload(payloadU8) {
-  let text = "";
-  try {
-    if (
-      typeof payloadU8?.toString === "function" &&
-      payloadU8?.toString !== Uint8Array.prototype.toString
-    ) {
-      text = payloadU8.toString("utf8");
-    } else {
-      text = new TextDecoder().decode(payloadU8);
-    }
-  } catch {
-    text = "";
-  }
-
-  const trimmed = text.trim();
-  if (!trimmed) return { kind: "empty", text: "" };
-
-  if (
-    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-    (trimmed.startsWith("[") && trimmed.endsWith("]"))
-  ) {
-    try {
-      const json = JSON.parse(trimmed);
-      return { kind: "json", text: trimmed, json };
-    } catch {
-      // fall through
-    }
-  }
-
-  return { kind: "text", text };
-}
-
-function isFiniteNumber(v) {
-  return typeof v === "number" && Number.isFinite(v);
-}
-
-function newId() {
-  try {
-    return crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-  } catch {
-    return `${Date.now()}-${Math.random()}`;
-  }
-}
-
-function safeJsonStringify(v) {
-  try {
-    return JSON.stringify(v, null, 2);
-  } catch {
-    return String(v);
-  }
-}
-
-function ensureDevice(map, id) {
-  if (!id) return null;
-  let d = map.get(id);
-  if (!d) {
-    d = {
-      id,
-      online: false,
-      lastSeenMs: 0,
-      stale: true,
-
-      latestTelemetry: null,
-      latestStatus: null,
-
-      state: new Map(),
-      meta: new Map(),
-
-      pendingCommands: new Map()
-    };
-    map.set(id, d);
-  }
-  return d;
-}
-
-function extractNumericFields(obj) {
-  if (!obj || typeof obj !== "object") return [];
-  const out = [];
-
-  if (isFiniteNumber(obj.value)) out.push(["value", obj.value]);
-
-  const fieldsObj = obj.fields && typeof obj.fields === "object" ? obj.fields : null;
-  if (fieldsObj) {
-    for (const [k, v] of Object.entries(fieldsObj)) {
-      if (isFiniteNumber(v)) out.push([k, v]);
-    }
-  }
-
-  const ignore = new Set(["t_ms", "ts_unix_ms", "ts", "seq", "uptime_ms", "ts_uptime_ms", "v"]);
-  for (const [k, v] of Object.entries(obj)) {
-    if (ignore.has(k)) continue;
-    if (k === "fields") continue;
-    if (isFiniteNumber(v)) out.push([k, v]);
-  }
-
-  const seen = new Set();
-  return out.filter(([k]) => {
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
-}
-
 export default function App() {
+  // --- RAF Batching ---
+  const { scheduleUpdate: scheduleRafUpdate } = useRafBatching();
+
   // --- Notifications ---
-  const notifsRef = useRef([]);
-  const [notifTick, setNotifTick] = useState(0);
-
-  function pushNotif(level, title, detail = "", device = "") {
-    notifsRef.current.unshift({
-      id: newId(),
-      t_ms: Date.now(),
-      level,           // "info" | "ok" | "warn" | "bad"
-      title,
-      detail,
-      device
-    });
-    if (notifsRef.current.length > 400) notifsRef.current.length = 400;
-
-    // low cost UI bump; you can throttle if needed
-    setNotifTick((x) => (x + 1) % 1_000_000);
-  }
-
-  function clearNotifs() {
-    notifsRef.current.length = 0;
-    setNotifTick((x) => (x + 1) % 1_000_000);
-  }
-
-  const notifItems = useMemo(() => {
-    // show last 40 in dashboard panel
-    return notifsRef.current.slice(0, 40);
-  }, [notifTick]);
+  const { notifItems, pushNotif, clearNotifs } = useNotifications();
 
   // Connection/config
   const [wsUrl, setWsUrl] = useState("");
   const [subTopic, setSubTopic] = useState("pulsar/+/telemetry/#");
   const [subscribeTopics, setSubscribeTopics] = useState(null);
-
   const [staleAfterMs, setStaleAfterMs] = useState(5000);
   const [commandTimeoutMs, setCommandTimeoutMs] = useState(2000);
-
   const [status, setStatus] = useState({ status: "loading", url: "" });
 
   // UI state
@@ -164,267 +42,148 @@ export default function App() {
   }, [paused]);
 
   // Tabs
-  const [tab, setTab] = useState("dashboard"); // dashboard | control | raw
-
+  const [tab, setTab] = useState("dashboard");
   const tabRef = useRef(tab);
   useEffect(() => {
     tabRef.current = tab;
   }, [tab]);
 
+  // Messaging
   const messagesRef = useRef([]);
-  const [rawTick, setRawTick] = useState(0); // UI refresh trigger
-
+  const [rawTick, setRawTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => {
-      if (tabRef.current === "raw") {
-        setRawTick((x) => x + 1);
-      }
-    }, 200); // 5 Hz UI refresh is plenty
-
+      if (tabRef.current === "raw") setRawTick((x) => x + 1);
+    }, 200);
     return () => clearInterval(id);
   }, []);
 
-  // Device registry
+  // Device & data storage
   const devicesRef = useRef(new Map());
   const [deviceTick, setDeviceTick] = useState(0);
-
-  // Plot store
   const seriesRef = useRef(new Map());
   const latestRef = useRef(new Map());
 
-  // Plot controls
+  // UI controls
   const [selectedDevice, setSelectedDevice] = useState("");
   const [selectedFields, setSelectedFields] = useState(["pressure_psi"]);
   const [maxPoints, setMaxPoints] = useState(1500);
-
-  // Raw filters
   const [rawDeviceFilter, setRawDeviceFilter] = useState("all");
   const [rawFamilyFilter, setRawFamilyFilter] = useState("all");
 
-  // Command Center
+  // Command/Calibration
   const [cmdAction, setCmdAction] = useState("relay.set");
   const [cmdArgsText, setCmdArgsText] = useState('{"relay":1,"state":1}');
   const [cmdHistory, setCmdHistory] = useState([]);
-
-  // Calibration panel
   const [calEditorText, setCalEditorText] = useState("");
   const [calAutoSync, setCalAutoSync] = useState(true);
 
+  // MQTT controller
   const controllerRef = useRef(null);
-
   const bumpQueuedRef = useRef(false);
 
   function bumpDeviceTick() {
     if (bumpQueuedRef.current) return;
     bumpQueuedRef.current = true;
-
     setTimeout(() => {
       bumpQueuedRef.current = false;
       setDeviceTick((x) => (x + 1) % 1_000_000);
-    }, 100); // ~10 Hz max UI refresh
+    }, 100);
   }
 
-  function getDeviceRole(dev) {
-    const caps = dev?.meta?.get("capabilities");
-    const t = caps?.device_type;
-    return t ? String(t) : "unknown";
-  }
+  // Handle ACK resolution with history logging
+  function handleAckResolved(ackInfo) {
+    const { deviceId, action, status, error, ackJson } = ackInfo;
+    const notifLevel = status === "acked" ? "ok" : "bad";
+    const notifDetail = status === "acked" ? "ack" : `failed: ${error || "unknown"}`;
 
-  function computeStale(dev) {
-    const last = dev?.lastSeenMs || 0;
-    dev.stale = !last || Date.now() - last > staleAfterMs;
-  }
+    pushNotif(notifLevel, `${deviceId} • ${action}`, notifDetail, deviceId);
 
-  function ingestForPlotsWithTp(tp, parsed) {
-    if (parsed.kind !== "json" || !parsed.json) return;
-
-    const device = tp.device || "unknown";
-    const obj = parsed.json;
-
-    const t =
-      (isFiniteNumber(obj.ts_unix_ms) && obj.ts_unix_ms) ||
-      (isFiniteNumber(obj.t_ms) && obj.t_ms) ||
-      Date.now();
-
-    // ✅ Now "latestRef" truly means "latest telemetry/event"
-    latestRef.current.set(device, obj);
-
-    const pairs = extractNumericFields(obj);
-    for (const [k, v] of pairs) {
-      const key = `${device}:${k}`;
-      pushPoint(seriesRef.current, key, { t, v }, maxPoints);
-    }
-  }
-
-  function resolveAck(deviceId, ackAction, ackJson) {
-    const dev = ensureDevice(devicesRef.current, deviceId);
-    if (!dev || !ackJson || typeof ackJson !== "object") return;
-
-    const id = ackJson.id || ackJson.req_id || ackJson.request_id;
-    if (!id) return;
-
-    const pending = dev.pendingCommands.get(id);
-    if (!pending) return;
-
-    clearTimeout(pending.timeoutId);
-    pending.status = ackJson.ok === false ? "failed" : "acked";
-    pending.error = ackJson.err || ackJson.error || null;
-
-    pushNotif(
-      pending.status === "acked" ? "ok" : "bad",
-      `${deviceId} • ${pending.action || ackAction}`,
-      pending.status === "acked" ? "ack" : `failed: ${pending.error || "unknown"}`,
-      deviceId
+    setCmdHistory((prev) =>
+      [
+        {
+          id: ackJson?.id || "unknown",
+          device: deviceId,
+          action,
+          status,
+          t: nowIsoMs(),
+          error,
+          payload: ackJson
+        },
+        ...prev
+      ].slice(0, 60)
     );
+  }
+
+  // Handle command timeout
+  function handleCommandTimeout(timeoutInfo) {
+    const { id, deviceId, action, timeoutMs } = timeoutInfo;
+    pushNotif("warn", `${deviceId} • ${action}`, `timeout after ${timeoutMs} ms`, deviceId);
 
     setCmdHistory((prev) =>
       [
         {
           id,
           device: deviceId,
-          action: pending.action || ackAction,
-          status: pending.status,
+          action,
+          status: "timeout",
           t: nowIsoMs(),
-          error: pending.error,
-          payload: ackJson
+          error: `No ack within ${timeoutMs} ms`
         },
         ...prev
       ].slice(0, 60)
     );
 
-    dev.pendingCommands.delete(id);
+    bumpDeviceTick();
   }
 
-  function upsertDeviceFromMessage(topic, parsed) {
-    const tp = parsePulsarTopic(topic);
-    if (!tp?.isPulsar || !tp.device) return;
-
-    const dev = ensureDevice(devicesRef.current, tp.device);
-    if (!dev) return;
-
-    dev.lastSeenMs = Date.now();
-    computeStale(dev);
-
-    const kind = tp.kind || "";
-    const path = tp.path || "";
-
-    if (kind === "status") {
-      if (parsed.kind === "json" && parsed.json && typeof parsed.json === "object") {
-        dev.latestStatus = parsed.json;
-        if (typeof parsed.json.online === "boolean") dev.online = parsed.json.online;
-        else dev.online = true;
-      } else {
-        dev.online = true;
-      }
-      return;
-    }
-
-    if (kind === "meta") {
-      const key = path || "root";
-      if (parsed.kind === "json") dev.meta.set(key, parsed.json);
-      else dev.meta.set(key, { text: parsed.text ?? "" });
-      return;
-    }
-
-    if (kind === "state") {
-      const key = path || "root";
-      if (parsed.kind === "json") dev.state.set(key, parsed.json);
-      else dev.state.set(key, { text: parsed.text ?? "" });
-      return;
-    }
-
-    if (kind === "ack") {
-      if (parsed.kind === "json") resolveAck(tp.device, path || "unknown", parsed.json);
-      return;
-    }
-
-    if (kind === "telemetry" || kind === "event") {
-      dev.online = true;
-      if (kind === "telemetry" && parsed.kind === "json") dev.latestTelemetry = parsed.json;
-      return;
-    }
-
-    dev.online = true;
+  // Handle command sent
+  function handleCommandSent(sentInfo) {
+    const { id, deviceId, action, t, payload } = sentInfo;
+    setCmdHistory((prev) =>
+      [
+        { id, device: deviceId, action, status: "sent", t, payload },
+        ...prev
+      ].slice(0, 60)
+    );
+    bumpDeviceTick();
   }
 
-  function handleIncoming(topic, payload) {
-    const parsed = tryParsePayload(payload);
-    const tp = parsePulsarTopic(topic);
+  // Create the MQTT message handler
+  const handleIncoming = useMemo(() => {
+    return createMqttMessageHandler({
+      devicesMap: devicesRef.current,
+      seriesMap: seriesRef.current,
+      latestMap: latestRef.current,
+      messagesRef,
+      paused: pausedRef.current,
+      parsePulsarTopic,
+      onAckResolved: handleAckResolved,
+      onDeviceChanged: bumpDeviceTick,
+      maxPoints
+    });
+  }, [maxPoints]);
 
-    // Only telemetry/event should drive "latest" + timeseries
-    if (tp?.isPulsar && (tp.kind === "telemetry" || tp.kind === "event")) {
-      ingestForPlotsWithTp(tp, parsed);
-    }
-
-    upsertDeviceFromMessage(topic, parsed);
-
-    bumpDeviceTick(); // (throttled recommended)
-
-    // Persist raw feed (ref)
-    if (!pausedRef.current) {
-      messagesRef.current.unshift({
-        id: newId(),
-        t: nowIsoMs(),
-        topic,
-        topicParsed: tp,
-        payloadLen: payload?.length ?? payload?.byteLength ?? 0,
-        parsed
-      });
-      if (messagesRef.current.length > 2000) messagesRef.current.length = 2000;
-    }
-  }
-
-  // Periodic stale/offline recompute + transition notifications
+  // Periodic stale/offline recompute
   useEffect(() => {
     const id = setInterval(() => {
       let changed = false;
-
       const now = Date.now();
+
       for (const dev of devicesRef.current.values()) {
         const prevStale = !!dev.stale;
         const prevOnline = !!dev.online;
 
-        // stale is purely time-based
-        dev.stale = !dev.lastSeenMs || (now - dev.lastSeenMs) > staleAfterMs;
+        computeStale(dev, staleAfterMs);
+        dev.online = computeOnline(dev, staleAfterMs);
 
-        // offline policy:
-        // - if device explicitly said online:false (from retained/LWT), keep it false
-        // - else treat "seen recently" as online=true, and if it's *very* old, mark offline
-        //
-        // Choose an "offlineAfter" a bit longer than staleAfter so you can be stale-but-online.
-        const offlineAfterMs = Math.max(staleAfterMs * 3, 15000);
-
-        const statusOnline =
-          typeof dev.latestStatus?.online === "boolean" ? dev.latestStatus.online : null;
-
-        if (statusOnline === false) {
-          dev.online = false;
-        } else if (!dev.lastSeenMs) {
-          dev.online = false;
-        } else if ((now - dev.lastSeenMs) > offlineAfterMs) {
-          dev.online = false;
-        } else {
-          dev.online = true;
-        }
-
-        // Transition notifications (only when flipping)
         if (prevStale !== dev.stale) {
-          pushNotif(
-            dev.stale ? "warn" : "ok",
-            `${dev.id}`,
-            dev.stale ? "stale" : "fresh",
-            dev.id
-          );
+          pushNotif(dev.stale ? "warn" : "ok", dev.id, dev.stale ? "stale" : "fresh", dev.id);
           changed = true;
         }
 
         if (prevOnline !== dev.online) {
-          pushNotif(
-            dev.online ? "ok" : "bad",
-            `${dev.id}`,
-            dev.online ? "online" : "offline",
-            dev.id
-          );
+          pushNotif(dev.online ? "ok" : "bad", dev.id, dev.online ? "online" : "offline", dev.id);
           changed = true;
         }
       }
@@ -435,8 +194,7 @@ export default function App() {
     return () => clearInterval(id);
   }, [staleAfterMs]);
 
-
-  // Load runtime config, then connect
+  // Load config and connect MQTT
   useEffect(() => {
     let isMounted = true;
 
@@ -444,46 +202,36 @@ export default function App() {
       const cfg = await loadRuntimeConfig();
       if (!isMounted) return;
 
-      const mqttWs = cfg.mqttWsUrl;
-      const mqttTopic = cfg.mqttTopic;
-
-      const subs =
-        Array.isArray(cfg.subscribeTopics) && cfg.subscribeTopics.length
-          ? cfg.subscribeTopics.map((s) => String(s).trim()).filter(Boolean)
-          : null;
-
-      const stale =
-        isFiniteNumber(cfg.staleAfterMs) && cfg.staleAfterMs > 0 ? cfg.staleAfterMs : 5000;
-
-      const cmdTo =
-        isFiniteNumber(cfg.commandTimeoutMs) && cfg.commandTimeoutMs > 0 ? cfg.commandTimeoutMs : 2000;
-
-      setWsUrl(mqttWs);
-      setSubTopic(mqttTopic);
-      setSubscribeTopics(subs);
-      setStaleAfterMs(stale);
-      setCommandTimeoutMs(cmdTo);
+      setWsUrl(cfg.mqttWsUrl);
+      setSubTopic(cfg.mqttTopic);
+      if (Array.isArray(cfg.subscribeTopics) && cfg.subscribeTopics.length) {
+        setSubscribeTopics(cfg.subscribeTopics.map((s) => String(s).trim()).filter(Boolean));
+      }
+      if (isFiniteNumber(cfg.staleAfterMs) && cfg.staleAfterMs > 0) setStaleAfterMs(cfg.staleAfterMs);
+      if (isFiniteNumber(cfg.commandTimeoutMs) && cfg.commandTimeoutMs > 0)
+        setCommandTimeoutMs(cfg.commandTimeoutMs);
 
       const ctl = connectMqtt({
-        url: mqttWs,
+        url: cfg.mqttWsUrl,
         onState: (s) => {
           setStatus(s);
-          // Only notify on meaningful transitions
           const st = String(s?.status || "");
           if (st === "connected") pushNotif("ok", "MQTT connected", s?.url || "");
           else if (st === "reconnecting") pushNotif("warn", "MQTT reconnecting", s?.url || "");
           else if (st === "disconnected") pushNotif("bad", "MQTT disconnected", s?.url || "");
         },
-        onMessage: (topic, payload) => handleIncoming(topic, payload)
+        onMessage: (topic, payload) => {
+          scheduleRafUpdate(() => handleIncoming(topic, payload));
+        }
       });
 
       controllerRef.current = ctl;
 
-      if (subs && subs.length) {
-        for (const t of subs) ctl.subscribe(t);
-      } else {
-        ctl.subscribe(mqttTopic);
-      }
+      const topics = Array.isArray(cfg.subscribeTopics) && cfg.subscribeTopics.length 
+        ? cfg.subscribeTopics 
+        : [cfg.mqttTopic];
+      
+      for (const t of topics) ctl.subscribe(t);
     })();
 
     return () => {
@@ -494,19 +242,17 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Resubscribe handler
   function resubscribe(e) {
     e?.preventDefault?.();
+    if (!controllerRef.current) return;
 
-    const ctl = controllerRef.current;
-    if (!ctl) return;
-
-    ctl.end();
+    controllerRef.current.end();
     messagesRef.current = [];
     setRawTick((x) => x + 1);
-
     setStatus({ status: "reconnecting", url: "" });
 
-    const newCtl = connectMqtt({
+    const ctl = connectMqtt({
       url: wsUrl,
       onState: (s) => {
         setStatus(s);
@@ -515,164 +261,48 @@ export default function App() {
         else if (st === "reconnecting") pushNotif("warn", "MQTT reconnecting", s?.url || "");
         else if (st === "disconnected") pushNotif("bad", "MQTT disconnected", s?.url || "");
       },
-      onMessage: (topic, payload) => handleIncoming(topic, payload)
+      onMessage: (topic, payload) => {
+        scheduleRafUpdate(() => handleIncoming(topic, payload));
+      }
     });
 
-    controllerRef.current = newCtl;
+    controllerRef.current = ctl;
 
-    if (subscribeTopics && subscribeTopics.length) {
-      for (const t of subscribeTopics) newCtl.subscribe(t);
-    } else {
-      newCtl.subscribe(subTopic);
-    }
+    const topics = subscribeTopics && subscribeTopics.length ? subscribeTopics : [subTopic];
+    for (const t of topics) ctl.subscribe(t);
   }
 
-  function clearMessages() {
-    messagesRef.current = [];
-    setRawTick((x) => x + 1);
-  }
-
-  // Devices list for UI
-  const deviceList = useMemo(() => {
-    const arr = Array.from(devicesRef.current.values()).map((d) => ({
-      id: d.id,
-      online: !!d.online,
-      stale: !!d.stale,
-      lastSeenMs: d.lastSeenMs || 0,
-      role: getDeviceRole(d),
-      pending: d.pendingCommands?.size || 0
-    }));
-    arr.sort((a, b) => {
-      if (a.online !== b.online) return a.online ? -1 : 1;
-      if (a.stale !== b.stale) return a.stale ? 1 : -1;
-      return a.id.localeCompare(b.id);
+  // Command publishing wrapper
+  function sendCommand(deviceId, action, args, extra) {
+    publishCommand({
+      controller: controllerRef.current,
+      devicesMap: devicesRef.current,
+      deviceId,
+      action,
+      args,
+      commandTimeoutMs,
+      onCommandSent: handleCommandSent,
+      onCommandTimeout: handleCommandTimeout,
+      extra
     });
-    return arr;
-  }, [deviceTick]);
-
-  const plotDevices = useMemo(() => {
-    const set = new Set();
-    for (const d of deviceList) set.add(d.id);
-    for (const dev of latestRef.current.keys()) set.add(dev);
-    return Array.from(set).sort();
-  }, [deviceList]);
-
-  // Keep selectedDevice valid
-  useEffect(() => {
-    if (!selectedDevice) {
-      const first = plotDevices[0];
-      if (first) setSelectedDevice(first);
-    } else if (!plotDevices.includes(selectedDevice)) {
-      const first = plotDevices[0];
-      if (first) setSelectedDevice(first);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plotDevices]);
-
-  const availableFields = useMemo(() => {
-    if (!selectedDevice) return [];
-    const latest = latestRef.current.get(selectedDevice);
-    if (!latest) return [];
-    const pairs = extractNumericFields(latest);
-    return pairs.map(([k]) => k).sort();
-  }, [selectedDevice, deviceTick]);
-
-  // Keep calibration editor synced unless user edits
-  useEffect(() => {
-    if (!selectedDevice) return;
-    if (!calAutoSync) return;
-
-    const dev = devicesRef.current.get(selectedDevice);
-    const cal = dev?.state?.get("calibration");
-    if (!cal) return;
-
-    setCalEditorText(safeJsonStringify(cal));
-  }, [selectedDevice, deviceTick, calAutoSync]);
-
-  function publishCommand(deviceId, action, args, extra = {}) {
-    const ctl = controllerRef.current;
-    if (!ctl) return { ok: false, err: "not_connected" };
-    if (!deviceId) return { ok: false, err: "no_device" };
-    if (!action) return { ok: false, err: "no_action" };
-
-    const id = newId();
-    const topic = `pulsar/${deviceId}/cmd/${action}`;
-
-    const payload = {
-      v: 1,
-      id,
-      t_ms: Date.now(),
-      args: args ?? {},
-      ttl_ms: commandTimeoutMs,
-      ...extra
-    };
-
-    const dev = ensureDevice(devicesRef.current, deviceId);
-    if (dev) {
-      const timeoutId = setTimeout(() => {
-        const pending = dev.pendingCommands.get(id);
-        pushNotif(
-          "warn",
-          `${deviceId} • ${action}`,
-          `timeout after ${commandTimeoutMs} ms`,
-          deviceId
-        );
-        if (pending) {
-          dev.pendingCommands.delete(id);
-          setCmdHistory((prev) =>
-            [
-              {
-                id,
-                device: deviceId,
-                action,
-                status: "timeout",
-                t: nowIsoMs(),
-                error: `No ack within ${commandTimeoutMs} ms`
-              },
-              ...prev
-            ].slice(0, 60)
-          );
-          bumpDeviceTick();
-        }
-      }, commandTimeoutMs);
-
-      dev.pendingCommands.set(id, {
-        id,
-        action,
-        tStart: Date.now(),
-        status: "pending",
-        error: null,
-        timeoutId
-      });
-    }
-
-    ctl.publish(topic, payload);
-
-    setCmdHistory((prev) =>
-      [
-        { id, device: deviceId, action, status: "sent", t: nowIsoMs(), payload },
-        ...prev
-      ].slice(0, 60)
-    );
-
-    bumpDeviceTick();
-    return { ok: true, id };
   }
 
-  function broadcastCommand(action, args, extra = {}) {
-    const targets = deviceList.filter((d) => d.online).map((d) => d.id);
-    if (!targets.length) {
-      pushNotif("warn", "Broadcast", "No online devices to send to");
-      return;
-    }
-
-    pushNotif("info", "Broadcast", `Sending ${action} to ${targets.length} device(s)`);
-
-    for (const devId of targets) {
-      publishCommand(devId, action, args, extra);
-    }
+  // Broadcast wrapper
+  function doBroadcastCommand(action, args, extra) {
+    broadcastCommand({
+      deviceList,
+      controller: controllerRef.current,
+      devicesMap: devicesRef.current,
+      action,
+      args,
+      commandTimeoutMs,
+      onCommandSent: handleCommandSent,
+      onCommandTimeout: handleCommandTimeout,
+      onNotif: ({ level, title, detail }) => pushNotif(level, title, detail)
+    });
   }
 
+  // Handlers for Control view
   function sendGenericCommand() {
     let args = {};
     try {
@@ -693,8 +323,7 @@ export default function App() {
       );
       return;
     }
-
-    publishCommand(selectedDevice, cmdAction, args);
+    sendCommand(selectedDevice, cmdAction, args);
   }
 
   function sendCalibration(mode) {
@@ -717,39 +346,75 @@ export default function App() {
       );
       return;
     }
-
-    const persist = mode === "apply";
-    publishCommand(selectedDevice, "calibration.set", {}, { mode, cal: calObj, persist });
+    sendCommand(selectedDevice, "calibration.set", {}, { mode, cal: calObj, persist: mode === "apply" });
   }
 
   function resetCalEditorToCurrent() {
-    const dev = selectedDevice ? devicesRef.current.get(selectedDevice) : null;
+    const dev = devicesRef.current.get(selectedDevice);
     const cal = dev?.state?.get("calibration");
-    if (!cal) return;
-    setCalEditorText(safeJsonStringify(cal));
-    setCalAutoSync(true);
+    if (cal) {
+      setCalEditorText(safeJsonStringify(cal));
+      setCalAutoSync(true);
+    }
   }
 
-  const rawMessagesSnapshot = useMemo(() => {
-    // Snapshot updates when rawTick changes
-    return messagesRef.current;
-  }, [rawTick]);
+  // Computed values
+  const deviceList = useMemo(() => {
+    const arr = Array.from(devicesRef.current.values()).map((d) => ({
+      id: d.id,
+      online: !!d.online,
+      stale: !!d.stale,
+      lastSeenMs: d.lastSeenMs || 0,
+      role: getDeviceRole(d),
+      pending: d.pendingCommands?.size || 0
+    }));
+    arr.sort((a, b) => {
+      if (a.online !== b.online) return a.online ? -1 : 1;
+      if (a.stale !== b.stale) return a.stale ? 1 : -1;
+      return a.id.localeCompare(b.id);
+    });
+    return arr;
+  }, [deviceTick]);
+
+  const plotDevices = useMemo(() => {
+    const set = new Set(deviceList.map((d) => d.id));
+    for (const dev of latestRef.current.keys()) set.add(dev);
+    return Array.from(set).sort();
+  }, [deviceList]);
+
+  useEffect(() => {
+    if (!selectedDevice && plotDevices[0]) setSelectedDevice(plotDevices[0]);
+    else if (selectedDevice && !plotDevices.includes(selectedDevice) && plotDevices[0])
+      setSelectedDevice(plotDevices[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plotDevices]);
+
+  const availableFields = useMemo(() => {
+    if (!selectedDevice) return [];
+    const latest = latestRef.current.get(selectedDevice);
+    if (!latest) return [];
+    return extractNumericFields(latest).map(([k]) => k).sort();
+  }, [selectedDevice, deviceTick]);
+
+  useEffect(() => {
+    if (!selectedDevice || !calAutoSync) return;
+    const dev = devicesRef.current.get(selectedDevice);
+    const cal = dev?.state?.get("calibration");
+    if (cal) setCalEditorText(safeJsonStringify(cal));
+  }, [selectedDevice, deviceTick, calAutoSync]);
+
+  const rawMessagesSnapshot = useMemo(() => messagesRef.current, [rawTick]);
 
   const filteredMessages = useMemo(() => {
     if (rawDeviceFilter === "all" && rawFamilyFilter === "all") return rawMessagesSnapshot;
-
     return rawMessagesSnapshot.filter((m) => {
-      const devOk =
-        rawDeviceFilter === "all" ? true : (m.topicParsed?.device || "") === rawDeviceFilter;
-      const famOk =
-        rawFamilyFilter === "all" ? true : (m.topicParsed?.kind || "") === rawFamilyFilter;
+      const devOk = rawDeviceFilter === "all" || (m.topicParsed?.device || "") === rawDeviceFilter;
+      const famOk = rawFamilyFilter === "all" || (m.topicParsed?.kind || "") === rawFamilyFilter;
       return devOk && famOk;
     });
   }, [rawMessagesSnapshot, rawDeviceFilter, rawFamilyFilter]);
 
-
-  const devicesSeenCount = deviceList.length;
-
+  // Render
   return (
     <div className="app">
       <header className="topbar">
@@ -760,7 +425,6 @@ export default function App() {
             <div className="subtitle">Live telemetry + control via MQTT over WebSockets</div>
           </div>
         </div>
-
         <div className="status">
           <span className={`pill ${status.status || "idle"}`}>{status.status || "idle"}</span>
           <span className="muted mono">{status.url || "(url pending)"}</span>
@@ -791,7 +455,7 @@ export default function App() {
             setSelectedFields={setSelectedFields}
             maxPoints={maxPoints}
             setMaxPoints={setMaxPoints}
-            broadcastCommand={broadcastCommand}
+            broadcastCommand={doBroadcastCommand}
             devicesRef={devicesRef}
             latestRef={latestRef}
             seriesRef={seriesRef}
@@ -834,9 +498,12 @@ export default function App() {
           resubscribe={resubscribe}
           paused={paused}
           setPaused={setPaused}
-          clearMessages={clearMessages}
+          clearMessages={() => {
+            messagesRef.current = [];
+            setRawTick((x) => x + 1);
+          }}
           messagesCount={messagesRef.current.length}
-          devicesSeenCount={devicesSeenCount}
+          devicesSeenCount={deviceList.length}
           rawDeviceFilter={rawDeviceFilter}
           setRawDeviceFilter={setRawDeviceFilter}
           rawFamilyFilter={rawFamilyFilter}
