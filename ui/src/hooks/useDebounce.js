@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import React from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * Custom hook for debouncing values
@@ -91,7 +90,7 @@ export function useDeepMemo(computation, dependencies) {
  * @param {Function} callback - Function to call with debounced value
  */
 export function useDebounceCallback(value, delayMs, callback) {
-  const timeoutRef = React.useRef(null);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     // Clear previous timeout if value changed before delay
