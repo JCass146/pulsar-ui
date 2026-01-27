@@ -1,0 +1,413 @@
+# Pulsar UI
+
+A modern React-based web dashboard for monitoring and controlling Pulsar IoT devices via MQTT in real-time.
+
+## Overview
+
+**Pulsar UI** is a containerized frontend application that visualizes telemetry data, device metrics, and system status from a fleet of IoT devices. It communicates with devices through MQTT WebSocket connections and displays live metrics, historical trends, and device control interfaces.
+
+## Project Structure
+
+```
+pulsar-ui/
+├── docker-compose.yml          # Docker Compose service definition
+├── ui/
+│   ├── package.json            # Node.js dependencies & npm scripts
+│   ├── vite.config.js          # Vite build configuration
+│   ├── Dockerfile              # Multi-stage Docker build (Node → Nginx)
+│   ├── nginx.conf              # Nginx reverse proxy configuration
+│   ├── config.template.json    # Runtime config template (injected at startup)
+│   ├── index.html              # HTML entry point
+│   ├── docker-entrypoint.d/
+│   │   └── 99-gen-config.sh   # Docker entrypoint script to generate config.json
+│   └── src/
+│       ├── main.jsx            # React app root (creates #root in index.html)
+│       ├── App.jsx             # Main application component & MQTT logic
+│       ├── config.js           # Runtime configuration loader
+│       ├── mqtt.js             # MQTT WebSocket client initialization
+│       ├── topic.js            # Pulsar topic parser (device/metric extraction)
+│       ├── timeseries.js       # Time-series data aggregation & sampling
+│       ├── styles.css          # Global styles
+│       └── ui/
+│           ├── DashboardView.jsx     # Device grid with status cards
+│           ├── ControlView.jsx       # Interactive device command interface
+│           ├── RawView.jsx           # Raw MQTT message viewer
+│           ├── LiveMetrics.jsx       # Real-time metrics display
+│           ├── DeviceList.jsx        # Device discovery & filtering
+│           ├── MetricCard.jsx        # Single metric display component
+│           ├── PlotCard.jsx          # Recharts time-series graph wrapper
+│           ├── Sparkline.jsx         # Compact trend indicator
+│           └── TopControlBar.jsx     # Navigation & status bar
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Framework** | React 18.3, Vite 5.4 |
+| **Charting** | Recharts 3.7 |
+| **Messaging** | MQTT 5.7 (WebSocket) |
+| **Containerization** | Docker, Nginx 1.27 |
+| **Build Tool** | Vite (HMR dev, optimized prod builds) |
+
+## Key Features
+
+- **Real-time MQTT Dashboard**: Live telemetry ingestion via WebSocket with ~2.5–4 Hz UI refresh
+- **Multi-topic Subscription**: Flexible subscription to `pulsar/+/telemetry`, `/status`, `/state`, `/meta`, `/ack`, `/event` with single-topic manual override
+- **Time-series Visualization**: Interactive Recharts line graphs with configurable time windows (default 60s), relative time-axis labels, and live data streaming
+- **Device Management**: Auto-discovery, online/offline/stale status tracking, device role inference from metadata
+- **Multiple Specialized Views**: Dashboard (grid overview), Control (command center), Raw (MQTT message inspector)
+- **Auto-reconnection**: Configurable reconnect intervals (default 1.5s), transparent error handling with user notifications
+- **Responsive UI**: Desktop-optimized with responsive cards, accessible on mobile
+- **Relay/State Control**: Aggregate relay control across multiple devices, quick-access buttons for broadcast relay toggling
+- **Persistent State**: Browser localStorage for pinned metrics, watched fields, and UI preferences per device
+
+## UI Capabilities & Interactions
+
+### Dashboard View
+The primary grid-based interface for real-time device monitoring:
+
+**Device Status Cards**
+- Live device state with online/offline/stale badges
+- Automatic relay state extraction from retained `state/relays` or telemetry fields
+- Smart device capability surfacing (device type, firmware version, status metadata)
+- Color-coded status indicators: ✓ online (green), ⚠ stale (yellow, no updates > 5s), ✗ offline (red)
+- Click to select device for detailed control
+
+**Watched Fields Grid**
+- Customizable metric watch list (saved per session in localStorage)
+- Default watched fields: `pressure_psi`, `mass_g`, `temp_c` (user-configurable)
+- Displays latest numeric values with automatic unit inference (psi, bar, °C, °F, g, kg, V, A, %, etc.)
+- Sparkline trend indicators (last ~30 points) embedded in each metric card
+- Pin/unpin metrics to keep important ones at the top
+
+**Time-Series Charts**
+- Interactive Recharts line graphs, one per pinned metric
+- Configurable time window (default 60 seconds, up to 5000 points cached per metric)
+- Hover-to-inspect with timestamp and value tooltips
+- Relative time axis (`-45s`, `-2m`) for instant context
+- Decimal-aware formatting (0.001 to 1000+ ranges)
+
+### Control View
+Interactive device command and configuration interface:
+
+**Device Selection**
+- Dropdown or quick-click list for device selection
+- Per-device state/meta inspection (expandable maps)
+- Visual hints for subscription requirements
+
+**Command Center**
+- **Generic Command Interface**: Send arbitrary `<action>` + JSON args to `pulsar/<device>/cmd/<action>`
+- **Command Template Library**: Pre-populated examples (e.g., `relay.set` with args `{"relay":1,"state":1}`)
+- **Command Timeout**: Configurable timeout (default 2000ms) for command acknowledgment
+- **ACK Pattern**: Devices respond on `pulsar/<device>/ack/<action>` with matching command `id` field
+- **Command History Log**: Full audit trail of sent commands with timestamp, device, action, args, and status
+- **Args Validation**: JSON editor with syntax highlighting and parse-error feedback
+
+**State & Meta Inspection**
+- Sortable key-value view of device state (retained messages from `pulsar/+/state/#`)
+- Device metadata display (device type, firmware, capabilities)
+- Live refresh on every message
+
+**Calibration Panel**
+- Edit calibration coefficients in JSON format
+- Auto-sync option to push changes to device
+- Reset-to-current to discard unsaved edits
+
+### Raw View
+Low-level MQTT message inspector and subscription tester:
+
+**Connection Management**
+- Live WebSocket URL editor (defaults from `/config.json`)
+- Single-topic subscribe field (wildcards: `+` for level, `#` for all-below)
+- Multi-topic config override toggle
+- Reconnect + Subscribe button for on-the-fly topic changes
+- Pause/Resume feed (pause freezes incoming messages; resume resumes)
+- Clear History button to reset message buffer
+
+**Message Statistics**
+- Total messages received counter
+- Unique devices seen counter
+- Message rate indication
+
+**Message Browser**
+- Full message table: Topic, Device ID, Message Family (extracted from topic path)
+- Device/Family filter dropdowns for quick searching
+- Raw payload display: JSON-pretty or hex-dumped
+- Byte-size indicator for each message
+- Timestamp (ISO-8601) for each ingest
+- Quick-click device name to switch to Control view
+
+**Topic Decoding**
+- Automatic `pulsar/device01/telemetry/temperature` → device=`device01`, family=`telemetry`, metric=`temperature` parsing
+- Family-based filtering (all telemetry, all status, etc.)
+
+### Live Metrics Panel
+Dense, compact metric display with sparklines:
+
+**Metric Extraction**
+- Scans incoming payloads for numeric fields
+- Auto-skips metadata fields (timestamps, seq, uptime_ms, etc.)
+- Nested field extraction from `fields` object in JSON payloads
+
+**Per-Device Metric Pinning**
+- Pin/unpin up to 24 metrics per device (saved to localStorage)
+- Pinned metrics appear first, remaining shown in arrival order
+- Up to ~14 metrics displayed at once (scrollable)
+- Pin/unstar button on each card
+
+**Sparkline Rendering**
+- Embedded micro-charts (7–30 points per sparkline)
+- Samples data if > 80 points available
+- Updates at ~2.5 Hz for smooth visual feedback
+
+### Top Control Bar
+Application-level controls and broadcast operations:
+
+**View Navigation**
+- Tab switcher: Dashboard ↔ Control ↔ Raw
+- Visual indicator of active view
+
+**Broadcast Relay Control**
+- Aggregate relay state across all online devices
+- Quick-toggle buttons for relays (e.g., Relay 1, Relay 2, Relay 3, Relay 4)
+- Relay states: ON (green), OFF (red), MIXED (yellow, some on/off), UNKNOWN (gray)
+- Single click broadcasts `relay.set` command to all online devices
+- Adaptive relay key detection (reads from device state; falls back to defaults [1,2,3,4])
+
+**Connection Status Badge**
+- MQTT connection state: Connected, Connecting, Reconnecting, Offline
+- Color-coded (green=ok, yellow=warn, red=error)
+- URL and error message on hover
+
+### Notification System
+In-app event log with visual feedback:
+
+**Notification Levels**
+- **Info** (blue): General messages
+- **OK** (green): Success, device online, data fresh
+- **Warn** (yellow): Stale data (> 5s no update), reconnecting
+- **Bad** (red): Device offline, MQTT disconnected, errors
+
+**Event Capture**
+- Device online/offline transitions
+- Stale ↔ fresh data state changes
+- MQTT connection state changes
+- Command sent/received with device context
+- Notification retention: Last 40 messages in dashboard, up to 400 in memory
+
+**Time-Stamped Display**
+- ISO-8601 timestamps for correlation with telemetry
+- Device ID context for multi-device logs
+- Searchable/filterable by event type
+
+### Device Discovery & Filtering
+
+**Auto-Discovery**
+- Dynamically populates device list as MQTT messages arrive
+- Online status: calculated from `latestSeen` timestamp vs. stale threshold
+- Tracks online, offline, and stale devices in separate counters
+
+**Device List UI**
+- Searchable device filter
+- Compact and expanded list views
+- Quick-select from compact list
+- Color-coded badges (online, offline, stale)
+- Click to pin/focus device in charts
+
+### Data Handling & Formatting
+
+**Payload Parsing**
+- Auto-detects JSON, text, or binary payloads
+- JSON prettified for display; falls back to text UTF-8 decode
+- Empty payload handling (marked as "empty")
+- Graceful error handling (malformed JSON → text display)
+
+**Numeric Formatting**
+- Smart precision: `0.001` for values < 10, `0.01` for < 100, `0.1` for < 1000, `0` for ≥ 1000
+- Unit inference from field names: `temp_c` → °C, `pressure_psi` → psi, etc.
+- Null/undefined → `—` placeholder
+
+**Time-Series Aggregation**
+- Sliding window per metric (up to 5000 points)
+- Automatic stale removal (configurable, default 5s)
+- Efficient decimation for charting (samples if > 80 points)
+- Relative time formatting: `-45s`, `-2m` for easy trend reading
+
+### Local Storage Persistence
+
+**Watched Fields** (`pulsarui:watchedFields:v1`)
+- Per-session list of metrics to monitor on dashboard
+- Survives page reload
+- Default: `["pressure_psi", "mass_g", "temp_c"]`
+
+**Pinned Metrics** (`pulsarui:pinnedFields:<device-id>`)
+- Per-device list of pinned metrics in Live Metrics panel
+- Up to 24 pinned metrics per device
+- Auto-cleared when switching devices
+
+### Accessibility & Responsiveness
+
+- **Semantic HTML**: Proper `<label>`, `<button>`, `<input>` usage for screen readers
+- **Keyboard Navigation**: Tab through controls, Enter to submit forms
+- **Color Blind Friendly**: Icons + text labels (not color-only status)
+- **Mobile Layout**: Single-column grid adapts for smaller screens (cards stack)
+- **Touch Friendly**: Large buttons, clear visual targets
+
+## Core Modules
+
+### [config.js](ui/src/config.js)
+Loads runtime configuration from `/config.json` (generated from `config.template.json`). Provides MQTT WebSocket URL, subscription topics, and timeout settings. Falls back to sensible defaults if config fetch fails.
+
+**Key Exports**: `loadRuntimeConfig()`
+
+### [mqtt.js](ui/src/mqtt.js)
+Wraps the MQTT.js client for WebSocket connections. Emits connection state changes and message events. Handles reconnection logic, error propagation, and clean subscriptions.
+
+**Key Exports**: `connectMqtt({ url, onState, onMessage })`
+
+### [topic.js](ui/src/topic.js)
+Parses Pulsar topic paths (e.g., `pulsar/device01/telemetry/temperature`) to extract device ID, message type, and metric name. Enables hierarchical organization of device data.
+
+**Key Exports**: `parsePulsarTopic(topicString)`
+
+### [timeseries.js](ui/src/timeseries.js)
+Aggregates incoming MQTT messages into time-series data structures. Handles data point insertion, stale removal, and sampling for efficient rendering. Maintains sliding windows per metric.
+
+**Key Exports**: `pushPoint(dataStore, deviceId, metricName, timestamp, value)`
+
+### [App.jsx](ui/src/App.jsx)
+Root application component. Orchestrates MQTT connection, manages global state (devices, metrics, connection status), and delegates rendering to specialized views (Dashboard, Control, Raw).
+
+**State Management**: React hooks (`useState`, `useRef`, `useEffect`, `useMemo`)
+
+### UI Components
+
+| Component | Purpose |
+|-----------|---------|
+| **DashboardView** | Grid of device status cards with key metrics |
+| **ControlView** | Send commands to devices, adjust settings |
+| **RawView** | Raw MQTT message browser (topic, payload, timestamp) |
+| **LiveMetrics** | Scrollable list of active metrics with sparklines |
+| **DeviceList** | Searchable, filterable device inventory |
+| **MetricCard** | Single metric display with unit, value, trend |
+| **PlotCard** | Recharts wrapper for time-series line/bar charts |
+| **Sparkline** | Micro chart (7–30 data points) for quick trends |
+| **TopControlBar** | View switcher, connection status, refresh controls |
+
+## Configuration
+
+### Environment Variables & Runtime Config
+
+**Docker environment** (`docker-compose.yml`):
+```yaml
+environment:
+  - MQTT_WS_URL=ws://pulsarpi.local:9001
+  - MQTT_TOPIC=pulsar/+/telemetry/#
+```
+
+**Runtime config** (`/config.json`, generated from `config.template.json`):
+```json
+{
+  "mqttWsUrl": "ws://pulsarpi.local:9001",
+  "subscribeTopics": [
+    "pulsar/+/telemetry",
+    "pulsar/+/status",
+    "pulsar/+/state/#",
+    "pulsar/+/meta/#",
+    "pulsar/+/ack/#",
+    "pulsar/+/event/#"
+  ],
+  "staleAfterMs": 5000,
+  "commandTimeoutMs": 2000
+}
+```
+
+The `99-gen-config.sh` entrypoint script injects `MQTT_WS_URL` and `MQTT_TOPIC` environment variables into `config.json` at container startup.
+
+## Build & Deployment
+
+### Local Development
+
+```bash
+cd ui
+npm install
+npm run dev  # Start dev server with HMR on 0.0.0.0:5173
+```
+
+Access at `http://localhost:5173`. Environment variables can be set via `.env` file or shell exports.
+
+### Production Build
+
+```bash
+npm run build       # Outputs to ui/dist/
+npm run preview     # Preview optimized build on 0.0.0.0:4173
+```
+
+### Docker Deployment
+
+**Multi-stage build**:
+1. Build stage: Node 20-Alpine → Vite compilation to `dist/`
+2. Runtime stage: Nginx 1.27-Alpine → Serves `dist/` + dynamic `config.json`
+
+```bash
+docker build -f ui/Dockerfile -t pulsar/pulsar-ui:latest ./ui
+docker run -p 8080:80 -e MQTT_WS_URL=ws://pulsarpi.local:9001 pulsar/pulsar-ui
+```
+
+**Via Docker Compose**:
+```bash
+docker-compose up -d  # Assumes pulsar_net bridge already exists
+```
+
+Accessible at `http://localhost:8080`
+
+## Nginx Configuration
+
+[nginx.conf](ui/nginx.conf) configures:
+- Static file serving from `/usr/share/nginx/html` (Vite dist output)
+- Dynamic `config.json` generation via shell script
+- Reverse proxy rules (if applicable)
+- CORS headers for MQTT WebSocket bridge
+
+## MQTT Topic Contract
+
+Pulsar UI expects topics following the v1 contract:
+
+| Topic Pattern | Purpose |
+|---------------|---------|
+| `pulsar/+/telemetry/#` | Sensor readings (temperature, humidity, etc.) |
+| `pulsar/+/status` | Device connectivity & health status |
+| `pulsar/+/state/#` | Device state (on/off, mode, etc.) |
+| `pulsar/+/meta/#` | Device metadata (model, firmware, etc.) |
+| `pulsar/+/ack/#` | Command acknowledgments |
+| `pulsar/+/event/#` | System events & notifications |
+
+Payloads can be JSON, text, or binary; the app auto-parses and handles gracefully.
+
+## Dependencies
+
+### Production
+- **react** (18.3.1): UI framework
+- **react-dom** (18.3.1): React DOM rendering
+- **mqtt** (5.7.0): MQTT client with WebSocket support
+- **recharts** (3.7.0): Chart library
+
+### Development
+- **vite** (5.4.11): Build tool & dev server
+- **@vitejs/plugin-react** (4.3.4): Fast Refresh for React
+
+## Networking
+
+- **Default Dev Port**: 5173
+- **Docker Exposed Port**: 8080 → 80 (Nginx)
+- **MQTT WebSocket Port**: 9001 (configurable)
+- **Docker Network**: `pulsar_net` (bridge, external)
+
+## Notes
+
+- The app uses React Hooks for all state management (no Redux/Context wrapper by default)
+- Time-series data is held in-memory; refresh page to reset
+- Stale data (no updates for 5s) is automatically pruned
+- MQTT reconnect backoff: 1.5s interval, 5s timeout
+- Vite's fast refresh enables instant HMR during development
