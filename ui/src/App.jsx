@@ -23,6 +23,11 @@ import RawView from "./ui/RawView.jsx";
 import ThemeToggle from "./ui/ThemeToggle.jsx";
 import GlobalStatusBar from "./ui/GlobalStatusBar.jsx";
 
+// Milestone 3: Command Workflows
+import AuthorityControl, { useAuthorityControl, AuthorityBadge } from "./ui/AuthorityControl.jsx";
+import CommandQueue from "./ui/CommandQueue.jsx";
+import CommandTemplates from "./ui/CommandTemplates.jsx";
+
 export default function App() {
   // --- RAF Batching ---
   const { scheduleUpdate: scheduleRafUpdate } = useRafBatching();
@@ -86,6 +91,29 @@ export default function App() {
   const [cmdHistory, setCmdHistory] = useState([]);
   const [calEditorText, setCalEditorText] = useState("");
   const [calAutoSync, setCalAutoSync] = useState(true);
+
+  // Milestone 3: Authority Control
+  const {
+    level: authorityLevel,
+    setLevel: setAuthorityLevel,
+    armedExpiresAt,
+    handleArmedExpire,
+    refreshArmed,
+    canExecuteCommand,
+    config: authorityConfig,
+  } = useAuthorityControl({
+    armedTimeoutMs: 30000,
+    onLevelChange: (newLevel) => {
+      pushNotif(
+        newLevel === "armed"
+          ? "⚠ ARMED mode enabled - dangerous commands allowed"
+          : newLevel === "view"
+          ? "👁 View-only mode - commands disabled"
+          : "🎛 Control mode - safe commands allowed",
+        newLevel === "armed" ? "warn" : "info"
+      );
+    },
+  });
 
   // MQTT controller
   const controllerRef = useRef(null);
@@ -183,6 +211,41 @@ export default function App() {
       ].slice(0, 60)
     );
     bumpDeviceTick();
+  }
+
+  // Cancel a pending command (M3.1)
+  function handleCancelCommand(cmdId, deviceId) {
+    const device = devicesRef.current.get(deviceId);
+    if (device?.pendingCommands?.has(cmdId)) {
+      const cmd = device.pendingCommands.get(cmdId);
+      // Clear the timeout
+      if (cmd.timeoutId) clearTimeout(cmd.timeoutId);
+      device.pendingCommands.delete(cmdId);
+
+      // Add to history as cancelled
+      setCmdHistory((prev) =>
+        [
+          {
+            id: cmdId,
+            device: deviceId,
+            action: cmd.action,
+            status: "cancelled",
+            t: nowIsoMs(),
+            error: "Cancelled by user"
+          },
+          ...prev
+        ].slice(0, 60)
+      );
+
+      pushNotif("info", `${deviceId} • ${cmd.action}`, "Command cancelled");
+      bumpDeviceTick();
+    }
+  }
+
+  // Retry a failed command (M3.1)
+  function handleRetryCommand(deviceId, action, args) {
+    refreshArmed(); // Refresh ARMED timer on activity
+    sendCommand(deviceId, action, args);
   }
 
   // Create the MQTT message handler
@@ -473,7 +536,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Global Status Bar (Milestone 2.1) */}
+      {/* Global Status Bar (Milestone 2.1, enhanced M3.3) */}
       <GlobalStatusBar
         mqttStatus={status.status}
         mqttUrl={status.url}
@@ -481,6 +544,10 @@ export default function App() {
         devicesRef={devicesRef}
         paused={paused}
         onTogglePause={() => setPaused((p) => !p)}
+        // Milestone 3.3: Authority (shown only when not on Control tab)
+        authorityLevel={tab !== "control" ? authorityLevel : null}
+        armedExpiresAt={armedExpiresAt}
+        onAuthorityClick={() => setTab("control")}
       />
 
       <div className="tabs">
@@ -540,6 +607,16 @@ export default function App() {
           setCalAutoSync={setCalAutoSync}
           sendCalibration={sendCalibration}
           resetCalEditorToCurrent={resetCalEditorToCurrent}
+          // Milestone 3: Command Workflows
+          authorityLevel={authorityLevel}
+          setAuthorityLevel={setAuthorityLevel}
+          armedExpiresAt={armedExpiresAt}
+          handleArmedExpire={handleArmedExpire}
+          canExecuteCommand={canExecuteCommand}
+          refreshArmed={refreshArmed}
+          onCancelCommand={handleCancelCommand}
+          onRetryCommand={handleRetryCommand}
+          sendCommand={sendCommand}
         />
       ) : (
         <RawView

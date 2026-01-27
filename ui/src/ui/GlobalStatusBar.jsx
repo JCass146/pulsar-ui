@@ -5,8 +5,10 @@
  * fleet health summary, armed state, mode, and active inhibits.
  *
  * Part of Milestone 2.1 - Global System Status Bar
+ * Enhanced in Milestone 3.3 - Authority indicator
  */
 import React, { useMemo } from "react";
+import { AuthorityBadge, AUTHORITY_LEVELS } from "./AuthorityControl.jsx";
 
 /**
  * Compute derived fleet statistics from device list.
@@ -185,6 +187,10 @@ export default function GlobalStatusBar({
   devicesRef,
   paused,
   onTogglePause,
+  // Milestone 3.3: Authority control (optional)
+  authorityLevel,
+  onAuthorityClick,
+  armedExpiresAt,
 }) {
   // Compute fleet statistics
   const stats = useMemo(() => {
@@ -211,6 +217,18 @@ export default function GlobalStatusBar({
 
       {/* Right: Controls */}
       <div className="gsbSection gsbRight">
+        {/* Authority badge (M3.3) - shown when on non-Control tabs */}
+        {authorityLevel && (
+          <div className="gsbAuthorityWrapper">
+            <AuthorityBadge level={authorityLevel} onClick={onAuthorityClick} />
+            {authorityLevel === "armed" && armedExpiresAt && (
+              <span className="gsbArmedTimer">
+                {Math.max(0, Math.ceil((armedExpiresAt - Date.now()) / 1000))}s
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Pause/Resume button */}
         <button
           className={`gsbPauseBtn ${paused ? "paused" : ""}`}

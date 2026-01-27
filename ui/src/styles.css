@@ -2176,3 +2176,1012 @@ button.danger {
 .tcbTagIndicator {
   color: rgba(46,231,255,0.8);
 }
+/* ============================================
+   MILESTONE 3: Command Workflows
+   ============================================ */
+
+/* Control View Main Layout */
+.controlViewMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.controlViewHeader {
+  padding: 12px 20px;
+  background: var(--glass-light);
+  border-bottom: 1px solid var(--border);
+}
+
+/* GlobalStatusBar Authority Badge */
+.gsbAuthorityWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 10px;
+}
+
+.gsbArmedTimer {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,200,0,0.95);
+  padding: 2px 6px;
+  background: rgba(255,200,0,0.15);
+  border-radius: 6px;
+  animation: armedPulse 1s ease-in-out infinite;
+}
+
+@keyframes armedPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ---- 3.1: Command Queue / Intent Panel ---- */
+.commandQueue {
+  background: linear-gradient(180deg, var(--card-gradient-start), var(--card-gradient-end));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.commandQueue.collapsed {
+  padding: 10px 14px;
+}
+
+.cmdQueueHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cmdQueueHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmdQueueCollapseBtn {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.cmdQueueTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--heading-color);
+  margin: 0;
+}
+
+/* Intent summary stats */
+.cmdIntentSummary {
+  display: flex;
+  gap: 8px;
+}
+
+.cmdIntentStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--glass-light);
+}
+
+.cmdIntentStat.active {
+  background: rgba(46,231,255,0.15);
+  border: 1px solid rgba(46,231,255,0.30);
+}
+
+.cmdIntentStat.ok .cmdIntentNum { color: rgba(0,255,140,0.9); }
+.cmdIntentStat.warn .cmdIntentNum { color: rgba(255,200,0,0.95); }
+.cmdIntentStat.bad .cmdIntentNum { color: rgba(255,80,80,0.95); }
+
+.cmdIntentNum {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.cmdIntentLabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* Queue sections */
+.cmdQueueSection {
+  margin-top: 12px;
+}
+
+.cmdQueueSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cmdQueueSectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.cmdQueueFilters {
+  display: flex;
+  gap: 4px;
+}
+
+.cmdQueueFilterBtn {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-strong);
+  background: transparent;
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.cmdQueueFilterBtn.active {
+  opacity: 1;
+  background: var(--glass-medium);
+}
+
+/* Command rows */
+.cmdQueueList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.cmdQueueRow {
+  border: 1px solid var(--glass-strong);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--overlay-light);
+}
+
+.cmdQueueRow.pending {
+  border-color: rgba(46,231,255,0.35);
+  background: rgba(46,231,255,0.05);
+}
+
+.cmdQueueRow.acked {
+  border-color: rgba(0,255,140,0.25);
+}
+
+.cmdQueueRow.timeout {
+  border-color: rgba(255,200,0,0.30);
+}
+
+.cmdQueueRow.failed {
+  border-color: rgba(255,80,80,0.35);
+}
+
+.cmdQueueRowTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cmdQueueTarget {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cmdQueueDevice {
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmdQueueAction {
+  font-size: 11px;
+  font-family: var(--mono);
+  opacity: 0.8;
+}
+
+.cmdQueueRowRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmdStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cmdStatusBadge.pending {
+  background: rgba(46,231,255,0.15);
+  color: rgba(46,231,255,0.95);
+}
+
+.cmdStatusBadge.sent {
+  background: rgba(150,150,150,0.15);
+  color: rgba(200,200,200,0.9);
+}
+
+.cmdStatusBadge.ok {
+  background: rgba(0,255,140,0.15);
+  color: rgba(0,255,140,0.95);
+}
+
+.cmdStatusBadge.warn {
+  background: rgba(255,200,0,0.15);
+  color: rgba(255,200,0,0.95);
+}
+
+.cmdStatusBadge.bad {
+  background: rgba(255,80,80,0.15);
+  color: rgba(255,80,80,0.95);
+}
+
+.cmdStatusBadge.muted {
+  background: var(--glass-light);
+  color: var(--muted);
+}
+
+.cmdStatusIcon {
+  font-size: 9px;
+}
+
+.cmdCancelBtn {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,80,80,0.30);
+  background: rgba(255,80,80,0.10);
+  font-size: 10px;
+  line-height: 1;
+  color: rgba(255,80,80,0.9);
+}
+
+.cmdCancelBtn:hover {
+  background: rgba(255,80,80,0.20);
+}
+
+/* Progress bar for pending commands */
+.cmdQueueProgress {
+  height: 3px;
+  background: var(--glass-light);
+  border-radius: 999px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.cmdQueueProgressBar {
+  height: 100%;
+  background: rgba(46,231,255,0.6);
+  border-radius: 999px;
+  transition: width 0.1s linear;
+}
+
+.cmdQueueRowMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.cmdQueueTime {
+  font-size: 10px;
+  opacity: 0.7;
+  font-family: var(--mono);
+}
+
+.cmdQueueExpandBtn {
+  margin-top: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-strong);
+  background: transparent;
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.cmdQueueExpandBtn:hover {
+  opacity: 1;
+  background: var(--glass-light);
+}
+
+.cmdQueueDetails {
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--overlay-bg);
+  border-radius: 8px;
+}
+
+.cmdQueueError {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.cmdQueueErrorLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,80,80,0.9);
+}
+
+.cmdQueueErrorText {
+  font-size: 11px;
+  color: rgba(255,80,80,0.8);
+}
+
+.cmdQueuePayload {
+  font-family: var(--mono);
+  font-size: 10px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 120px;
+  overflow: auto;
+}
+
+.cmdRetryBtn {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(46,231,255,0.30);
+  background: rgba(46,231,255,0.10);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cmdRetryBtn:hover {
+  background: rgba(46,231,255,0.18);
+}
+
+.cmdQueueEmpty {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* ---- 3.2: Command Template Library ---- */
+.commandTemplates {
+  background: linear-gradient(180deg, var(--card-gradient-start), var(--card-gradient-end));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.commandTemplates.collapsed {
+  padding: 10px 14px;
+}
+
+.cmdTemplatesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cmdTemplatesHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmdTemplatesCollapseBtn {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.cmdTemplatesTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--heading-color);
+  margin: 0;
+}
+
+.cmdTemplatesNewBtn {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+.cmdTemplatesControls {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cmdTemplatesSearch {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-strong);
+  background: var(--overlay-bg);
+  font-size: 12px;
+}
+
+.cmdTemplatesCategoryFilters {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.cmdTemplatesCategoryBtn {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-strong);
+  background: transparent;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.cmdTemplatesCategoryBtn.active {
+  opacity: 1;
+  background: var(--glass-medium);
+  border-color: var(--border);
+}
+
+.cmdTemplatesNoDevice {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255,200,0,0.08);
+  border: 1px solid rgba(255,200,0,0.25);
+  font-size: 12px;
+  text-align: center;
+  color: rgba(255,200,0,0.9);
+}
+
+.cmdTemplatesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.cmdTemplateCard {
+  border: 1px solid var(--glass-strong);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--overlay-light);
+}
+
+.cmdTemplateCard.danger {
+  border-color: rgba(255,80,80,0.35);
+  background: rgba(255,80,80,0.05);
+}
+
+.cmdTemplateCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cmdTemplateInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cmdTemplateName {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cmdTemplateAction {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.cmdTemplateCategory {
+  font-size: 9px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--glass-light);
+  opacity: 0.7;
+}
+
+.cmdTemplateDesc {
+  font-size: 11px;
+  margin-top: 6px;
+  opacity: 0.7;
+  line-height: 1.3;
+}
+
+.cmdTemplateArgs {
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: var(--overlay-bg);
+  border-radius: 6px;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmdTemplateActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.cmdTemplateExecBtn {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cmdTemplateExecBtn.danger {
+  background: rgba(255,80,80,0.15);
+  border-color: rgba(255,80,80,0.35);
+  color: rgba(255,80,80,0.95);
+}
+
+.cmdTemplateExecBtn.danger:hover:not(:disabled) {
+  background: rgba(255,80,80,0.25);
+}
+
+.cmdTemplateBtn {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-light);
+  font-size: 11px;
+}
+
+.cmdTemplateBtn:hover {
+  background: var(--glass-strong);
+}
+
+.cmdTemplateBtn.danger:hover {
+  background: rgba(255,80,80,0.15);
+  border-color: rgba(255,80,80,0.30);
+}
+
+.cmdTemplatesEmpty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 30px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* Template editor modal */
+.cmdTemplateEditorOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.cmdTemplateEditor {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  width: min(480px, 90vw);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.cmdTemplateEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cmdTemplateEditorHeader h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--heading-color);
+}
+
+.cmdTemplateEditorClose {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-strong);
+  background: transparent;
+  font-size: 14px;
+}
+
+.cmdTemplateEditorError {
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: rgba(255,80,80,0.15);
+  border: 1px solid rgba(255,80,80,0.35);
+  color: rgba(255,80,80,0.95);
+  font-size: 12px;
+}
+
+.cmdTemplateEditorForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cmdTemplateEditorRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.cmdTemplateEditorRow > label {
+  flex: 1;
+}
+
+.cmdTemplateEditorCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding-bottom: 10px;
+}
+
+.cmdTemplateEditorCheckbox input {
+  width: auto;
+}
+
+.cmdTemplateEditorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--glass-medium);
+}
+
+/* ---- 3.3: Authority Control ---- */
+.authorityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.authorityBadge.info {
+  background: rgba(120,160,255,0.15);
+  border: 1px solid rgba(120,160,255,0.30);
+  color: rgba(120,160,255,0.95);
+}
+
+.authorityBadge.ok {
+  background: rgba(0,255,140,0.12);
+  border: 1px solid rgba(0,255,140,0.28);
+  color: rgba(0,255,140,0.95);
+}
+
+.authorityBadge.warn {
+  background: rgba(255,200,0,0.15);
+  border: 1px solid rgba(255,200,0,0.40);
+  color: rgba(255,200,0,0.95);
+  animation: pulse-authority 2s ease-in-out infinite;
+}
+
+@keyframes pulse-authority {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+.authorityBadgeIcon {
+  font-size: 11px;
+}
+
+.authorityBadgeLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Armed timer */
+.armedTimer {
+  position: relative;
+  width: 60px;
+  height: 20px;
+  background: var(--glass-light);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.armedTimerBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255,200,0,0.40);
+  transition: width 0.1s linear;
+}
+
+.armedTimerText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,200,0,0.95);
+}
+
+/* Authority control full */
+.authorityControl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.authorityControlMain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.authorityControlBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.authorityControlBtn.info {
+  background: rgba(120,160,255,0.12);
+  border: 1px solid rgba(120,160,255,0.25);
+}
+
+.authorityControlBtn.ok {
+  background: rgba(0,255,140,0.10);
+  border: 1px solid rgba(0,255,140,0.25);
+}
+
+.authorityControlBtn.warn {
+  background: rgba(255,200,0,0.12);
+  border: 1px solid rgba(255,200,0,0.35);
+}
+
+.authorityControlIcon {
+  font-size: 16px;
+}
+
+.authorityControlText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.authorityControlLabel {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.authorityControlDesc {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* Authority selector modal */
+.authoritySelectorOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.authoritySelector {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  width: min(400px, 90vw);
+}
+
+.authoritySelectorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.authoritySelectorHeader h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--heading-color);
+}
+
+.authoritySelectorClose {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-strong);
+  background: transparent;
+  font-size: 14px;
+}
+
+.authoritySelectorOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.authoritySelectorOption {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.authoritySelectorOption.info {
+  border: 1px solid rgba(120,160,255,0.25);
+  background: rgba(120,160,255,0.05);
+}
+
+.authoritySelectorOption.info:hover,
+.authoritySelectorOption.info.active {
+  background: rgba(120,160,255,0.12);
+}
+
+.authoritySelectorOption.ok {
+  border: 1px solid rgba(0,255,140,0.25);
+  background: rgba(0,255,140,0.05);
+}
+
+.authoritySelectorOption.ok:hover,
+.authoritySelectorOption.ok.active {
+  background: rgba(0,255,140,0.12);
+}
+
+.authoritySelectorOption.warn {
+  border: 1px solid rgba(255,200,0,0.30);
+  background: rgba(255,200,0,0.05);
+}
+
+.authoritySelectorOption.warn:hover,
+.authoritySelectorOption.warn.active {
+  background: rgba(255,200,0,0.12);
+}
+
+.authoritySelectorOptionTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.authoritySelectorIcon {
+  font-size: 18px;
+}
+
+.authoritySelectorLabel {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.authoritySelectorDesc {
+  font-size: 12px;
+  opacity: 0.7;
+  line-height: 1.3;
+}
+
+.authoritySelectorWarning {
+  font-size: 11px;
+  color: rgba(255,200,0,0.9);
+  margin-top: 4px;
+}
+
+/* Armed confirmation */
+.authoritySelectorConfirm {
+  text-align: center;
+  padding: 10px 0;
+}
+
+.authoritySelectorConfirmIcon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.authoritySelectorConfirmTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: rgba(255,200,0,0.95);
+  margin-bottom: 12px;
+}
+
+.authoritySelectorConfirmText {
+  font-size: 13px;
+  opacity: 0.8;
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+.authoritySelectorConfirmInput {
+  margin-bottom: 16px;
+}
+
+.authoritySelectorConfirmInput label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.authoritySelectorConfirmInput input {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.authoritySelectorConfirmActions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Command gate overlay */
+.commandGateBlocked {
+  position: relative;
+  cursor: not-allowed;
+}
+
+.commandGateOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  border-radius: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.commandGateIcon {
+  font-size: 20px;
+  opacity: 0.8;
+}
