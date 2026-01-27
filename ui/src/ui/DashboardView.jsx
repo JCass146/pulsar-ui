@@ -1,6 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useDebounceCallback } from "../hooks/useDebounce.js";
-import { APP_CONFIG } from "../config-constants.js";
 import PlotCard from "./PlotCard.jsx";
 import DeviceList from "./DeviceList.jsx";
 import VirtualizedDeviceList from "./VirtualizedDeviceList.jsx";
@@ -141,25 +139,6 @@ export default function DashboardView({
     setWatchedText(watchedFields.join(", "));
   }, []); // once
 
-  // Debounce watched field changes to avoid excessive localStorage writes
-  useDebounceCallback(watchedText, APP_CONFIG.DEBOUNCE_INPUT_MS, (debouncedText) => {
-    const next = debouncedText
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    const uniq = [];
-    const seen = new Set();
-    for (const f of next) {
-      if (seen.has(f)) continue;
-      seen.add(f);
-      uniq.push(f);
-    }
-    const final = uniq.length ? uniq : ["pressure_psi"];
-    setWatchedFields(final);
-    saveWatchedFields(final);
-  });
-
   // Pick a stable device order: online first, then stale, then offline
   const devicesOrdered = useMemo(() => {
     const arr = [...deviceList];
@@ -191,6 +170,24 @@ export default function DashboardView({
     }
     return out;
   }, [devicesOrdered, watchedFields, latestRef]);
+
+  function applyWatched() {
+    const next = watchedText
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const uniq = [];
+    const seen = new Set();
+    for (const f of next) {
+      if (seen.has(f)) continue;
+      seen.add(f);
+      uniq.push(f);
+    }
+    const final = uniq.length ? uniq : ["pressure_psi"];
+    setWatchedFields(final);
+    saveWatchedFields(final);
+  }
 
   const selectedDevObj = selectedDevice ? devicesRef.current.get(selectedDevice) : null;
   const selectedRole = selectedDevObj ? getDeviceRole(selectedDevObj) : "—";
