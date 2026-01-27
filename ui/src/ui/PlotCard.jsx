@@ -16,8 +16,25 @@ function splitSeriesKey(seriesKey) {
   return { device: s.slice(0, i), field: s.slice(i + 1) };
 }
 
-function PlotCard({ seriesRef, seriesKey, height = 220 }) {
+function fmtRelSec(x) {
+  if (!Number.isFinite(x)) return "";
+  // x is negative seconds; show like -45s, -2m, etc.
+  const s = Math.round(x);
+  const a = Math.abs(s);
+  if (a < 90) return `${s}s`;
+  const m = Math.round(s / 60);
+  return `${m}m`;
+}
+
+function PlotCard({
+  seriesRef,
+  seriesKey,
+  height = 220,
+  windowSec = 60,          // <- default window (seconds)
+  showXAxis = true
+}) {
   const [tick, setTick] = useState(0);
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setTick((x) => x + 1), 250); // ~4 fps
@@ -27,46 +44,82 @@ function PlotCard({ seriesRef, seriesKey, height = 220 }) {
   const { device, field } = useMemo(() => splitSeriesKey(seriesKey), [seriesKey]);
   const unit = useMemo(() => inferUnit(field), [field]);
 
-  const { data, lastV } = useMemo(() => {
+  const { data, lastV, nowMs } = useMemo(() => {
+    const now = Date.now();
     const arr = seriesRef.current.get(seriesKey) || [];
-    const mapped = arr.map((p) => ({ t: p.t, v: p.v }));
+
+    const cutoff = now - windowSec * 1000;
+
+    // Filter to window and map to relative seconds (negative -> now)
+    const mapped = [];
+    for (let i = Math.max(0, arr.length - 5000); i < arr.length; i++) {
+      const p = arr[i];
+      if (!p) continue;
+      if (p.t < cutoff) continue;
+      mapped.push({
+        x: (p.t - now) / 1000, // negative seconds
+        v: p.v
+      });
+    }
+
     const lv = arr.length ? arr[arr.length - 1].v : null;
-    return { data: mapped, lastV: lv };
-  }, [tick, seriesKey, seriesRef]);
+    return { data: mapped, lastV: lv, nowMs: now };
+  }, [tick, seriesKey, seriesRef, windowSec]);
 
   return (
-    <div className="plotCard">
+    <div
+      className="plotCard"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <div className="plotHdr">
         <div className="plotHdrLeft">
           <div className="plotTitle mono" title={seriesKey}>
-            {device}
-            <span className="muted"> • </span>
-            {field}
+            {field || seriesKey}
           </div>
           <div className="plotValue mono">
-            {fmt(lastV)}{unit ? <span className="plotUnit">{unit}</span> : null}
+            {fmt(lastV)}
+            {unit ? <span className="plotUnit">{unit}</span> : null}
           </div>
         </div>
+
+        <button
+          className={`plotGear ${hovered ? "show" : ""}`}
+          type="button"
+          title="Plot options (coming soon)"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // stub for now
+          }}
+        >
+          ⚙
+        </button>
       </div>
 
-      <div className="plotInner" style={{ height }}>
+      <div className="plotInner" style={{ height, position: "relative" }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <XAxis
-              dataKey="t"
+              dataKey="x"
               type="number"
-              domain={["auto", "auto"]}
-              tickFormatter={(ms) => new Date(ms).toLocaleTimeString()}
-              hide
+              domain={[-windowSec, 0]}
+              tickFormatter={fmtRelSec}
+              hide={!showXAxis}
             />
             <YAxis width={46} />
             <Tooltip
-              labelFormatter={(ms) => new Date(ms).toLocaleTimeString()}
+              labelFormatter={(x) => `t ${fmtRelSec(x)} (now)`}
               formatter={(v) => [v, field]}
             />
             <Line dataKey="v" dot={false} isAnimationActive={false} type="monotone" />
           </LineChart>
         </ResponsiveContainer>
+
+        {/* device origin tag bottom-right */}
+        <div className="plotOrigin mono" title="Device origin">
+          {device}
+        </div>
       </div>
     </div>
   );
