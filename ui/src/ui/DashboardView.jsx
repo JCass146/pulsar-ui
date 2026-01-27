@@ -111,7 +111,6 @@ export default function DashboardView({
   latestRef,
   seriesRef,
   getDeviceRole,
-  getDeviceRole,
   notifItems,
   clearNotifs
 }) {

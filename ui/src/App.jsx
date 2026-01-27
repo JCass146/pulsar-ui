@@ -508,7 +508,13 @@ export default function App() {
 
     const newCtl = connectMqtt({
       url: wsUrl,
-      onState: (s) => setStatus(s),
+      onState: (s) => {
+        setStatus(s);
+        const st = String(s?.status || "");
+        if (st === "connected") pushNotif("ok", "MQTT connected", s?.url || "");
+        else if (st === "reconnecting") pushNotif("warn", "MQTT reconnecting", s?.url || "");
+        else if (st === "disconnected") pushNotif("bad", "MQTT disconnected", s?.url || "");
+      },
       onMessage: (topic, payload) => handleIncoming(topic, payload)
     });
 
