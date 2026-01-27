@@ -6,6 +6,8 @@ import { pushPoint } from "./timeseries.js";
 import { useRafBatching } from "./hooks/useRafBatching.js";
 import { useNotifications } from "./hooks/useNotifications.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+import { APP_CONFIG } from "./config-constants.js";
+import { errorHandler } from "./services/error-handler.js";
 
 // Utilities
 import { isFiniteNumber, newId, nowIsoMs, safeJsonStringify } from "./utils/helpers.js";
@@ -32,8 +34,8 @@ export default function App() {
   const [wsUrl, setWsUrl] = useState("");
   const [subTopic, setSubTopic] = useState("pulsar/+/telemetry/#");
   const [subscribeTopics, setSubscribeTopics] = useState(null);
-  const [staleAfterMs, setStaleAfterMs] = useState(5000);
-  const [commandTimeoutMs, setCommandTimeoutMs] = useState(2000);
+  const [staleAfterMs, setStaleAfterMs] = useState(APP_CONFIG.STALE_AFTER_MS);
+  const [commandTimeoutMs, setCommandTimeoutMs] = useState(APP_CONFIG.COMMAND_TIMEOUT_MS);
   const [status, setStatus] = useState({ status: "loading", url: "" });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,7 +63,7 @@ export default function App() {
 
     const id = setInterval(() => {
       setRawTick((x) => x + 1);
-    }, 100);
+    }, APP_CONFIG.RAW_VIEW_REFRESH_MS);
     return () => clearInterval(id);
   }, [tab]);
 
@@ -146,27 +148,29 @@ export default function App() {
 
   // Check device stale/online status (called periodically and when device changes)
   function checkDeviceStatus() {
-    let changed = false;
+    return errorHandler.safeExecute(() => {
+      let changed = false;
 
-    for (const dev of devicesRef.current.values()) {
-      const prevStale = !!dev.stale;
-      const prevOnline = !!dev.online;
+      for (const dev of devicesRef.current.values()) {
+        const prevStale = !!dev.stale;
+        const prevOnline = !!dev.online;
 
-      computeStale(dev, staleAfterMs);
-      dev.online = computeOnline(dev, staleAfterMs);
+        computeStale(dev, staleAfterMs);
+        dev.online = computeOnline(dev, staleAfterMs);
 
-      if (prevStale !== dev.stale) {
-        pushNotif(dev.stale ? "warn" : "ok", dev.id, dev.stale ? "stale" : "fresh", dev.id);
-        changed = true;
+        if (prevStale !== dev.stale) {
+          pushNotif(dev.stale ? "warn" : "ok", dev.id, dev.stale ? "stale" : "fresh", dev.id);
+          changed = true;
+        }
+
+        if (prevOnline !== dev.online) {
+          pushNotif(dev.online ? "ok" : "bad", dev.id, dev.online ? "online" : "offline", dev.id);
+          changed = true;
+        }
       }
 
-      if (prevOnline !== dev.online) {
-        pushNotif(dev.online ? "ok" : "bad", dev.id, dev.online ? "online" : "offline", dev.id);
-        changed = true;
-      }
-    }
-
-    if (changed) bumpDeviceTick();
+      if (changed) bumpDeviceTick();
+    }, "checkDeviceStatus");
   }
 
   // Handle command sent
@@ -198,7 +202,7 @@ export default function App() {
 
   // Periodic stale/offline recompute (background housekeeping)
   useEffect(() => {
-    const id = setInterval(checkDeviceStatus, 500);
+    const id = setInterval(checkDeviceStatus, APP_CONFIG.STALE_CHECK_INTERVAL_MS);
     return () => clearInterval(id);
   }, [staleAfterMs]);
 

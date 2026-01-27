@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PlotCard from "./PlotCard.jsx";
 import DeviceList from "./DeviceList.jsx";
-import VirtualizedDeviceList from "./VirtualizedDeviceList.jsx";
 import VirtualizedNotifications from "./VirtualizedNotifications.jsx";
 import TopControlBar from "./TopControlBar.jsx";
+import { useDebounceCallback } from "../hooks/useDebounce.js";
+import { APP_CONFIG } from "../config-constants.js";
 
 function pillClassForBool(v) {
   if (v === true) return "ok";
@@ -138,6 +139,29 @@ export default function DashboardView({
     // keep text in sync if loaded
     setWatchedText(watchedFields.join(", "));
   }, []); // once
+
+  // Auto-apply watched fields with debounce
+  useDebounceCallback(
+    watchedText,
+    APP_CONFIG.DEBOUNCE_INPUT_MS,
+    (debouncedText) => {
+      const next = debouncedText
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const uniq = [];
+      const seen = new Set();
+      for (const f of next) {
+        if (seen.has(f)) continue;
+        seen.add(f);
+        uniq.push(f);
+      }
+      const final = uniq.length ? uniq : ["pressure_psi"];
+      setWatchedFields(final);
+      saveWatchedFields(final);
+    }
+  );
 
   // Pick a stable device order: online first, then stale, then offline
   const devicesOrdered = useMemo(() => {
