@@ -16,6 +16,7 @@ import { tryParsePayload, extractNumericFields } from "./utils/parsing.js";
 import { ensureDevice, computeStale, computeOnline, getDeviceRole } from "./services/device-registry.js";
 import { createMqttMessageHandler } from "./services/mqtt-handler.js";
 import { publishCommand, broadcastCommand } from "./services/command-publisher.js";
+import { getEventsForChart, getEventsForTimeline, purgeOldEvents } from "./services/event-handler.js";
 
 import DashboardView from "./ui/DashboardView.jsx";
 import ControlView from "./ui/ControlView.jsx";
@@ -213,6 +214,15 @@ export default function App() {
     bumpDeviceTick();
   }
 
+  // Handle incoming events (M4.1)
+  function handleIncomingEvent(event) {
+    // Push notification for events
+    pushNotif(event.severity === "error" ? "bad" : event.severity === "warn" ? "warn" : "info",
+      `${event.device} • ${event.name}`,
+      event.msg,
+      event.device);
+  }
+
   // Cancel a pending command (M3.1)
   function handleCancelCommand(cmdId, deviceId) {
     const device = devicesRef.current.get(deviceId);
@@ -259,6 +269,7 @@ export default function App() {
       parsePulsarTopic,
       onAckResolved: handleAckResolved,
       onDeviceChanged: bumpDeviceTick,
+      onEvent: handleIncomingEvent,
       maxPoints
     });
   }, [maxPoints]);

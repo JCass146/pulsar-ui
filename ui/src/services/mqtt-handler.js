@@ -6,6 +6,7 @@
 import { tryParsePayload, extractNumericFields } from "../utils/parsing.js";
 import { ensureDevice, computeStale } from "./device-registry.js";
 import { pushPoint } from "../timeseries.js";
+import { handleEvent } from "./event-handler.js";
 
 /**
  * Process incoming telemetry/event for time-series storage
@@ -141,6 +142,7 @@ export function upsertDeviceFromMessage(devicesMap, topic, tp, parsed) {
  * @param {function} options.parsePulsarTopic - Topic parser
  * @param {function} options.onAckResolved - ACK callback
  * @param {function} options.onDeviceChanged - Device change callback
+ * @param {function} options.onEvent - Event callback
  * @param {number} options.maxPoints - Max time-series points
  * @returns {function} Handler function: (topic, payload) => void
  */
@@ -154,6 +156,7 @@ export function createMqttMessageHandler(options) {
     parsePulsarTopic,
     onAckResolved,
     onDeviceChanged,
+    onEvent,
     maxPoints = 1500
   } = options;
 
@@ -164,6 +167,11 @@ export function createMqttMessageHandler(options) {
     // Ingest telemetry/event for time-series
     if (tp?.isPulsar && (tp.kind === "telemetry" || tp.kind === "event")) {
       ingestForPlotsWithTp(seriesMap, latestMap, tp, parsed, maxPoints);
+    }
+
+    // Handle events for markers and notifications
+    if (tp?.isPulsar && tp.kind === "event") {
+      handleEvent(tp, parsed, onEvent);
     }
 
     // Resolve ACK

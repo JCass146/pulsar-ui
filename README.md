@@ -2,6 +2,58 @@
 
 A modern React-based web dashboard for monitoring and controlling Pulsar IoT devices via MQTT in real-time.
 
+## Implemented Milestones & Recent Work (2026-01-27)
+
+Summary of recent fixes and Milestone 3 implementation integrated into the codebase.
+
+- **Theme / CSS overhaul**: Reworked theming to use CSS custom properties for light/dark parity. Key changes in `ui/src/styles.css` include variables such as `--glass-bg`, `--card-gradient-*`, and `--bg-gradient-*` and replacement of hardcoded rgba() colors so the Light theme renders correctly.
+
+- **Milestone 3 — Command Workflows (implemented)**:
+  - `ui/src/ui/CommandQueue.jsx` — Active command queue / intent panel showing pending commands, progress bars, and history with cancel/retry support.
+  - `ui/src/ui/CommandTemplates.jsx` — Command template library with builtin templates, custom templates persisted to localStorage, editor modal, and category/search filters.
+  - `ui/src/ui/AuthorityControl.jsx` — Authority layers (`view` / `control` / `armed`) with `useAuthorityControl()` hook, `AuthorityBadge`, `ArmedTimer` (30s auto-expire), `AuthoritySelector` modal, and `CommandGate` wrapper to block commands when not allowed.
+
+- **Integration**:
+  - `App.jsx` now imports and uses `useAuthorityControl`, and passes authority-related props to `ControlView` and `GlobalStatusBar` (compact badge in the status bar when not on Control tab).
+  - `ControlView.jsx` was updated to embed the Command Queue, Command Templates, and the AuthorityControl header; authority-aware send/cancel/retry flows and gated dangerous actions (e.g., apply calibration) are enforced.
+
+- **Persistence**: Command templates persisted via `ui/src/utils/persistence.js` under the key `COMMAND_TEMPLATES` (stored as `pulsarui:cmdTemplates:v1`). Builtin templates are provided and custom templates are saved/loaded automatically.
+
+- **Utilities**: Added `formatDuration()` to `ui/src/utils/helpers.js` which is used by the Command Queue for elapsed/progress display.
+
+Usage notes
+
+- To run locally (development):
+
+```bash
+cd ui
+npm install
+npm run dev
+```
+
+- To build for production:
+
+```bash
+cd ui
+npm run build
+```
+
+Behavior highlights
+
+- ARMED mode requires typing `ARM` in the Authority selector modal and auto-expires after 30 seconds of inactivity; ARMED is required for dangerous templates (marked `danger`) and actions such as `Apply + Persist` calibration.
+- Command Queue exposes cancel and retry actions. Cancel removes the pending command and records a `cancelled` entry in the command history.
+- Templates can be executed against the selected device from the Control view; duplicates can be created and custom templates edited and deleted.
+
+Files added/modified (high level)
+
+- Added: `ui/src/ui/CommandQueue.jsx`, `ui/src/ui/CommandTemplates.jsx`, `ui/src/ui/AuthorityControl.jsx`
+- Modified: `ui/src/App.jsx`, `ui/src/ui/ControlView.jsx`, `ui/src/ui/GlobalStatusBar.jsx`, `ui/src/styles.css`, `ui/src/utils/helpers.js` (added `formatDuration`), `ui/src/utils/persistence.js` (already had templates support)
+
+If you'd like, I can:
+- run the dev server and verify the UI manually
+- run a full build and report any bundler warnings/errors
+- add short screenshots / animated GIFs for the new UI panels
+
 ## Overview
 
 **Pulsar UI** is a containerized frontend application that visualizes telemetry data, device metrics, and system status from a fleet of IoT devices. It communicates with devices through MQTT WebSocket connections and displays live metrics, historical trends, and device control interfaces.
@@ -509,6 +561,28 @@ Pulsar UI expects topics following the v1 contract:
 | `pulsar/+/meta/#` | Device metadata (model, firmware, etc.) |
 | `pulsar/+/ack/#` | Command acknowledgments |
 | `pulsar/+/event/#` | System events & notifications |
+
+### Recommended Payload Schemas
+
+For `pulsar/+/event/#` topics:
+```json
+{
+  "id": "<uuid>",
+  "ts_unix_ms": 1234567890,
+  "severity": "info|warn|error",
+  "msg": "...",
+  "data": {...}
+}
+```
+
+For `pulsar/+/ack/#` topics:
+```json
+{
+  "id": "<cmd-id>",
+  "ok": true|false,
+  "error": "..."
+}
+```
 
 Payloads can be JSON, text, or binary; the app auto-parses and handles gracefully.
 

@@ -116,11 +116,19 @@ export default function TopControlBar({
   }, [targetDevices, defaultRelayKeys]);
 
   function setRelayAll(relayKey, state01) {
-    if (broadcastToDevices && targetDeviceIds.length > 0) {
+    const deviceIdsWithRelay = targetDevices
+      .filter(d => {
+        const relays = d?.state?.get?.("relays");
+        return relays && typeof relays === "object" && (relayKey in relays);
+      })
+      .map(d => d.id);
+
+    if (broadcastToDevices && deviceIdsWithRelay.length > 0) {
       // Use targeted broadcast if available
-      broadcastToDevices(targetDeviceIds, "relay.set", { relay: relayKey, state: state01 });
+      broadcastToDevices(deviceIdsWithRelay, "relay.set", { relay: relayKey, state: state01 });
     } else {
-      // Fall back to global broadcast
+      // Fall back to global broadcast - but this sends to all online, not filtered
+      // TODO: Implement individual publishCommand calls for filtered devices
       broadcastCommand("relay.set", { relay: relayKey, state: state01 });
     }
   }
