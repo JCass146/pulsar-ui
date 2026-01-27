@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import React from 'react';
 
 /**
  * Custom hook for debouncing values
@@ -70,4 +71,46 @@ export function useDeepMemo(computation, dependencies) {
   }, dependencies); // eslint-disable-line react-hooks/exhaustive-deps
 
   return memoizedValue;
+}
+
+/**
+ * useDebounceCallback
+ *
+ * Debounces a callback, executing it only after delay_ms has passed with no new calls.
+ * Useful for expensive operations triggered by user input (localStorage saves, API calls).
+ *
+ * Usage:
+ *   const [search, setSearch] = useState("");
+ *   useDebounceCallback(search, 500, (value) => {
+ *     // This runs 500ms after user stops typing
+ *     performSearch(value);
+ *   });
+ *
+ * @param {*} value - Dependency value to debounce
+ * @param {number} delayMs - Delay in milliseconds
+ * @param {Function} callback - Function to call with debounced value
+ */
+export function useDebounceCallback(value, delayMs, callback) {
+  const timeoutRef = React.useRef(null);
+
+  useEffect(() => {
+    // Clear previous timeout if value changed before delay
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Schedule new callback
+    timeoutRef.current = setTimeout(() => {
+      callback(value);
+      timeoutRef.current = null;
+    }, delayMs);
+
+    // Cleanup on unmount
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [value, delayMs, callback]);
 }

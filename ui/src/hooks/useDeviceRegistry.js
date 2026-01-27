@@ -47,7 +47,7 @@ export function useDeviceRegistry() {
 
   // Get devices sorted by status
   const getDevicesSorted = useCallback((online = true) => {
-    const arr = Array.from(devicesRef.current.values());
+    let arr = Array.from(devicesRef.current.values());
     if (online) {
       arr = arr.filter((d) => d.online);
     }

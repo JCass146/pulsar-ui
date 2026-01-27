@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useDebounce } from "../hooks/useDebounce.js";
+import { useDebounceCallback } from "../hooks/useDebounce.js";
 import { APP_CONFIG } from "../config-constants.js";
 import PlotCard from "./PlotCard.jsx";
 import DeviceList from "./DeviceList.jsx";
@@ -142,7 +142,7 @@ export default function DashboardView({
   }, []); // once
 
   // Debounce watched field changes to avoid excessive localStorage writes
-  useDebounce(watchedText, APP_CONFIG.DEBOUNCE_INPUT_MS, (debouncedText) => {
+  useDebounceCallback(watchedText, APP_CONFIG.DEBOUNCE_INPUT_MS, (debouncedText) => {
     const next = debouncedText
       .split(",")
       .map((s) => s.trim())
