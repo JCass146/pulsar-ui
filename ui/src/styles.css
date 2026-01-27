@@ -718,3 +718,110 @@ button.danger {
   font-weight: 900;
 }
 .favBtn.fav { border-color: rgba(255,255,255,0.22); }
+
+/* ---- Plot header instrumentation ---- */
+.plotHdr {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.plotHdrLeft {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+}
+
+.plotValue {
+  font-size: 14px;
+  font-weight: 900;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.plotUnit {
+  font-size: 11px;
+  opacity: 0.65;
+  margin-left: 6px;
+}
+
+/* tighter chart wall */
+.plotsGrid {
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+/* ---- Status wall ---- */
+.statusWall {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 12px;
+}
+
+.deviceStatusCard {
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.22);
+  padding: 12px;
+}
+
+.deviceStatusHdr {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.deviceStatusName {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  font-weight: 900;
+}
+
+.deviceStatusName:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.statusBtnGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.statusBtn {
+  border-radius: 12px;
+  padding: 10px 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* tones */
+.statusBtn.ok {
+  border-color: rgba(0,255,140,0.28);
+  background: rgba(0,255,140,0.10);
+}
+
+.statusBtn.warn {
+  border-color: rgba(255,200,0,0.30);
+  background: rgba(255,200,0,0.10);
+}
+
+.statusBtn.bad {
+  border-color: rgba(255,80,80,0.35);
+  background: rgba(255,80,80,0.12);
+}
+
+.statusBtn.neutral {
+  border-color: rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+}
