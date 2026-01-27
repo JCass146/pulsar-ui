@@ -3,6 +3,8 @@ import PlotCard from "./PlotCard.jsx";
 import DeviceList from "./DeviceList.jsx";
 import VirtualizedNotifications from "./VirtualizedNotifications.jsx";
 import TopControlBar from "./TopControlBar.jsx";
+import LiveMetricsRail from "./LiveMetricsRail.jsx";
+import RetainedStateBank from "./RetainedStateBank.jsx";
 import { useDebounceCallback } from "../hooks/useDebounce.js";
 import { APP_CONFIG } from "../config-constants.js";
 
@@ -128,7 +130,10 @@ export default function DashboardView({
   getDeviceRole,
   notifItems,
   clearNotifs,
-  broadcastCommand
+  broadcastCommand,
+  // new props for Milestone 1
+  sendCommand,
+  pushNotif,
 }) {
   // Watched fields (no multi-select dropdown needed)
   const [watchedFields, setWatchedFields] = useState(() => loadWatchedFields());
@@ -287,7 +292,12 @@ export default function DashboardView({
             </button>
           </div>
 
-          <VirtualizedNotifications notifItems={notifItems} clearNotifs={clearNotifs} />
+          <VirtualizedNotifications
+            notifItems={notifItems}
+            clearNotifs={clearNotifs}
+            showStickyFaults={true}
+            maxHeight={360}
+          />
 
           <div className="hint" style={{ marginTop: 8 }}>
             Full packet history lives in <span className="mono">Raw</span>.
@@ -396,13 +406,25 @@ export default function DashboardView({
 
       {/* RIGHT RAIL */}
       <aside className="dashRight">
-        <section className="card controls">
-          <h2>Selected device</h2>
-          <div className="hint">
-            We’ll keep the detailed “pinned metrics” panel here later (or move it to Control).
-            For now, dashboard is focused on fleet visibility.
-          </div>
-        </section>
+        {/* Live Metrics Rail (Milestone 1.1) */}
+        <LiveMetricsRail
+          devicesRef={devicesRef}
+          latestRef={latestRef}
+          seriesRef={seriesRef}
+          deviceList={deviceList}
+          selectedDevice={selectedDevice}
+          pushNotif={pushNotif}
+        />
+
+        {/* Retained State Bank (Milestone 1.2) */}
+        <RetainedStateBank
+          devicesRef={devicesRef}
+          latestRef={latestRef}
+          deviceList={deviceList}
+          selectedDevice={selectedDevice}
+          onSendCommand={sendCommand}
+          broadcastCommand={broadcastCommand}
+        />
       </aside>
     </div>
   );

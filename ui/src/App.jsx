@@ -503,6 +503,8 @@ export default function App() {
             getDeviceRole={getDeviceRole}
             notifItems={notifItems}
             clearNotifs={clearNotifs}
+            sendCommand={sendCommand}
+            pushNotif={pushNotif}
           />
         </main>
       ) : tab === "control" ? (
