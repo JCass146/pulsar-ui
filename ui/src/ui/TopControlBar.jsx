@@ -125,11 +125,11 @@ export default function TopControlBar({
 
     if (broadcastToDevices && deviceIdsWithRelay.length > 0) {
       // Use targeted broadcast if available
-      broadcastToDevices(deviceIdsWithRelay, "relay.set", { id: relayKey, state: state01 });
+      broadcastToDevices(deviceIdsWithRelay, "relay.set", { relay: relayKey, state: state01 });
     } else {
       // Fall back to global broadcast - but this sends to all online, not filtered
       // TODO: Implement individual publishCommand calls for filtered devices
-      broadcastCommand("relay.set", { id: relayKey, state: state01 });
+      broadcastCommand("relay.set", { relay: relayKey, state: state01 });
     }
   }
 
