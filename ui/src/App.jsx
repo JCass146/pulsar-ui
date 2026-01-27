@@ -33,6 +33,8 @@ export default function App() {
   const [staleAfterMs, setStaleAfterMs] = useState(5000);
   const [commandTimeoutMs, setCommandTimeoutMs] = useState(2000);
   const [status, setStatus] = useState({ status: "loading", url: "" });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // UI state
   const [paused, setPaused] = useState(false);
@@ -199,39 +201,49 @@ export default function App() {
     let isMounted = true;
 
     (async () => {
-      const cfg = await loadRuntimeConfig();
-      if (!isMounted) return;
+      try {
+        const cfg = await loadRuntimeConfig();
+        if (!isMounted) return;
 
-      setWsUrl(cfg.mqttWsUrl);
-      setSubTopic(cfg.mqttTopic);
-      if (Array.isArray(cfg.subscribeTopics) && cfg.subscribeTopics.length) {
-        setSubscribeTopics(cfg.subscribeTopics.map((s) => String(s).trim()).filter(Boolean));
-      }
-      if (isFiniteNumber(cfg.staleAfterMs) && cfg.staleAfterMs > 0) setStaleAfterMs(cfg.staleAfterMs);
-      if (isFiniteNumber(cfg.commandTimeoutMs) && cfg.commandTimeoutMs > 0)
-        setCommandTimeoutMs(cfg.commandTimeoutMs);
-
-      const ctl = connectMqtt({
-        url: cfg.mqttWsUrl,
-        onState: (s) => {
-          setStatus(s);
-          const st = String(s?.status || "");
-          if (st === "connected") pushNotif("ok", "MQTT connected", s?.url || "");
-          else if (st === "reconnecting") pushNotif("warn", "MQTT reconnecting", s?.url || "");
-          else if (st === "disconnected") pushNotif("bad", "MQTT disconnected", s?.url || "");
-        },
-        onMessage: (topic, payload) => {
-          scheduleRafUpdate(() => handleIncoming(topic, payload));
+        setWsUrl(cfg.mqttWsUrl);
+        setSubTopic(cfg.mqttTopic);
+        if (Array.isArray(cfg.subscribeTopics) && cfg.subscribeTopics.length) {
+          setSubscribeTopics(cfg.subscribeTopics.map((s) => String(s).trim()).filter(Boolean));
         }
-      });
+        if (isFiniteNumber(cfg.staleAfterMs) && cfg.staleAfterMs > 0) setStaleAfterMs(cfg.staleAfterMs);
+        if (isFiniteNumber(cfg.commandTimeoutMs) && cfg.commandTimeoutMs > 0)
+          setCommandTimeoutMs(cfg.commandTimeoutMs);
 
-      controllerRef.current = ctl;
+        const ctl = connectMqtt({
+          url: cfg.mqttWsUrl,
+          onState: (s) => {
+            setStatus(s);
+            const st = String(s?.status || "");
+            if (st === "connected") pushNotif("ok", "MQTT connected", s?.url || "");
+            else if (st === "reconnecting") pushNotif("warn", "MQTT reconnecting", s?.url || "");
+            else if (st === "disconnected") pushNotif("bad", "MQTT disconnected", s?.url || "");
+          },
+          onMessage: (topic, payload) => {
+            scheduleRafUpdate(() => handleIncoming(topic, payload));
+          }
+        });
 
-      const topics = Array.isArray(cfg.subscribeTopics) && cfg.subscribeTopics.length 
-        ? cfg.subscribeTopics 
-        : [cfg.mqttTopic];
-      
-      for (const t of topics) ctl.subscribe(t);
+        controllerRef.current = ctl;
+
+        const topics = Array.isArray(cfg.subscribeTopics) && cfg.subscribeTopics.length
+          ? cfg.subscribeTopics
+          : [cfg.mqttTopic];
+
+        for (const t of topics) ctl.subscribe(t);
+
+        setIsLoading(false);
+      } catch (err) {
+        if (!isMounted) return;
+        setError(`Failed to load configuration: ${err.message}`);
+        setStatus({ status: "error", url: "" });
+        pushNotif("bad", "Configuration Error", err.message);
+        setIsLoading(false);
+      }
     })();
 
     return () => {
@@ -417,6 +429,23 @@ export default function App() {
   // Render
   return (
     <div className="app">
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Loading configuration...</div>
+        </div>
+      )}
+
+      {error && (
+        <div className="error-banner">
+          <div className="error-content">
+            <div className="error-title">Error</div>
+            <div className="error-message">{error}</div>
+            <button className="error-dismiss" onClick={() => setError(null)}>Dismiss</button>
+          </div>
+        </div>
+      )}
+
       <header className="topbar">
         <div className="brand">
           <div className="logo" />
