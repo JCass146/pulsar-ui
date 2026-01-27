@@ -21,6 +21,7 @@ import { getEventsForChart, getEventsForTimeline, purgeOldEvents } from "./servi
 import DashboardView from "./ui/DashboardView.jsx";
 import ControlView from "./ui/ControlView.jsx";
 import RawView from "./ui/RawView.jsx";
+import TimelineView from "./ui/TimelineView.jsx";
 import ThemeToggle from "./ui/ThemeToggle.jsx";
 import GlobalStatusBar from "./ui/GlobalStatusBar.jsx";
 
@@ -92,6 +93,10 @@ export default function App() {
   const [cmdHistory, setCmdHistory] = useState([]);
   const [calEditorText, setCalEditorText] = useState("");
   const [calAutoSync, setCalAutoSync] = useState(true);
+
+  // Events (M4.1)
+  const [events, setEvents] = useState([]);
+  const [eventsTick, setEventsTick] = useState(0);
 
   // Milestone 3: Authority Control
   const {
@@ -221,6 +226,9 @@ export default function App() {
       `${event.device} • ${event.name}`,
       event.msg,
       event.device);
+
+    // Update events state for timeline
+    setEvents(prev => [event, ...prev].slice(0, 100));
   }
 
   // Cancel a pending command (M3.1)
@@ -568,6 +576,9 @@ export default function App() {
         <button className={tab === "control" ? "tab active" : "tab"} onClick={() => setTab("control")}>
           Control
         </button>
+        <button className={tab === "timeline" ? "tab active" : "tab"} onClick={() => setTab("timeline")}>
+          Timeline
+        </button>
         <button className={tab === "raw" ? "tab active" : "tab"} onClick={() => setTab("raw")}>
           Raw
         </button>
@@ -628,6 +639,14 @@ export default function App() {
           onCancelCommand={handleCancelCommand}
           onRetryCommand={handleRetryCommand}
           sendCommand={sendCommand}
+        />
+      ) : tab === "timeline" ? (
+        <TimelineView
+          events={events}
+          commandHistory={cmdHistory}
+          devices={deviceList}
+          onDeviceSelect={setSelectedDevice}
+          selectedDeviceId={selectedDevice?.id}
         />
       ) : (
         <RawView

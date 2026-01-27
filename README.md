@@ -160,7 +160,7 @@ Interactive device command and configuration interface:
 
 **Command Center**
 - **Generic Command Interface**: Send arbitrary `<action>` + JSON args to `pulsar/<device>/cmd/<action>`
-- **Command Template Library**: Pre-populated examples (e.g., `relay.set` with args `{"relay":1,"state":1}`)
+- **Command Template Library**: Pre-populated examples (e.g., `relay.set` with args `{"id":1,"state":1}`)
 - **Command Timeout**: Configurable timeout (default 2000ms) for command acknowledgment
 - **ACK Pattern**: Devices respond on `pulsar/<device>/ack/<action>` with matching command `id` field
 - **Command History Log**: Full audit trail of sent commands with timestamp, device, action, args, and status
