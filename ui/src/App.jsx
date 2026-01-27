@@ -659,6 +659,20 @@ export default function App() {
     return { ok: true, id };
   }
 
+  function broadcastCommand(action, args, extra = {}) {
+    const targets = deviceList.filter((d) => d.online).map((d) => d.id);
+    if (!targets.length) {
+      pushNotif("warn", "Broadcast", "No online devices to send to");
+      return;
+    }
+
+    pushNotif("info", "Broadcast", `Sending ${action} to ${targets.length} device(s)`);
+
+    for (const devId of targets) {
+      publishCommand(devId, action, args, extra);
+    }
+  }
+
   function sendGenericCommand() {
     let args = {};
     try {
@@ -771,12 +785,13 @@ export default function App() {
             selectedDevice={selectedDevice}
             setSelectedDevice={setSelectedDevice}
             plotDevices={plotDevices}
-            deviceList={deviceList}   // ✅ add this
+            deviceList={deviceList}
             availableFields={availableFields}
             selectedFields={selectedFields}
             setSelectedFields={setSelectedFields}
             maxPoints={maxPoints}
             setMaxPoints={setMaxPoints}
+            broadcastCommand={broadcastCommand}
             devicesRef={devicesRef}
             latestRef={latestRef}
             seriesRef={seriesRef}

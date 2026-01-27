@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PlotCard from "./PlotCard.jsx";
 import DeviceList from "./DeviceList.jsx";
+import TopControlBar from "./TopControlBar.jsx";
 
 function pillClassForBool(v) {
   if (v === true) return "ok";
@@ -112,7 +113,8 @@ export default function DashboardView({
   seriesRef,
   getDeviceRole,
   notifItems,
-  clearNotifs
+  clearNotifs,
+  broadcastCommand
 }) {
   // Watched fields (no multi-select dropdown needed)
   const [watchedFields, setWatchedFields] = useState(() => loadWatchedFields());
@@ -291,6 +293,12 @@ export default function DashboardView({
             </div>
           </div>
         </section>
+
+        <TopControlBar
+          deviceList={deviceList}
+          devicesRef={devicesRef}
+          broadcastCommand={broadcastCommand}
+        />
 
         {/* STATUS BUTTONS PER DEVICE */}
         <section className="card controls" style={{ marginTop: 12 }}>
