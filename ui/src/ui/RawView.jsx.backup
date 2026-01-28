@@ -95,166 +95,7 @@ export default function RawView({
       />
 
       <main className="rawViewMain">
-        {/* LEFT PANEL: Connection + Filters (260px) */}
-        <aside className="rawViewConnection">
-          <section className="card controls">
-            <h2>🔌 Connection</h2>
-
-            <div className="connectionStatus">
-              <div className="connectionStatusLabel">WebSocket Connection</div>
-              <div className="connectionStatusValue mono">
-                {wsUrl || "(pending)"}
-              </div>
-              <div className="hint">
-                Connected via runtime config (<span className="mono">/config.json</span>)
-              </div>
-            </div>
-
-            <form className="form" onSubmit={resubscribe} style={{ marginTop: 16 }}>
-              <label>
-                Subscribe topic
-                <input
-                  value={subTopic}
-                  onChange={(e) => {
-                    setSubTopic(e.target.value);
-                    setSubscribeTopics(null); // manual override => single-topic mode
-                  }}
-                  placeholder="pulsar/+/telemetry/#"
-                  spellCheck={false}
-                />
-                <div className="hint">
-                  Wildcards: + and #
-                </div>
-              </label>
-
-              {subscribeTopics && subscribeTopics.length > 0 && (
-                <div className="hint" style={{ marginTop: 8 }}>
-                  Multi-subscribe:
-                  <ul style={{ margin: "6px 0 0 18px" }}>
-                    {subscribeTopics.map((t) => (
-                      <li key={t}>
-                        <span className="mono">{t}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div className="row" style={{ marginTop: 12 }}>
-                <button type="submit">Reconnect</button>
-                <button type="button" className="secondary" onClick={() => setPaused((p) => !p)}>
-                  {paused ? "▶" : "⏸"}
-                </button>
-                <button type="button" className="danger" onClick={clearMessages}>
-                  Clear
-                </button>
-              </div>
-            </form>
-
-            <div className="stats" style={{ marginTop: 16 }}>
-              <div className="stat">
-                <div className="statLabel">Messages</div>
-                <div className="statValue mono">{messagesCount}</div>
-              </div>
-              <div className="stat">
-                <div className="statLabel">Devices</div>
-                <div className="statValue mono">{devicesSeenCount}</div>
-              </div>
-            </div>
-
-            <h3 style={{ marginTop: 16 }}>🔍 Filters</h3>
-            <div className="form">
-              <label>
-                Device
-                <select value={rawDeviceFilter} onChange={(e) => setRawDeviceFilter(e.target.value)}>
-                  <option value="all">all</option>
-                  {plotDevices.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Family
-                <select value={rawFamilyFilter} onChange={(e) => setRawFamilyFilter(e.target.value)}>
-                  <option value="all">all</option>
-                  <option value="status">status</option>
-                  <option value="meta">meta</option>
-                  <option value="state">state (retained)</option>
-                  <option value="telemetry">telemetry</option>
-                  <option value="event">event</option>
-                  <option value="cmd">cmd</option>
-                  <option value="ack">ack</option>
-                </select>
-              </label>
-            </div>
-          </section>
-        </aside>
-
-        {/* CENTER: Message Feed (flex-1) */}
-        <section className="card feed rawViewFeed">
-          <h2>📨 Message Feed</h2>
-
-          <div className="feedList">
-            {filteredMessages.map((m) => (
-              <article key={m.id} className="msg">
-                <div className="msgMeta">
-                  <span className="mono muted">{m.t}</span>
-                  <span className="mono topic">{m.topic}</span>
-                  <span className="muted mono">{formatBytes(m.payloadLen)}</span>
-                </div>
-
-                <div className="msgBody">
-                  {m.parsed.kind === "json" ? (
-                    <pre className="pre">{safeJsonStringify(m.parsed.json)}</pre>
-                  ) : m.parsed.kind === "text" ? (
-                    <pre className="pre">{m.parsed.text}</pre>
-                  ) : (
-                    <span className="muted">(empty)</span>
-                  )}
-                </div>
-
-                {m.topicParsed?.isPulsar && (
-                  <div className="msgFooter">
-                    <DeviceChip
-                      deviceId={m.topicParsed.device}
-                      devicesRef={devicesRef}
-                      size="small"
-                      compact
-                      clickable
-                      onClick={(id) => {
-                        setExpandedDevice(id);
-                        setSelectedDevice(id);
-                      }}
-                    />
-                    <span className="badge">
-                      kind: <span className="mono">{m.topicParsed.kind || "?"}</span>
-                    </span>
-                    {m.topicParsed.path && (
-                      <span className="badge">
-                        path: <span className="mono">{m.topicParsed.path}</span>
-                      </span>
-                    )}
-                  </div>
-                )}
-              </article>
-            ))}
-
-            {filteredMessages.length === 0 && (
-              <div className="empty">
-                <div className="emptyTitle">No messages yet</div>
-                <div className="muted">
-                  Make sure Mosquitto has <span className="mono">listener 9001</span> with{" "}
-                  <span className="mono">protocol websockets</span>, and that you're publishing/subscribed correctly.
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* RIGHT PANEL: Fleet List (280px) */}
+        {/* LEFT PANEL: Fleet List */}
         <aside className="rawViewFleet">
           <section className="card controls">
             <h2>🛰️ Fleet</h2>
@@ -349,10 +190,13 @@ export default function RawView({
             </section>
           )}
         </aside>
-      </main>
-    </div>
-  );
-}
+
+        {/* CENTER: Connection + Filters */}
+        <section className="card controls rawViewControls">
+          <h2>🔌 Connection</h2>
+
+        <form className="form" onSubmit={resubscribe}>
+          <div className="connectionStatus">
             <div className="connectionStatusLabel">WebSocket Connection</div>
             <div className="connectionStatusValue mono">
               {wsUrl || "(pending)"}

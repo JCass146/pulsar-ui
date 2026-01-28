@@ -4,8 +4,10 @@ import VirtualizedNotifications from "./VirtualizedNotifications.jsx";
 import TopControlBar from "./TopControlBar.jsx";
 import LiveMetricsRail from "./LiveMetricsRail.jsx";
 import HealthSummaryBar from "./HealthSummaryBar.jsx";
+import RetainedSnapshotBar from "./RetainedSnapshotBar.jsx";
 import { useDebounceCallback } from "../hooks/useDebounce.js";
 import { APP_CONFIG } from "../config-constants.js";
+import { loadPinnedMetrics } from "../utils/persistence.js";
 
 function pillClassForBool(v) {
   if (v === true) return "ok";
@@ -143,6 +145,16 @@ export default function DashboardView({
   const [watchedText, setWatchedText] = useState(() => loadWatchedFields().join(", "));
   const [showOnlyOnline, setShowOnlyOnline] = useState(true);
   const [configCollapsed, setConfigCollapsed] = useState(true);
+  const [notifCollapsed, setNotifCollapsed] = useState(true);
+  const [pinnedMetrics] = useState(() => loadPinnedMetrics());
+
+  // Auto-expand notifications on errors/warnings
+  useEffect(() => {
+    const hasErrors = notifItems.some(n => n.level === "bad" || n.level === "warn");
+    if (hasErrors && notifCollapsed) {
+      setNotifCollapsed(false);
+    }
+  }, [notifItems, notifCollapsed]);
 
   useEffect(() => {
     // keep text in sync if loaded
@@ -318,30 +330,55 @@ export default function DashboardView({
             )}
           </section>
 
-          {/* Notifications */}
+          {/* Notifications - Collapsed by default */}
           <section className="card controls" style={{ marginTop: 12 }}>
-            <div className="row" style={{ alignItems: "center", justifyContent: "space-between" }}>
-              <h2 style={{ margin: 0 }}>🔔 Notifications</h2>
-              <button type="button" className="secondary" onClick={clearNotifs}>
-                Clear
-              </button>
+            <div
+              className="row"
+              style={{ alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+              onClick={() => setNotifCollapsed((v) => !v)}
+            >
+              <h2 style={{ margin: 0 }}>🔔 Notifications {notifItems.length > 0 && `(${notifItems.length})`}</h2>
+              <div className="row" style={{ gap: 8 }}>
+                {!notifCollapsed && (
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={(e) => { e.stopPropagation(); clearNotifs(); }}
+                  >
+                    Clear
+                  </button>
+                )}
+                <span className="muted">{notifCollapsed ? "▶" : "▼"}</span>
+              </div>
             </div>
 
-            <VirtualizedNotifications
-              notifItems={notifItems}
-              clearNotifs={clearNotifs}
-              showStickyFaults={true}
-              maxHeight={360}
-            />
-
-            <div className="hint" style={{ marginTop: 8 }}>
-              Full message history in <span className="mono">Raw</span> tab.
-            </div>
+            {!notifCollapsed && (
+              <>
+                <VirtualizedNotifications
+                  notifItems={notifItems}
+                  clearNotifs={clearNotifs}
+                  showStickyFaults={true}
+                  maxHeight={360}
+                />
+                <div className="hint" style={{ marginTop: 8 }}>
+                  Full message history in <span className="mono">Raw</span> tab.
+                </div>
+              </>
+            )}
           </section>
         </aside>
 
         {/* CENTER - Charts Wall */}
         <section className="dashSimpleCenter">
+          {/* Retained State Strip */}
+          {pinnedMetrics && pinnedMetrics.length > 0 && (
+            <RetainedSnapshotBar
+              pinnedMetrics={pinnedMetrics}
+              devicesRef={devicesRef}
+              latestRef={latestRef}
+            />
+          )}
+
           {/* CHART WALL */}
           <div className="plotsGrid">
             {wallSeries.length ? (

@@ -568,6 +568,7 @@ export default function App() {
         authorityLevel={tab !== "control" ? authorityLevel : null}
         armedExpiresAt={armedExpiresAt}
         onAuthorityClick={() => setTab("control")}
+        currentTab={tab}
       />
 
       <div className="tabs">

@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { fmt, inferUnit } from "./MetricCard.jsx";
 import DeviceChip from "./DeviceChip.jsx";
+import ChartSettingsModal from "./ChartSettingsModal.jsx";
 import { getFriendlyFieldLabel } from "../utils/health.js";
 
 function splitSeriesKey(seriesKey) {
@@ -38,11 +39,16 @@ function PlotCard({
 }) {
   const [tick, setTick] = useState(0);
   const [hovered, setHovered] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [currentWindow, setCurrentWindow] = useState(windowSec);
+  const [yAxisAuto, setYAxisAuto] = useState(true);
+  const [chartPaused, setChartPaused] = useState(false);
 
   useEffect(() => {
+    if (chartPaused) return; // Don't update when paused
     const id = setInterval(() => setTick((x) => x + 1), 250); // ~4 fps
     return () => clearInterval(id);
-  }, []);
+  }, [chartPaused]);
 
   const { device, field } = useMemo(() => splitSeriesKey(seriesKey), [seriesKey]);
   const unit = useMemo(() => inferUnit(field), [field]);
@@ -52,7 +58,7 @@ function PlotCard({
     const now = Date.now();
     const arr = seriesRef.current.get(seriesKey) || [];
 
-    const cutoff = now - windowSec * 1000;
+    const cutoff = now - currentWindow * 1000;
 
     // Filter to window and map to relative seconds (negative -> now)
     const mapped = [];
@@ -68,7 +74,7 @@ function PlotCard({
 
     const lv = arr.length ? arr[arr.length - 1].v : null;
     return { data: mapped, lastV: lv, nowMs: now };
-  }, [tick, seriesKey, seriesRef, windowSec]);
+  }, [tick, seriesKey, seriesRef, currentWindow]);
 
   return (
     <div
@@ -102,16 +108,27 @@ function PlotCard({
         <button
           className={`plotGear ${hovered ? "show" : ""}`}
           type="button"
-          title="Plot options (coming soon)"
+          title="Plot options"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            // stub for now
+            setSettingsOpen(true);
           }}
         >
           ⚙
         </button>
       </div>
+
+      <ChartSettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        windowSec={currentWindow}
+        onWindowChange={setCurrentWindow}
+        yAxisAuto={yAxisAuto}
+        onYAxisAutoChange={setYAxisAuto}
+        isPaused={chartPaused}
+        onPausedChange={setChartPaused}
+      />
 
       <div className="plotInner" style={{ height, position: "relative" }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -119,7 +136,7 @@ function PlotCard({
             <XAxis
               dataKey="x"
               type="number"
-              domain={[-windowSec, 0]}
+              domain={[-currentWindow, 0]}
               tickFormatter={fmtRelSec}
               hide={!showXAxis}
             />

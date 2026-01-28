@@ -4016,30 +4016,38 @@ button.danger {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 140px);
-  padding: 8px;
-  gap: 12px;
+  padding: 0;
+  gap: 0;
 }
 
 .rawViewMain {
   display: grid;
-  grid-template-columns: 280px 320px 1fr;
+  grid-template-columns: 260px 1fr 280px;
   gap: 12px;
+  padding: 12px;
   flex: 1;
   min-height: 0;
+}
+
+.rawViewConnection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.rawViewFeed {
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .rawViewFleet {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.rawViewControls {
-  overflow-y: auto;
-}
-
-.rawViewFeed {
+  gap: 12px;
   overflow-y: auto;
   min-height: 0;
 }
@@ -4047,40 +4055,54 @@ button.danger {
 /* Responsive adjustments for Raw view */
 @media (max-width: 1200px) {
   .rawViewMain {
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 240px 1fr 260px;
+  }
+}
+
+@media (max-width: 900px) {
+  .rawViewMain {
+    grid-template-columns: 1fr 260px;
     grid-template-rows: auto 1fr;
   }
   
-  .rawViewControls {
-    grid-column: 2;
+  .rawViewConnection {
+    grid-column: 1 / -1;
     grid-row: 1;
+    max-height: 200px;
   }
   
   .rawViewFeed {
-    grid-column: 1 / -1;
+    grid-column: 1;
+    grid-row: 2;
+  }
+  
+  .rawViewFleet {
+    grid-column: 2;
     grid-row: 2;
   }
 }
 
-@media (max-width: 800px) {
-  .rawViewMain {
-    grid-template-columns: 1fr;
-  }
-  
-  .rawViewFleet {
-    max-height: 200px;
-  }
-  
-  .rawViewControls {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  
-  .rawViewFeed {
-    grid-column: 1;
-    grid-row: 3;
-    max-height: 400px;
-  }
+/* Connection status display */
+.connectionStatus {
+  padding: 12px;
+  background: var(--glass-light);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.connectionStatusLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.connectionStatusValue {
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-all;
 }
 
 /* Multi-device command confirmation modal */
@@ -4158,4 +4180,190 @@ button.danger {
 .metricLabel__technical {
   font-size: 10px;
   color: var(--muted);
+}
+
+/* ===== Modal Overlay & Content ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: min(480px, 90vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.modal-body .form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.modal-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.modal-body input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+}
+
+.modal-body input[type="checkbox"] + span {
+  display: inline;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.modal-footer button {
+  padding: 8px 16px;
+}
+
+/* ===== Retained Snapshot Bar ===== */
+.retainedSnapshotBar {
+  background: linear-gradient(to bottom, var(--glass-light), transparent);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.retainedSnapshotLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.retainedSnapshotTiles {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.retainedSnapshot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--glass-medium);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: fit-content;
+  white-space: nowrap;
+}
+
+.retainedSnapshot.fresh {
+  background: var(--glass-light);
+}
+
+.retainedSnapshot.stale {
+  opacity: 0.6;
+  border-color: var(--border);
+}
+
+.retainedSnapshot__device {
+  flex-shrink: 0;
+}
+
+.retainedSnapshot__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.retainedSnapshot__field {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.retainedSnapshot__value {
+  color: var(--text);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.retainedSnapshot__unit {
+  font-size: 10px;
+  margin-left: 3px;
+  color: var(--muted);
+}
+
+.retainedSnapshot__badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.retainedSnapshot__badge.stale {
+  background: rgba(255, 100, 100, 0.2);
+  color: #ff6464;
 }

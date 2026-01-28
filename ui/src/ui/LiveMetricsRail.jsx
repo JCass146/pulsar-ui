@@ -53,6 +53,7 @@ function PinnedMetricTile({
   seriesData,
   onUnpin,
   thresholdOverrides,
+  tick, // NEW: for real-time sparkline updates
 }) {
   const unit = inferUnit(field);
   const freshness = getFreshnessStatus(lastUpdateMs);
@@ -67,11 +68,11 @@ function PinnedMetricTile({
     thresholdStatus === "critical" ? "critical" :
     thresholdStatus === "warn" ? "warn" : "ok";
 
-  // Get last N points for sparkline
+  // Get last N points for sparkline - includes tick to force updates every 250ms
   const sparkPoints = useMemo(() => {
     if (!seriesData || !Array.isArray(seriesData)) return [];
     return seriesData.slice(-60); // Last 60 points for compact view
-  }, [seriesData]);
+  }, [seriesData, tick]); // tick forces recalculation every 250ms for live updates
 
   return (
     <div className={`pinnedMetric ${visualStatus}`}>
@@ -133,6 +134,13 @@ export default function LiveMetricsRail({
   const [pinnedMetrics, setPinnedMetrics] = useState(() => loadPinnedMetrics());
   const [thresholdOverrides] = useState(() => ({})); // TODO: load from persistence
   const [collapsed, setCollapsed] = useState(false);
+  const [tick, setTick] = useState(0);
+
+  // Force re-render every 250ms to update live series data
+  React.useEffect(() => {
+    const id = setInterval(() => setTick((x) => x + 1), 250);
+    return () => clearInterval(id);
+  }, []);
 
   // Save pinned metrics when they change
   const savePinned = useCallback((newPinned) => {
@@ -191,7 +199,7 @@ export default function LiveMetricsRail({
         seriesData,
       };
     }).sort((a, b) => a.pinOrder - b.pinOrder);
-  }, [pinnedMetrics, latestRef, seriesRef]);
+  }, [pinnedMetrics, latestRef, seriesRef, tick]);
 
   // Get available fields from selected device for quick-pin
   const availableFields = useMemo(() => {
@@ -301,6 +309,7 @@ export default function LiveMetricsRail({
                   lastUpdateMs={pin.lastUpdateMs}
                   seriesData={pin.seriesData}
                   onUnpin={unpinMetric}
+                  tick={tick}
                   thresholdOverrides={thresholdOverrides}
                 />
               ))

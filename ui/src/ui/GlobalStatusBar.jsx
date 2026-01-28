@@ -191,6 +191,8 @@ export default function GlobalStatusBar({
   authorityLevel,
   onAuthorityClick,
   armedExpiresAt,
+  // NEW: Tab indicator for context-aware status pills
+  currentTab = "dashboard",
 }) {
   // Compute fleet statistics
   const stats = useMemo(() => {
@@ -202,6 +204,11 @@ export default function GlobalStatusBar({
     return computeSystemHealth(stats, mqttStatus);
   }, [stats, mqttStatus]);
 
+  // Determine what to show based on current tab
+  const showFleetCounts = currentTab === "dashboard" || currentTab === "raw";
+  const showStateIndicators = currentTab === "control";
+  const showLiveOnly = currentTab !== "control" && currentTab !== "dashboard";
+
   return (
     <div className={`globalStatusBar ${health}`}>
       {/* Left: MQTT Status */}
@@ -209,16 +216,16 @@ export default function GlobalStatusBar({
         <MqttStatusIndicator status={mqttStatus} url={mqttUrl} />
       </div>
 
-      {/* Center: Fleet Counts */}
+      {/* Center: Fleet Counts & State (context-aware) */}
       <div className="gsbSection gsbCenter">
-        <FleetCountBadges stats={stats} />
-        <SystemStateIndicators stats={stats} />
+        {showFleetCounts && <FleetCountBadges stats={stats} />}
+        {showStateIndicators && <SystemStateIndicators stats={stats} />}
       </div>
 
       {/* Right: Controls */}
       <div className="gsbSection gsbRight">
         {/* Authority badge (M3.3) - shown when on non-Control tabs */}
-        {authorityLevel && (
+        {authorityLevel && currentTab === "control" && (
           <div className="gsbAuthorityWrapper">
             <AuthorityBadge level={authorityLevel} onClick={onAuthorityClick} />
             {authorityLevel === "armed" && armedExpiresAt && (
@@ -239,7 +246,7 @@ export default function GlobalStatusBar({
           {paused ? "▶ RESUME" : "⏸ LIVE"}
         </button>
 
-        {/* System health indicator */}
+        {/* System health indicator - always show */}
         <div className={`gsbHealthIndicator ${health}`}>
           <span className="gsbHealthIcon">
             {health === "ok" ? "●" :
