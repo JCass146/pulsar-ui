@@ -686,7 +686,7 @@ export default function App() {
           devicesRef={devicesRef}
           latestRef={latestRef}
           sendCommand={sendCommand}
-          broadcastCommand={handleBroadcast}
+          broadcastCommand={doBroadcastCommand}
           healthFilter={healthFilter}
           onHealthFilterChange={setHealthFilter}
         />
