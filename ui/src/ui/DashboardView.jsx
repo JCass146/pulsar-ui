@@ -4,6 +4,7 @@ import VirtualizedNotifications from "./VirtualizedNotifications.jsx";
 import TopControlBar from "./TopControlBar.jsx";
 import LiveMetricsRail from "./LiveMetricsRail.jsx";
 import RetainedSnapshotBar from "./RetainedSnapshotBar.jsx";
+import DeviceChip from "./DeviceChip.jsx";
 import { useDebounceCallback } from "../hooks/useDebounce.js";
 import { APP_CONFIG } from "../config-constants.js";
 import { loadPinnedMetrics } from "../utils/persistence.js";
