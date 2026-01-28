@@ -10,6 +10,7 @@ import './DashboardLayout.css';
 export function DashboardLayout({
   topBar = null,
   fleetStrip = null,
+  topControlBar = null,
   controlPanel = null,
   chartGrid = null,
   metricsRail = null,
@@ -26,11 +27,16 @@ export function DashboardLayout({
       
       {/* Main three-column layout */}
       <div className="dashboard-layout__main">
-        {/* Left column: Fleet status strip + control panel */}
+        {/* Left column: Fleet status strip + control + notifications */}
         <aside className="dashboard-layout__sidebar-left">
           {fleetStrip && (
             <div className="dashboard-layout__fleet-strip">
               {fleetStrip}
+            </div>
+          )}
+          {topControlBar && (
+            <div className="dashboard-layout__top-control-bar">
+              {topControlBar}
             </div>
           )}
           {controlPanel && (

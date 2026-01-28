@@ -51,6 +51,13 @@
   border-bottom: 1px solid var(--border-divider);
 }
 
+/* Top control bar */
+.dashboard-layout__top-control-bar {
+  flex-shrink: 0;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-divider);
+}
+
 /* Control panel sections */
 .dashboard-layout__control-panel {
   display: flex;

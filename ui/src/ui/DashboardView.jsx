@@ -357,18 +357,16 @@ export default function DashboardView({
           )}
         </>
       }
-      leftSidebar={
-        <>
-          <FleetStatusStrip devices={displayDevices} />
-          <TopControlBar
-            deviceList={displayDevices}
-            devicesRef={devicesRef}
-            broadcastCommand={broadcastCommand}
-          />
-          <ControlPanel sections={controlPanelSections} />
-        </>
+      fleetStrip={<FleetStatusStrip devices={displayDevices} />}
+      topControlBar={
+        <TopControlBar
+          deviceList={displayDevices}
+          devicesRef={devicesRef}
+          broadcastCommand={broadcastCommand}
+        />
       }
-      centerContent={
+      controlPanel={<ControlPanel sections={controlPanelSections} />}
+      chartGrid={
         <>
           {pinnedMetrics && pinnedMetrics.length > 0 && (
             <RetainedSnapshotBar
@@ -382,7 +380,7 @@ export default function DashboardView({
           </div>
         </>
       }
-      rightSidebar={
+      metricsRail={
         <LiveMetricsRail
           devicesRef={devicesRef}
           latestRef={latestRef}
@@ -392,7 +390,7 @@ export default function DashboardView({
           pushNotif={pushNotif}
         />
       }
-      bottomNotifications={
+      notifications={
         notifItems.length > 0 ? (
           <VirtualizedNotifications
             notifItems={notifItems}
