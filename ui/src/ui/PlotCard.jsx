@@ -5,8 +5,7 @@ import {
   Line,
   XAxis,
   YAxis,
-  Tooltip,
-  Grid
+  Tooltip
 } from "recharts";
 import { Card, CardHeader, CardTitle, CardMeta, CardBody } from "../components/Card.jsx";
 import { Pill } from "../components/Pill.jsx";
@@ -182,12 +181,6 @@ function PlotCard({
         <div className="plot-card__chart-container">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 8, right: 12, left: -30, bottom: 20 }}>
-              <Grid 
-                strokeDasharray="3 3" 
-                stroke="var(--border-divider)" 
-                opacity={0.25}
-                vertical={false}
-              />
               <XAxis
                 dataKey="x"
                 type="number"
