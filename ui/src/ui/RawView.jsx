@@ -95,103 +95,7 @@ export default function RawView({
       />
 
       <main className="rawViewMain">
-        {/* LEFT PANEL: Fleet List */}
-        <aside className="rawViewFleet">
-          <section className="card controls">
-            <h2>�️ Fleet</h2>
-            <div className="hint" style={{ marginBottom: 12 }}>
-              {filteredDeviceList.length} device{filteredDeviceList.length !== 1 ? "s" : ""}
-              {healthFilter !== "all" && ` (filtered: ${healthFilter})`}
-            </div>
-
-            <div className="fleetPanel__list">
-              {filteredDeviceList.map((d) => {
-                const dev = devicesRef?.current?.get(d.id);
-                const healthConfig = getHealthConfig(d);
-                const friendlyName = getDeviceFriendlyName(dev, devicesRef);
-                const role = getDeviceRole(dev || d);
-                const isSelected = expandedDevice === d.id;
-
-                return (
-                  <div
-                    key={d.id}
-                    className={`fleetDevice ${isSelected ? "fleetDevice--selected" : ""}`}
-                    onClick={() => setExpandedDevice(isSelected ? null : d.id)}
-                  >
-                    <span
-                      className="fleetDevice__health"
-                      style={{ color: healthConfig.color }}
-                      title={healthConfig.label}
-                    >
-                      {healthConfig.icon}
-                    </span>
-
-                    <div className="fleetDevice__identity">
-                      {friendlyName ? (
-                        <>
-                          <span className="fleetDevice__name">{friendlyName}</span>
-                          <span className="fleetDevice__id mono">{formatShortDeviceId(d.id)}</span>
-                        </>
-                      ) : (
-                        <span className="fleetDevice__name mono">{formatShortDeviceId(d.id)}</span>
-                      )}
-                    </div>
-
-                    <div className="fleetDevice__meta">
-                      {role && role !== "unknown" && (
-                        <span className="fleetDevice__role">{role}</span>
-                      )}
-                      <span className="mono">{formatLastSeen(d.lastSeenMs)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {filteredDeviceList.length === 0 && (
-                <div className="muted" style={{ padding: 12 }}>
-                  {healthFilter !== "all"
-                    ? `No ${healthFilter} devices.`
-                    : "No devices detected yet."}
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* Device Details Panel */}
-          {expandedDeviceObj && (
-            <section className="card controls deviceDetailsPanel" style={{ marginTop: 12 }}>
-              <div className="deviceDetailsPanel__header">
-                <DeviceChip
-                  device={expandedDeviceObj}
-                  devicesRef={devicesRef}
-                  showRole
-                  showLastSeen
-                />
-                <button
-                  type="button"
-                  className="deviceDetailsPanel__close"
-                  onClick={() => setExpandedDevice(null)}
-                  title="Close"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <h3>Retained State</h3>
-              <RetainedStateBank
-                devicesRef={devicesRef}
-                latestRef={latestRef}
-                deviceList={[{ id: expandedDevice, ...expandedDeviceObj }]}
-                selectedDevice={expandedDevice}
-                onSendCommand={sendCommand}
-                broadcastCommand={broadcastCommand}
-                compact
-              />
-            </section>
-          )}
-        </aside>
-
-        {/* CENTER: Connection + Filters */}
+        {/* LEFT PANEL: Connection + Filters */}
         <section className="card controls rawViewControls">
           <h2>🔌 Connection</h2>
 
@@ -287,65 +191,162 @@ export default function RawView({
         </div>
         </section>
 
-      <section className="card feed rawViewFeed">
-        <h2>📨 Message Feed</h2>
+        {/* CENTER: Message Feed */}
+        <section className="card feed rawViewFeed">
+          <h2>📨 Message Feed</h2>
 
-        <div className="feedList">
-          {filteredMessages.map((m) => (
-            <article key={m.id} className="msg">
-              <div className="msgMeta">
-                <span className="mono muted">{m.t}</span>
-                <span className="mono topic">{m.topic}</span>
-                <span className="muted mono">{formatBytes(m.payloadLen)}</span>
-              </div>
+          <div className="feedList">
+            {filteredMessages.map((m) => (
+              <article key={m.id} className="msg">
+                <div className="msgMeta">
+                  <span className="mono muted">{m.t}</span>
+                  <span className="mono topic">{m.topic}</span>
+                  <span className="muted mono">{formatBytes(m.payloadLen)}</span>
+                </div>
 
-              <div className="msgBody">
-                {m.parsed.kind === "json" ? (
-                  <pre className="pre">{safeJsonStringify(m.parsed.json)}</pre>
-                ) : m.parsed.kind === "text" ? (
-                  <pre className="pre">{m.parsed.text}</pre>
-                ) : (
-                  <span className="muted">(empty)</span>
-                )}
-              </div>
+                <div className="msgBody">
+                  {m.parsed.kind === "json" ? (
+                    <pre className="pre">{safeJsonStringify(m.parsed.json)}</pre>
+                  ) : m.parsed.kind === "text" ? (
+                    <pre className="pre">{m.parsed.text}</pre>
+                  ) : (
+                    <span className="muted">(empty)</span>
+                  )}
+                </div>
 
-              {m.topicParsed?.isPulsar && (
-                <div className="msgFooter">
-                  <DeviceChip
-                    deviceId={m.topicParsed.device}
-                    devicesRef={devicesRef}
-                    size="small"
-                    compact
-                    clickable
-                    onClick={(id) => {
-                      setExpandedDevice(id);
-                      setSelectedDevice(id);
-                    }}
-                  />
-                  <span className="badge">
-                    kind: <span className="mono">{m.topicParsed.kind || "?"}</span>
-                  </span>
-                  {m.topicParsed.path ? (
+                {m.topicParsed?.isPulsar && (
+                  <div className="msgFooter">
+                    <DeviceChip
+                      deviceId={m.topicParsed.device}
+                      devicesRef={devicesRef}
+                      size="small"
+                      compact
+                      clickable
+                      onClick={(id) => {
+                        setExpandedDevice(id);
+                        setSelectedDevice(id);
+                      }}
+                    />
                     <span className="badge">
-                      path: <span className="mono">{m.topicParsed.path}</span>
+                      kind: <span className="mono">{m.topicParsed.kind || "?"}</span>
                     </span>
-                  ) : null}
+                    {m.topicParsed.path ? (
+                      <span className="badge">
+                        path: <span className="mono">{m.topicParsed.path}</span>
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+              </article>
+            ))}
+
+            {filteredMessages.length === 0 && (
+              <div className="empty">
+                <div className="emptyTitle">No messages yet</div>
+                <div className="muted">
+                  Make sure Mosquitto has <span className="mono">listener 9001</span> with{" "}
+                  <span className="mono">protocol websockets</span>, and that you’re publishing/subscribed correctly.
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* RIGHT PANEL: Fleet List */}
+        <aside className="rawViewFleet">
+          <section className="card controls">
+            <h2>�️ Fleet</h2>
+            <div className="hint" style={{ marginBottom: 12 }}>
+              {filteredDeviceList.length} device{filteredDeviceList.length !== 1 ? "s" : ""}
+              {healthFilter !== "all" && ` (filtered: ${healthFilter})`}
+            </div>
+
+            <div className="fleetPanel__list">
+              {filteredDeviceList.map((d) => {
+                const dev = devicesRef?.current?.get(d.id);
+                const healthConfig = getHealthConfig(d);
+                const friendlyName = getDeviceFriendlyName(dev, devicesRef);
+                const role = getDeviceRole(dev || d);
+                const isSelected = expandedDevice === d.id;
+
+                return (
+                  <div
+                    key={d.id}
+                    className={`fleetDevice ${isSelected ? "fleetDevice--selected" : ""}`}
+                    onClick={() => setExpandedDevice(isSelected ? null : d.id)}
+                  >
+                    <span
+                      className="fleetDevice__health"
+                      style={{ color: healthConfig.color }}
+                      title={healthConfig.label}
+                    >
+                      {healthConfig.icon}
+                    </span>
+
+                    <div className="fleetDevice__identity">
+                      {friendlyName ? (
+                        <>
+                          <span className="fleetDevice__name">{friendlyName}</span>
+                          <span className="fleetDevice__id mono">{formatShortDeviceId(d.id)}</span>
+                        </>
+                      ) : (
+                        <span className="fleetDevice__name mono">{formatShortDeviceId(d.id)}</span>
+                      )}
+                    </div>
+
+                    <div className="fleetDevice__meta">
+                      {role && role !== "unknown" && (
+                        <span className="fleetDevice__role">{role}</span>
+                      )}
+                      <span className="mono">{formatLastSeen(d.lastSeenMs)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredDeviceList.length === 0 && (
+                <div className="muted" style={{ padding: 12 }}>
+                  {healthFilter !== "all"
+                    ? `No ${healthFilter} devices.`
+                    : "No devices detected yet."}
                 </div>
               )}
-            </article>
-          ))}
-
-          {filteredMessages.length === 0 && (
-            <div className="empty">
-              <div className="emptyTitle">No messages yet</div>
-              <div className="muted">
-                Make sure Mosquitto has <span className="mono">listener 9001</span> with{" "}
-                <span className="mono">protocol websockets</span>, and that you’re publishing/subscribed correctly.
-              </div>
             </div>
+          </section>
+
+          {/* Device Details Panel */}
+          {expandedDeviceObj && (
+            <section className="card controls deviceDetailsPanel" style={{ marginTop: 12 }}>
+              <div className="deviceDetailsPanel__header">
+                <DeviceChip
+                  device={expandedDeviceObj}
+                  devicesRef={devicesRef}
+                  showRole
+                  showLastSeen
+                />
+                <button
+                  type="button"
+                  className="deviceDetailsPanel__close"
+                  onClick={() => setExpandedDevice(null)}
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <h3>Retained State</h3>
+              <RetainedStateBank
+                devicesRef={devicesRef}
+                latestRef={latestRef}
+                deviceList={[{ id: expandedDevice, ...expandedDeviceObj }]}
+                selectedDevice={expandedDevice}
+                onSendCommand={sendCommand}
+                broadcastCommand={broadcastCommand}
+                compact
+              />
+            </section>
           )}
-        </div>
-      </section>
+        </aside>
       </main>
     </div>
   );
