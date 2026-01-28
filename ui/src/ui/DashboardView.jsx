@@ -3,7 +3,6 @@ import PlotCard from "./PlotCard.jsx";
 import VirtualizedNotifications from "./VirtualizedNotifications.jsx";
 import TopControlBar from "./TopControlBar.jsx";
 import LiveMetricsRail from "./LiveMetricsRail.jsx";
-import HealthSummaryBar from "./HealthSummaryBar.jsx";
 import RetainedSnapshotBar from "./RetainedSnapshotBar.jsx";
 import { useDebounceCallback } from "../hooks/useDebounce.js";
 import { APP_CONFIG } from "../config-constants.js";
@@ -135,10 +134,6 @@ export default function DashboardView({
   // new props for Milestone 1
   sendCommand,
   pushNotif,
-  // NEW: HealthSummaryBar navigation props
-  onNavigateToRaw,
-  onHealthFilterChange,
-  healthFilter = "all",
 }) {
   // Watched fields (no multi-select dropdown needed)
   const [watchedFields, setWatchedFields] = useState(() => loadWatchedFields());
@@ -239,14 +234,6 @@ export default function DashboardView({
 
   return (
     <div className="dashSimple">
-      {/* HEALTH SUMMARY BAR - Global fleet health at top */}
-      <HealthSummaryBar
-        deviceList={deviceList}
-        onFilterChange={onHealthFilterChange}
-        activeFilter={healthFilter}
-        onNavigateToRaw={onNavigateToRaw}
-      />
-
       {/* MAIN CONTENT */}
       <div className="dashSimpleMain">
         {/* LEFT RAIL - Control Station & Notifications */}

@@ -87,13 +87,6 @@ export default function RawView({
 
   return (
     <div className="rawViewLayout">
-      {/* Health Summary Bar at top */}
-      <HealthSummaryBar
-        deviceList={deviceList}
-        onFilterChange={onHealthFilterChange}
-        activeFilter={healthFilter}
-      />
-
       <main className="rawViewMain">
         {/* LEFT PANEL: Connection + Filters */}
         <section className="card controls rawViewControls">
@@ -256,6 +249,14 @@ export default function RawView({
         <aside className="rawViewFleet">
           <section className="card controls">
             <h2>�️ Fleet</h2>
+
+            {/* Fleet Health Filter */}
+            <HealthSummaryBar
+              deviceList={deviceList}
+              onFilterChange={onHealthFilterChange}
+              activeFilter={healthFilter}
+            />
+
             <div className="hint" style={{ marginBottom: 12 }}>
               {filteredDeviceList.length} device{filteredDeviceList.length !== 1 ? "s" : ""}
               {healthFilter !== "all" && ` (filtered: ${healthFilter})`}

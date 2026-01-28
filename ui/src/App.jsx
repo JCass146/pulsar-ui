@@ -607,13 +607,6 @@ export default function App() {
             clearNotifs={clearNotifs}
             sendCommand={sendCommand}
             pushNotif={pushNotif}
-            // NEW: HealthSummaryBar props
-            onNavigateToRaw={() => setTab("raw")}
-            onHealthFilterChange={(filter) => {
-              setHealthFilter(filter);
-              setTab("raw");
-            }}
-            healthFilter={healthFilter}
           />
         </main>
       ) : tab === "control" ? (
