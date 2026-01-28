@@ -234,6 +234,20 @@ export default function DashboardView({
 
   return (
     <div className="dashSimple">
+      {/* Selected Device Indicator */}
+      {selectedDevice && (
+        <div className="selectedDeviceIndicator">
+          <span className="selectedDeviceLabel">Selected:</span>
+          <DeviceChip
+            deviceId={selectedDevice}
+            devicesRef={devicesRef}
+            size="small"
+            showRole
+            showLastSeen
+          />
+        </div>
+      )}
+
       {/* MAIN CONTENT */}
       <div className="dashSimpleMain">
         {/* LEFT RAIL - Control Station & Notifications */}

@@ -3,7 +3,8 @@ import DeviceList from "./DeviceList.jsx";
 import CommandQueue from "./CommandQueue.jsx";
 import CommandTemplates from "./CommandTemplates.jsx";
 import AuthorityControl, { CommandGate } from "./AuthorityControl.jsx";
-import { DeviceChipGroup } from "./DeviceChip.jsx";
+import DeviceChip, { DeviceChipGroup } from "./DeviceChip.jsx";
+import DeviceCapabilities from "./DeviceCapabilities.jsx";
 
 function safeJsonStringify(v) {
   try {
@@ -11,6 +12,85 @@ function safeJsonStringify(v) {
   } catch {
     return String(v);
   }
+}
+
+/**
+ * CommandPreviewModal - Shows command details before execution
+ */
+function CommandPreviewModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  deviceId,
+  action,
+  args,
+  isDangerous = false,
+  authorityLevel,
+}) {
+  if (!isOpen) return null;
+
+  const topic = `pulsar/${deviceId}/cmd/${action}`;
+  const payload = safeJsonStringify(args);
+
+  return (
+    <div className="modalOverlay" onClick={onClose}>
+      <div className="modalContent commandPreviewModal" onClick={(e) => e.stopPropagation()}>
+        <div className="modalHeader">
+          <h3>⚠ Command Preview</h3>
+          <button type="button" className="modalClose" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modalBody">
+          <div className="commandPreviewSection">
+            <h4>Target Device</h4>
+            <div className="commandPreviewDevice">
+              <DeviceChip
+                device={{ id: deviceId }}
+                isSelected={false}
+                onClick={() => {}}
+                showRole={true}
+                compact={false}
+              />
+            </div>
+          </div>
+
+          <div className="commandPreviewSection">
+            <h4>MQTT Topic</h4>
+            <div className="mono commandPreviewTopic">{topic}</div>
+          </div>
+
+          <div className="commandPreviewSection">
+            <h4>Command Payload</h4>
+            <pre className="commandPreviewPayload">{payload}</pre>
+          </div>
+
+          {isDangerous && (
+            <div className="commandPreviewWarning">
+              <div className="warningIcon">⚠</div>
+              <div className="warningText">
+                <strong>Dangerous Command</strong>
+                <p>This operation may cause device instability, data loss, or require manual recovery.</p>
+                <p>Authority Level: <span className="authorityBadge">{authorityLevel.toUpperCase()}</span></p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="modalFooter">
+          <button type="button" className="secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={`primary ${isDangerous ? 'danger' : ''}`}
+            onClick={onConfirm}
+          >
+            {isDangerous ? '⚠ Execute Dangerous Command' : 'Execute Command'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ControlView({
@@ -57,6 +137,41 @@ export default function ControlView({
   const [queueCollapsed, setQueueCollapsed] = useState(false);
   const [templatesCollapsed, setTemplatesCollapsed] = useState(false);
 
+  // Command preview modal state
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    deviceId: null,
+    action: null,
+    args: null,
+    isDangerous: false,
+    onConfirm: null,
+  });
+
+  // Command staging state
+  const [stagedCommands, setStagedCommands] = useState([]);
+  const [expertMode, setExpertMode] = useState(false);
+
+  // Determine if a command is dangerous
+  const isCommandDangerous = (action, args) => {
+    const dangerousActions = [
+      'system.reboot',
+      'firmware.update',
+      'firmware.flash',
+      'system.factory_reset',
+      'calibration.apply',
+      'relay.all_off', // Emergency all-off is dangerous
+    ];
+
+    if (dangerousActions.includes(action)) return true;
+
+    // Check for dangerous args patterns
+    if (args && typeof args === 'object') {
+      if (args.factory_reset || args.force || args.dangerous) return true;
+    }
+
+    return false;
+  };
+
   const stateEntries = useMemo(() => {
     if (!dev?.state) return [];
     return Array.from(dev.state.entries()).sort(([a], [b]) => a.localeCompare(b));
@@ -70,23 +185,93 @@ export default function ControlView({
   const currentCal = dev?.state?.get("calibration");
 
   // Execute a template command (M3.2)
-  const handleExecuteTemplate = (deviceId, action, args) => {
-    if (!canExecuteCommand || !canExecuteCommand(false)) {
+  const handleExecuteTemplate = (deviceId, action, args, isDangerous = false) => {
+    const dangerous = isDangerous || isCommandDangerous(action, args);
+
+    // Check authority
+    if (!canExecuteCommand || !canExecuteCommand(dangerous)) {
       return; // Blocked by authority
     }
-    if (refreshArmed) refreshArmed(); // Keep ARMED timer alive
-    if (sendCommand) {
-      sendCommand(deviceId, action, args);
+
+    // Fast-track safe commands in expert mode
+    if (!dangerous && expertMode) {
+      if (refreshArmed) refreshArmed(); // Keep ARMED timer alive
+      if (sendCommand) {
+        sendCommand(deviceId, action, args);
+      }
+      return;
     }
+
+    // Stage command for review
+    const stagedCmd = {
+      deviceId,
+      action,
+      args,
+      isDangerous: dangerous,
+      deviceCount: 1,
+      timestamp: Date.now(),
+    };
+
+    setStagedCommands(prev => [...prev, stagedCmd]);
   };
 
   // Authority-aware send generic command
   const handleSendGenericCommand = () => {
-    if (!canExecuteCommand || !canExecuteCommand(false)) {
+    if (!selectedDevice) return;
+
+    let parsedArgs;
+    try {
+      parsedArgs = cmdArgsText.trim() ? JSON.parse(cmdArgsText) : {};
+    } catch (e) {
+      alert(`Invalid JSON in args: ${e.message}`);
+      return;
+    }
+
+    const dangerous = isCommandDangerous(cmdAction, parsedArgs);
+
+    // Check authority
+    if (!canExecuteCommand || !canExecuteCommand(dangerous)) {
       return; // Blocked by authority
     }
+
+    // Fast-track safe commands in expert mode
+    if (!dangerous && expertMode) {
+      if (refreshArmed) refreshArmed();
+      sendGenericCommand();
+      return;
+    }
+
+    // Stage command for review
+    const stagedCmd = {
+      deviceId: selectedDevice,
+      action: cmdAction,
+      args: parsedArgs,
+      isDangerous: dangerous,
+      deviceCount: 1,
+      timestamp: Date.now(),
+    };
+
+    setStagedCommands(prev => [...prev, stagedCmd]);
+  };
+
+  // Handle executing staged commands
+  const handleExecuteStaged = (stagedCmd) => {
     if (refreshArmed) refreshArmed();
-    sendGenericCommand();
+    if (sendCommand) {
+      sendCommand(stagedCmd.deviceId, stagedCmd.action, stagedCmd.args);
+    }
+    // Remove from staged commands
+    setStagedCommands(prev => prev.filter(cmd => cmd !== stagedCmd));
+  };
+
+  // Handle canceling staged commands
+  const handleCancelStaged = (stagedCmd) => {
+    setStagedCommands(prev => prev.filter(cmd => cmd !== stagedCmd));
+  };
+
+  // Toggle expert mode
+  const handleToggleExpertMode = () => {
+    setExpertMode(prev => !prev);
   };
 
   // Authority-aware calibration send
@@ -111,12 +296,26 @@ export default function ControlView({
         />
       </div>
 
+      {/* Global Selected Device Indicator */}
+      {selectedDevice && (
+        <div className="selectedDeviceIndicator">
+          <span className="selectedDeviceLabel">Selected:</span>
+          <DeviceChip
+            device={selectedDevice}
+            isSelected={true}
+            onClick={() => {}}
+            showRole={true}
+            compact={false}
+          />
+        </div>
+      )}
+
       {/* Safe Mode Indicator (shown when authority is "control" level) */}
       {authorityLevel === "control" && (
         <div className="controlSafeMode">
           <span className="controlSafeMode__icon">🛡️</span>
           <span className="controlSafeMode__text">
-            <strong>Safe Commands Only</strong> — Dangerous operations (firmware, calibration apply) require ARMED mode.
+            <strong>SAFE MODE</strong> — All commands require preview confirmation. Dangerous operations (reboot, firmware, calibration apply) are blocked.
           </span>
           <button
             type="button"
@@ -156,6 +355,12 @@ export default function ControlView({
             selectedDevice={selectedDevice}
             onSelect={(id) => setSelectedDevice(id)}
             compact
+          />
+
+          <DeviceCapabilities
+            selectedDevice={selectedDevice}
+            devicesRef={devicesRef}
+            deviceTick={deviceTick}
           />
 
         </section>
@@ -226,6 +431,11 @@ export default function ControlView({
             onRetryCommand={onRetryCommand}
             collapsed={queueCollapsed}
             onToggleCollapse={() => setQueueCollapsed((v) => !v)}
+            stagedCommands={stagedCommands}
+            onExecuteStaged={handleExecuteStaged}
+            onCancelStaged={handleCancelStaged}
+            expertMode={expertMode}
+            onToggleExpertMode={handleToggleExpertMode}
           />
         </section>
 
@@ -348,6 +558,18 @@ export default function ControlView({
           )}
         </section>
       </div>
+
+      {/* Command Preview Modal */}
+      <CommandPreviewModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ isOpen: false })}
+        onConfirm={previewModal.onConfirm}
+        deviceId={previewModal.deviceId}
+        action={previewModal.action}
+        args={previewModal.args}
+        isDangerous={previewModal.isDangerous}
+        authorityLevel={authorityLevel}
+      />
     </main>
   );
 }

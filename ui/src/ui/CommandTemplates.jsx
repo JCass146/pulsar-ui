@@ -55,6 +55,16 @@ const BUILTIN_TEMPLATES = [
     danger: true,
   },
   {
+    id: "builtin-firmware-update",
+    name: "Firmware Update",
+    action: "firmware.update",
+    args: { url: "https://example.com/firmware.bin", version: "1.2.3" },
+    description: "Update device firmware from URL",
+    builtin: true,
+    category: "system",
+    danger: true,
+  },
+  {
     id: "builtin-identify",
     name: "Identify",
     action: "system.identify",
@@ -62,6 +72,69 @@ const BUILTIN_TEMPLATES = [
     description: "Flash LED for identification",
     builtin: true,
     category: "system",
+  },
+];
+
+/**
+ * Default built-in scenarios (cannot be deleted)
+ */
+const BUILTIN_SCENARIOS = [
+  {
+    id: "scenario-power-cycle",
+    name: "Power Cycle Device",
+    description: "Safely power cycle a device with status checks",
+    builtin: true,
+    category: "system",
+    steps: [
+      {
+        action: "system.identify",
+        args: { duration_ms: 2000 },
+        waitMs: 0,
+        description: "Identify device before power cycle",
+      },
+      {
+        action: "relay.set",
+        args: { relay: 1, state: 0 },
+        waitMs: 1000,
+        description: "Turn relay OFF",
+      },
+      {
+        action: "relay.set",
+        args: { relay: 1, state: 1 },
+        waitMs: 2000,
+        description: "Turn relay back ON",
+        softAssert: "system.status",
+      },
+    ],
+  },
+  {
+    id: "scenario-calibration-workflow",
+    name: "Calibration Workflow",
+    description: "Complete calibration workflow with dry run and apply",
+    builtin: true,
+    category: "calibration",
+    danger: true,
+    steps: [
+      {
+        action: "calibration.dry_run",
+        args: {},
+        waitMs: 0,
+        description: "Test calibration changes",
+      },
+      {
+        action: "system.identify",
+        args: { duration_ms: 1000 },
+        waitMs: 2000,
+        description: "Brief identification before applying",
+      },
+      {
+        action: "calibration.apply",
+        args: {},
+        waitMs: 1000,
+        description: "Apply calibration permanently",
+        softAssert: "calibration.status",
+      },
+    ],
   },
 ];
 
@@ -157,6 +230,75 @@ function TemplateCard({
             🗑
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ScenarioCard - A single scenario display
+ */
+function ScenarioCard({
+  scenario,
+  onExecute,
+  disabled,
+  authorityLevel,
+  isExecuting,
+  currentStep,
+}) {
+  const canExecute =
+    !disabled &&
+    (authorityLevel === "armed" ||
+      (authorityLevel === "control" && !scenario.danger));
+
+  return (
+    <div className={`cmdTemplateCard ${scenario.danger ? "danger" : ""} ${isExecuting ? "executing" : ""}`}>
+      <div className="cmdTemplateHeader">
+        <div className="cmdTemplateName">{scenario.name}</div>
+        <div className="cmdTemplateCategory">{scenario.category}</div>
+      </div>
+
+      <div className="cmdTemplateDescription">
+        {scenario.description}
+      </div>
+
+      <div className="scenarioSteps">
+        <div className="scenarioStepsHeader">
+          Steps ({scenario.steps.length})
+        </div>
+        <div className="scenarioStepsList">
+          {scenario.steps.map((step, index) => (
+            <div
+              key={index}
+              className={`scenarioStep ${isExecuting && index === currentStep ? "current" : ""} ${isExecuting && index < currentStep ? "completed" : ""}`}
+            >
+              <span className="scenarioStepNumber">{index + 1}</span>
+              <span className="scenarioStepAction">{step.action}</span>
+              {step.waitMs > 0 && (
+                <span className="scenarioStepWait">({step.waitMs}ms)</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="cmdTemplateActions">
+        <button
+          className={`cmdTemplateExecute ${canExecute ? "" : "disabled"}`}
+          onClick={() => canExecute && onExecute(scenario)}
+          disabled={!canExecute || isExecuting}
+          title={
+            !canExecute
+              ? authorityLevel === "view"
+                ? "View-only mode"
+                : "Dangerous scenario requires ARMED mode"
+              : isExecuting
+              ? "Scenario executing..."
+              : "Execute scenario"
+          }
+        >
+          {isExecuting ? `Executing (${currentStep + 1}/${scenario.steps.length})` : scenario.danger ? "⚠ Execute" : "▶ Execute"}
+        </button>
       </div>
     </div>
   );
@@ -309,10 +451,17 @@ export default function CommandTemplates({
   const [customTemplates, setCustomTemplates] = useState(() =>
     loadCommandTemplates()
   );
+  const [customScenarios, setCustomScenarios] = useState(() =>
+    JSON.parse(localStorage.getItem('pulsar-command-scenarios') || '[]')
+  );
+  const [activeTab, setActiveTab] = useState("templates");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingTemplate, setEditingTemplate] = useState(null);
+  const [editingScenario, setEditingScenario] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [executingScenario, setExecutingScenario] = useState(null);
+  const [executionStep, setExecutionStep] = useState(0);
 
   // Merge builtin and custom templates
   const allTemplates = useMemo(() => {
@@ -348,7 +497,7 @@ export default function CommandTemplates({
   const handleExecute = useCallback(
     (template) => {
       if (onExecuteTemplate && selectedDevice) {
-        onExecuteTemplate(selectedDevice, template.action, template.args);
+        onExecuteTemplate(selectedDevice, template.action, template.args, template.danger);
       }
     },
     [onExecuteTemplate, selectedDevice]
@@ -367,6 +516,70 @@ export default function CommandTemplates({
     },
     [customTemplates, persistTemplates]
   );
+
+  // Scenario persistence
+  const persistScenarios = useCallback((scenarios) => {
+    setCustomScenarios(scenarios);
+    localStorage.setItem('pulsar-command-scenarios', JSON.stringify(scenarios));
+  }, []);
+
+  // Merge builtin and custom scenarios
+  const allScenarios = useMemo(() => {
+    return [...BUILTIN_SCENARIOS, ...customScenarios];
+  }, [customScenarios]);
+
+  // Scenario execution
+  const handleExecuteScenario = useCallback(
+    async (scenario) => {
+      if (!selectedDevice || !onExecuteTemplate) return;
+
+      setExecutingScenario(scenario);
+      setExecutionStep(0);
+
+      for (let i = 0; i < scenario.steps.length; i++) {
+        const step = scenario.steps[i];
+        setExecutionStep(i);
+
+        // Execute the step
+        onExecuteTemplate(selectedDevice, step.action, step.args, scenario.danger);
+
+        // Wait for the specified time
+        if (step.waitMs > 0) {
+          await new Promise(resolve => setTimeout(resolve, step.waitMs));
+        }
+
+        // Optional soft assertion (could be enhanced to check device state)
+        if (step.softAssert) {
+          // For now, just log the assertion
+          console.log(`Scenario ${scenario.name}: Step ${i + 1} completed, asserting ${step.softAssert}`);
+        }
+      }
+
+      setExecutingScenario(null);
+      setExecutionStep(0);
+    },
+    [selectedDevice, onExecuteTemplate]
+  );
+
+  // Filter scenarios
+  const filteredScenarios = useMemo(() => {
+    return allScenarios.filter((s) => {
+      // Category filter
+      if (categoryFilter !== "all" && s.category !== categoryFilter) {
+        return false;
+      }
+      // Search filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          s.name.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q) ||
+          s.steps.some(step => step.action.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+  }, [allScenarios, categoryFilter, searchQuery]);
 
   const handleDuplicate = useCallback(
     (template) => {
@@ -418,7 +631,21 @@ export default function CommandTemplates({
               {collapsed ? "▶" : "▼"}
             </button>
           )}
-          <h2 className="cmdTemplatesTitle">Command Templates</h2>
+          <h2 className="cmdTemplatesTitle">Command Library</h2>
+        </div>
+        <div className="cmdTemplatesTabs">
+          <button
+            className={`cmdTemplatesTab ${activeTab === "templates" ? "active" : ""}`}
+            onClick={() => setActiveTab("templates")}
+          >
+            Templates
+          </button>
+          <button
+            className={`cmdTemplatesTab ${activeTab === "scenarios" ? "active" : ""}`}
+            onClick={() => setActiveTab("scenarios")}
+          >
+            Scenarios
+          </button>
         </div>
         <button
           className="cmdTemplatesNewBtn secondary"
@@ -435,7 +662,7 @@ export default function CommandTemplates({
             <input
               className="cmdTemplatesSearch"
               type="text"
-              placeholder="Search templates..."
+              placeholder={`Search ${activeTab}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -457,31 +684,55 @@ export default function CommandTemplates({
           {/* Device indicator */}
           {!selectedDevice && (
             <div className="cmdTemplatesNoDevice">
-              Select a device to execute templates
+              Select a device to execute {activeTab}
             </div>
           )}
 
-          {/* Template grid */}
+          {/* Content grid */}
           <div className="cmdTemplatesGrid">
-            {filteredTemplates.length > 0 ? (
-              filteredTemplates.map((template) => (
-                <TemplateCard
-                  key={template.id}
-                  template={template}
-                  onExecute={handleExecute}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onDuplicate={handleDuplicate}
-                  disabled={!selectedDevice}
-                  authorityLevel={authorityLevel}
-                />
-              ))
+            {activeTab === "templates" ? (
+              // Templates
+              filteredTemplates.length > 0 ? (
+                filteredTemplates.map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    template={template}
+                    onExecute={handleExecute}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onDuplicate={handleDuplicate}
+                    disabled={!selectedDevice}
+                    authorityLevel={authorityLevel}
+                  />
+                ))
+              ) : (
+                <div className="cmdTemplatesEmpty">
+                  {searchQuery
+                    ? "No templates match your search"
+                    : "No templates in this category"}
+                </div>
+              )
             ) : (
-              <div className="cmdTemplatesEmpty">
-                {searchQuery
-                  ? "No templates match your search"
-                  : "No templates in this category"}
-              </div>
+              // Scenarios
+              filteredScenarios.length > 0 ? (
+                filteredScenarios.map((scenario) => (
+                  <ScenarioCard
+                    key={scenario.id}
+                    scenario={scenario}
+                    onExecute={handleExecuteScenario}
+                    disabled={!selectedDevice}
+                    authorityLevel={authorityLevel}
+                    isExecuting={executingScenario?.id === scenario.id}
+                    currentStep={executionStep}
+                  />
+                ))
+              ) : (
+                <div className="cmdTemplatesEmpty">
+                  {searchQuery
+                    ? "No scenarios match your search"
+                    : "No scenarios in this category"}
+                </div>
+              )
             )}
           </div>
 

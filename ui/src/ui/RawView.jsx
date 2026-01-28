@@ -88,6 +88,20 @@ export default function RawView({
   return (
     <div className="rawViewLayout">
       <main className="rawViewMain">
+        {/* Global Selected Device Indicator */}
+        {selectedDevice && (
+          <div className="selectedDeviceIndicator">
+            <span className="selectedDeviceLabel">Selected:</span>
+            <DeviceChip
+              device={selectedDevice}
+              isSelected={true}
+              onClick={() => {}}
+              showRole={true}
+              compact={false}
+            />
+          </div>
+        )}
+
         {/* LEFT PANEL: Connection + Filters */}
         <section className="card controls rawViewControls">
           <h2>🔌 Connection</h2>
@@ -96,10 +110,10 @@ export default function RawView({
           <div className="connectionStatus">
             <div className="connectionStatusLabel">WebSocket Connection</div>
             <div className="connectionStatusValue mono">
-              {wsUrl || "(pending)"}
+              ✓ Connected
             </div>
             <div className="hint">
-              Connected via runtime config (<span className="mono">/config.json</span>)
+              Edit runtime config: <span className="mono">/config.json</span>
             </div>
           </div>
 

@@ -26,6 +26,42 @@
   /* Background gradient colors */
   --bg-gradient-start: #0e1a2a;
   --bg-gradient-end: #070a0f;
+  
+  /* Density & Spacing System */
+  --gap-xs: 4px;
+  --gap-sm: 6px;
+  --gap-md: 10px;
+  --gap-lg: 14px;
+  --gap-xl: 18px;
+  --gap-xxl: 24px;
+  
+  --pad-xs: 6px;
+  --pad-sm: 8px;
+  --pad-md: 12px;
+  --pad-lg: 16px;
+  --pad-xl: 20px;
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  
+  --font-xs: 10px;
+  --font-sm: 11px;
+  --font-md: 13px;
+  --font-lg: 14px;
+  --font-xl: 16px;
+  
+  --btn-h-sm: 24px;
+  --btn-h: 30px;
+  --btn-h-lg: 36px;
+  
+  --chip-h: 22px;
+  --chip-h-lg: 28px;
+  
+  --line-xs: 1.2;
+  --line-sm: 1.3;
+  --line-md: 1.4;
+  --line-lg: 1.5;
 }
 
 /* Light theme variables */
@@ -184,8 +220,8 @@ body {
 .grid {
   flex: 1;
   display: grid;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px;
+  padding: 12px;
   grid-template-columns: 380px 1fr;
   align-items: start;
 }
@@ -218,11 +254,11 @@ body {
 }
 
 .controls {
-  padding: 14px;
+  padding: 12px;
 }
 
 .feed {
-  padding: 14px;
+  padding: 12px;
 }
 
 /* ---------- Typography ---------- */
@@ -244,7 +280,7 @@ h3 {
 
 .form {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 label {
@@ -292,6 +328,55 @@ select option {
   color: var(--muted);
 }
 
+/* ---------- Text Utilities ---------- */
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: var(--line-sm);
+}
+
+.clamp3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: var(--line-sm);
+}
+
+/* ---------- Layout Utilities ---------- */
+
+.flexCol {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.flexRow {
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+}
+
+.scrollY {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.scrollX {
+  overflow-x: auto;
+  min-width: 0;
+}
+
 /* ---------- Buttons ---------- */
 
 .row {
@@ -301,7 +386,7 @@ select option {
 }
 
 button {
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 12px;
   border: 1px solid var(--glass-strong);
   background: var(--glass-medium);
@@ -329,14 +414,14 @@ button.danger {
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .stat {
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 10px;
+  padding: 8px;
   background: var(--overlay-light);
 }
 
@@ -355,8 +440,6 @@ button.danger {
 .feedList {
   display: grid;
   gap: 10px;
-  max-height: calc(100vh - 160px);
-  overflow: auto;
   padding-right: 2px;
 }
 
@@ -462,6 +545,7 @@ button.danger {
 .plotsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  grid-template-rows: repeat(auto-fit, 268px); /* Fixed height rows */
   gap: 12px;
 }
 
@@ -475,6 +559,9 @@ button.danger {
   padding: 10px;
   background: var(--overlay-bg);
   min-width: 0;
+  height: 268px; /* Fixed: 48px header + 220px chart */
+  display: flex;
+  flex-direction: column;
 }
 
 .plotTitle {
@@ -484,7 +571,9 @@ button.danger {
 }
 
 .plotInner {
-  height: 260px;
+  height: 220px; /* Fixed chart height */
+  flex: 1;
+}
   min-width: 0;
 }
 
@@ -1755,6 +1844,120 @@ button.danger {
   font-size: 11px;
 }
 
+/* ---------- Grouped Notifications ---------- */
+
+.notifGroup {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notifGroup:hover {
+  border-color: var(--glass-strong);
+  background: var(--glass-light);
+}
+
+.notifGroup.new {
+  border-color: var(--border-warn);
+  background: rgba(255, 193, 7, 0.05);
+}
+
+.notifGroup.expanded {
+  border-color: var(--glass-strong);
+}
+
+.notifGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.notifGroupIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.notifGroupContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.notifGroupDevice {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notifGroupError {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notifGroupMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.notifGroupCount {
+  background: var(--bg-accent);
+  color: var(--text-accent);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+.notifGroupTime {
+  font-family: var(--mono);
+}
+
+.notifGroupExpand {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.notifGroupDetails {
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.notifGroupItem {
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--glass-medium);
+}
+
+.notifGroupItem:last-child {
+  border-bottom: none;
+}
+
+.notifTime {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.notifMessage {
+  font-size: 11px;
+  color: var(--text);
+  flex: 1;
+}
+
 /* ---- MILESTONE 2: Global Status Bar (2.1) ---- */
 .globalStatusBar {
   display: flex;
@@ -2559,6 +2762,167 @@ button.danger {
   opacity: 0.6;
 }
 
+/* ---------- Staged Commands (Review Before Send) ---------- */
+
+.cmdExpertMode {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: var(--glass-bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.cmdExpertModeLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cmdExpertMode input[type="checkbox"] {
+  margin: 0;
+}
+
+.cmdExpertModeText {
+  font-weight: 500;
+}
+
+.cmdStagedRow {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.cmdStagedRow.danger {
+  border-color: var(--border-warn);
+  background: rgba(255, 193, 7, 0.05);
+}
+
+.cmdStagedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cmdStagedTarget {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cmdStagedDevice {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+
+.cmdStagedAction {
+  font-size: 12px;
+  opacity: 0.8;
+  background: var(--bg-code);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.cmdStagedBroadcast {
+  font-size: 11px;
+  color: var(--text-accent);
+  font-weight: 500;
+}
+
+.cmdStagedDanger {
+  font-size: 11px;
+  color: var(--text-warn);
+  font-weight: 700;
+  background: var(--bg-warn);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.cmdStagedDetails {
+  margin-bottom: 12px;
+}
+
+.cmdStagedTopic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.cmdStagedTopicLabel {
+  font-weight: 600;
+  min-width: 40px;
+}
+
+.cmdStagedTopicValue {
+  background: var(--bg-code);
+  padding: 4px 8px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.cmdStagedPayload {
+  font-size: 12px;
+}
+
+.cmdStagedPayloadLabel {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.cmdStagedPayloadValue {
+  background: var(--bg-code);
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  max-height: 120px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cmdStagedActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.cmdStagedExecute {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cmdStagedExecute.primary {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-border);
+}
+
+.cmdStagedExecute.danger {
+  background: var(--btn-danger-bg);
+  color: var(--btn-danger-text);
+  border: 1px solid var(--btn-danger-border);
+}
+
+.cmdStagedCancel {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+  border: 1px solid var(--btn-secondary-border);
+}
+
 /* ---- 3.2: Command Template Library ---- */
 .commandTemplates {
   background: linear-gradient(180deg, var(--card-gradient-start), var(--card-gradient-end));
@@ -2599,6 +2963,32 @@ button.danger {
   font-weight: 800;
   color: var(--heading-color);
   margin: 0;
+}
+
+.cmdTemplatesTabs {
+  display: flex;
+  gap: 4px;
+  background: var(--glass-bg);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.cmdTemplatesTab {
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cmdTemplatesTab.active {
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .cmdTemplatesNewBtn {
@@ -2772,6 +3162,190 @@ button.danger {
   padding: 30px;
   font-size: 12px;
   opacity: 0.6;
+}
+
+/* ---------- Scenario Cards ---------- */
+
+.scenarioSteps {
+  margin: 12px 0;
+}
+
+.scenarioStepsHeader {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scenarioStepsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scenarioStep {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--bg-code);
+  border-radius: 4px;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.scenarioStep.current {
+  background: rgba(46,231,255,0.2);
+  opacity: 1;
+  animation: pulse 1s infinite;
+}
+
+.scenarioStep.completed {
+  background: rgba(76,175,80,0.2);
+  opacity: 0.7;
+}
+
+.scenarioStepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: var(--border);
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.scenarioStepAction {
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+.scenarioStepWait {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.cmdTemplateCard.executing {
+  border-color: rgba(46,231,255,0.5);
+  box-shadow: 0 0 10px rgba(46,231,255,0.3);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ---------- Device Capabilities Panel ---------- */
+
+.deviceCapabilities {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--glass-bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.deviceCapabilitiesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.deviceCapabilitiesTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.deviceCapabilitiesRole {
+  font-size: 11px;
+  background: var(--bg-accent);
+  color: var(--text-accent);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.deviceCapabilitiesSection {
+  margin-bottom: 12px;
+}
+
+.deviceCapabilitiesSectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.deviceCapabilitiesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.deviceCapabilitiesItem {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-family: var(--mono);
+}
+
+.deviceCapabilitiesItem.command {
+  background: var(--bg-code);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.deviceCapabilitiesItem.feature {
+  background: rgba(46,231,255,0.15);
+  color: rgba(46,231,255,0.95);
+  border: 1px solid rgba(46,231,255,0.3);
+}
+
+.deviceCapabilitiesItem.sensor {
+  background: rgba(76,175,80,0.15);
+  color: rgba(76,175,80,0.95);
+  border: 1px solid rgba(76,175,80,0.3);
+}
+
+.deviceCapabilitiesItem.actuator {
+  background: rgba(255,152,0,0.15);
+  color: rgba(255,152,0,0.95);
+  border: 1px solid rgba(255,152,0,0.3);
+}
+
+.deviceCapabilitiesEmpty {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+}
+
+.deviceCapabilitiesIcon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+.deviceCapabilitiesText {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.deviceCapabilitiesHint {
+  font-size: 11px;
+  opacity: 0.7;
+  font-style: italic;
 }
 
 /* Template editor modal */
@@ -3486,6 +4060,7 @@ button.danger {
   border: 1px solid var(--chip-border, var(--border));
   border-radius: 999px;
   white-space: nowrap;
+  min-width: 0;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
@@ -3519,15 +4094,18 @@ button.danger {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
 }
 
 .deviceChip__name {
   font-weight: 500;
   color: var(--text);
+  min-width: 0;
 }
 
 .deviceChip__id {
   color: var(--text);
+  min-width: 0;
 }
 
 .deviceChip--compact .deviceChip__id {
@@ -3567,6 +4145,23 @@ button.danger {
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+}
+
+/* ---------- Selected Device Indicator ---------- */
+
+.selectedDeviceIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.selectedDeviceLabel {
+  color: var(--muted);
+  font-weight: 500;
 }
 
 /* ---------- HealthSummaryBar Component ---------- */
@@ -3729,6 +4324,8 @@ button.danger {
   align-items: flex-start;
   gap: 8px;
   margin-bottom: 8px;
+  height: 48px; /* Fixed header height */
+  flex-shrink: 0;
 }
 
 .plotHdrLeft {
@@ -3744,6 +4341,10 @@ button.danger {
   font-weight: 500;
   color: var(--heading-color);
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .plotCard .plotValue {
@@ -3880,8 +4481,6 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 400px;
-  overflow-y: auto;
 }
 
 .fleetDevice {
@@ -4018,37 +4617,37 @@ button.danger {
   height: calc(100vh - 140px);
   padding: 0;
   gap: 0;
+  overflow: hidden;
 }
 
 .rawViewMain {
   display: grid;
   grid-template-columns: 260px 1fr 280px;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 10px;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .rawViewConnection {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow-y: auto;
   min-height: 0;
 }
 
 .rawViewFeed {
-  overflow-y: auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .rawViewFleet {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow-y: auto;
   min-height: 0;
 }
 
@@ -4280,6 +4879,87 @@ button.danger {
 
 .modal-footer button {
   padding: 8px 16px;
+}
+
+/* ---------- Command Preview Modal ---------- */
+
+.commandPreviewModal {
+  max-width: 600px;
+  width: 90vw;
+}
+
+.commandPreviewSection {
+  margin-bottom: 20px;
+}
+
+.commandPreviewSection h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.commandPreviewDevice {
+  display: flex;
+  align-items: center;
+}
+
+.commandPreviewTopic {
+  background: var(--bg-code);
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.commandPreviewPayload {
+  background: var(--bg-code);
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.commandPreviewWarning {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-warn);
+  border: 1px solid var(--border-warn);
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.warningIcon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.warningText strong {
+  display: block;
+  color: var(--text-warn);
+  margin-bottom: 8px;
+}
+
+.warningText p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.authorityBadge {
+  background: var(--bg-accent);
+  color: var(--text-accent);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 /* ===== Retained Snapshot Bar ===== */

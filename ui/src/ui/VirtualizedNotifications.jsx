@@ -125,6 +125,54 @@ function VirtualizedNotifications({
 }) {
   const [activeCategories, setActiveCategories] = useState(["bad", "warn", "ok", "info"]);
   const [acknowledgedFaults, setAcknowledgedFaults] = useState(new Set());
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
+
+  // Group notifications by device + error type
+  const groupedNotifications = useMemo(() => {
+    const groups = new Map();
+
+    for (const notif of notifItems) {
+      const deviceId = notif.deviceId || notif.title || "unknown";
+      const errorType = notif.detail || notif.message || "unknown";
+      const groupKey = `${deviceId}:${errorType}`;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          key: groupKey,
+          deviceId,
+          errorType,
+          level: notif.level || "info",
+          notifications: [],
+          count: 0,
+          latestTime: 0,
+          isNew: false,
+        });
+      }
+
+      const group = groups.get(groupKey);
+      group.notifications.push(notif);
+      group.count++;
+      if (notif.t_ms > group.latestTime) {
+        group.latestTime = notif.t_ms;
+      }
+
+      // Mark as new if recent (last 30 seconds)
+      if (Date.now() - notif.t_ms < 30000) {
+        group.isNew = true;
+      }
+    }
+
+    return Array.from(groups.values()).sort((a, b) => b.latestTime - a.latestTime);
+  }, [notifItems]);
+
+  // Auto-expand new fault groups
+  React.useEffect(() => {
+    const newFaultGroups = groupedNotifications
+      .filter(g => g.level === "bad" && g.isNew)
+      .map(g => g.key);
+
+    setExpandedGroups(prev => new Set([...prev, ...newFaultGroups]));
+  }, [groupedNotifications]);
 
   // Count notifications by category
   const counts = useMemo(() => {
@@ -136,18 +184,26 @@ function VirtualizedNotifications({
     return c;
   }, [notifItems]);
 
-  // Filter notifications by active categories
-  const filteredNotifications = useMemo(() => {
-    return notifItems.filter((n) => activeCategories.includes(n.level || "info"));
-  }, [notifItems, activeCategories]);
+  // Filter groups by active categories
+  const filteredGroups = useMemo(() => {
+    return groupedNotifications.filter((g) => activeCategories.includes(g.level));
+  }, [groupedNotifications, activeCategories]);
 
-  // Extract sticky faults (not yet acknowledged)
+  // Extract sticky faults (last 3 devices with errors, not acknowledged)
   const stickyFaults = useMemo(() => {
     if (!showStickyFaults) return [];
-    return extractLastFaults(notifItems).filter(
-      (f) => !acknowledgedFaults.has(f.id)
-    ).slice(0, 3); // Max 3 sticky faults
-  }, [notifItems, acknowledgedFaults, showStickyFaults]);
+
+    const errorGroups = groupedNotifications
+      .filter(g => g.level === "bad")
+      .filter(g => !acknowledgedFaults.has(g.key))
+      .slice(0, 3); // Max 3 sticky faults
+
+    return errorGroups.map(g => ({
+      ...g.notifications[0], // Use the latest notification from the group
+      groupKey: g.key,
+      count: g.count,
+    }));
+  }, [groupedNotifications, acknowledgedFaults, showStickyFaults]);
 
   // Toggle category filter
   const toggleCategory = (cat) => {
@@ -217,9 +273,9 @@ function VirtualizedNotifications({
         counts={counts}
       />
 
-      {/* Notification list */}
+      {/* Notification groups */}
       <div className="notifList" style={{ height: maxHeight }}>
-        {filteredNotifications.length === 0 ? (
+        {filteredGroups.length === 0 ? (
           <div className="notifEmpty muted">
             {notifItems.length === 0
               ? "No notifications yet."
@@ -230,11 +286,59 @@ function VirtualizedNotifications({
             {({ height, width }) => (
               <List
                 height={height}
-                itemCount={filteredNotifications.length}
-                itemSize={72}
+                itemCount={filteredGroups.length}
+                itemSize={80}
                 width={width}
               >
-                {Row}
+                {({ index, style }) => {
+                  const group = filteredGroups[index];
+                  const isExpanded = expandedGroups.has(group.key);
+
+                  return (
+                    <div style={style}>
+                      <div
+                        className={`notifGroup ${group.level} ${isExpanded ? 'expanded' : ''} ${group.isNew ? 'new' : ''}`}
+                        onClick={() => {
+                          setExpandedGroups(prev => {
+                            const next = new Set(prev);
+                            if (next.has(group.key)) {
+                              next.delete(group.key);
+                            } else {
+                              next.add(group.key);
+                            }
+                            return next;
+                          });
+                        }}
+                      >
+                        <div className="notifGroupHeader">
+                          <div className="notifGroupIcon">
+                            {CATEGORIES[group.level]?.icon || "•"}
+                          </div>
+                          <div className="notifGroupContent">
+                            <div className="notifGroupDevice mono">{group.deviceId}</div>
+                            <div className="notifGroupError">{group.errorType}</div>
+                          </div>
+                          <div className="notifGroupMeta">
+                            <span className="notifGroupCount">{group.count}</span>
+                            <span className="notifGroupTime">{formatRelativeTime(group.latestTime)}</span>
+                            <span className="notifGroupExpand">{isExpanded ? "▼" : "▶"}</span>
+                          </div>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="notifGroupDetails">
+                            {group.notifications.map((notif, idx) => (
+                              <div key={idx} className="notifGroupItem">
+                                <div className="notifTime">{formatTime(notif.t_ms)}</div>
+                                <div className="notifMessage">{notif.message || notif.detail}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }}
               </List>
             )}
           </AutoSizer>

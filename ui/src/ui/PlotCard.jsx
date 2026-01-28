@@ -32,7 +32,7 @@ function fmtRelSec(x) {
 function PlotCard({
   seriesRef,
   seriesKey,
-  height = 220,
+  height = 220, // Fixed chart height
   windowSec = 60,          // <- default window (seconds)
   showXAxis = true,
   devicesRef = null,       // NEW: ref to devices Map for DeviceChip
@@ -130,7 +130,7 @@ function PlotCard({
         onPausedChange={setChartPaused}
       />
 
-      <div className="plotInner" style={{ height, position: "relative" }}>
+      <div className="plotInner" style={{ height: 220, position: "relative" }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <XAxis

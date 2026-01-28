@@ -22,15 +22,56 @@ const STATUS_CONFIG = {
 };
 
 /**
- * StatusBadge - Displays command status with icon
+ * StagedCommandRow - A command waiting for review before sending
  */
-function StatusBadge({ status }) {
-  const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+function StagedCommandRow({ cmd, onExecute, onCancel, isBroadcast = false }) {
+  const topic = `pulsar/${cmd.deviceId}/cmd/${cmd.action}`;
+  const isDangerous = cmd.isDangerous;
+
   return (
-    <span className={`cmdStatusBadge ${config.className}`}>
-      <span className="cmdStatusIcon">{config.icon}</span>
-      {config.label}
-    </span>
+    <div className={`cmdStagedRow ${isDangerous ? 'danger' : ''}`}>
+      <div className="cmdStagedHeader">
+        <div className="cmdStagedTarget">
+          <span className="cmdStagedDevice">{cmd.deviceId}</span>
+          <span className="cmdStagedAction">{cmd.action}</span>
+          {isBroadcast && (
+            <span className="cmdStagedBroadcast">📡 Broadcast to {cmd.deviceCount} devices</span>
+          )}
+        </div>
+        {isDangerous && (
+          <span className="cmdStagedDanger">⚠ Dangerous</span>
+        )}
+      </div>
+
+      <div className="cmdStagedDetails">
+        <div className="cmdStagedTopic">
+          <span className="cmdStagedTopicLabel">Topic:</span>
+          <span className="cmdStagedTopicValue mono">{topic}</span>
+        </div>
+
+        <div className="cmdStagedPayload">
+          <span className="cmdStagedPayloadLabel">Payload:</span>
+          <pre className="cmdStagedPayloadValue">{JSON.stringify(cmd.args, null, 2)}</pre>
+        </div>
+      </div>
+
+      <div className="cmdStagedActions">
+        <button
+          type="button"
+          className={`cmdStagedExecute ${isDangerous ? 'danger' : 'primary'}`}
+          onClick={() => onExecute(cmd)}
+        >
+          {isDangerous ? '⚠ Execute Dangerous' : 'Execute'}
+        </button>
+        <button
+          type="button"
+          className="cmdStagedCancel secondary"
+          onClick={() => onCancel(cmd)}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -167,6 +208,11 @@ function IntentSummary({ pendingCount, recentStats }) {
  * @param {Function} props.onRetryCommand - Retry a failed command
  * @param {boolean} props.collapsed - Whether panel is collapsed
  * @param {Function} props.onToggleCollapse - Toggle collapse state
+ * @param {Array} props.stagedCommands - Commands waiting for review
+ * @param {Function} props.onExecuteStaged - Execute a staged command
+ * @param {Function} props.onCancelStaged - Cancel a staged command
+ * @param {boolean} props.expertMode - Skip staging for safe commands
+ * @param {Function} props.onToggleExpertMode - Toggle expert mode
  */
 export default function CommandQueue({
   devicesRef,
@@ -177,6 +223,11 @@ export default function CommandQueue({
   collapsed = false,
   onToggleCollapse,
   maxHistoryDisplay = 20,
+  stagedCommands = [],
+  onExecuteStaged,
+  onCancelStaged,
+  expertMode = false,
+  onToggleExpertMode,
 }) {
   const [expandedIds, setExpandedIds] = useState(new Set());
   const [historyFilter, setHistoryFilter] = useState("all"); // all, acked, timeout, failed
@@ -268,6 +319,42 @@ export default function CommandQueue({
 
       {!collapsed && (
         <>
+          {/* Expert Mode Toggle */}
+          {onToggleExpertMode && (
+            <div className="cmdExpertMode">
+              <label className="cmdExpertModeLabel">
+                <input
+                  type="checkbox"
+                  checked={expertMode}
+                  onChange={onToggleExpertMode}
+                />
+                <span className="cmdExpertModeText">Expert Mode: Skip staging for safe commands</span>
+              </label>
+            </div>
+          )}
+
+          {/* Staged commands section */}
+          {stagedCommands.length > 0 && (
+            <div className="cmdQueueSection">
+              <div className="cmdQueueSectionHeader">
+                <span className="cmdQueueSectionTitle">
+                  Review Before Send ({stagedCommands.length})
+                </span>
+              </div>
+              <div className="cmdQueueList staged">
+                {stagedCommands.map((cmd, index) => (
+                  <StagedCommandRow
+                    key={`staged-${index}`}
+                    cmd={cmd}
+                    onExecute={onExecuteStaged}
+                    onCancel={onCancelStaged}
+                    isBroadcast={cmd.deviceCount > 1}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Pending commands section */}
           {pendingCommands.length > 0 && (
             <div className="cmdQueueSection">
