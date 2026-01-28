@@ -151,6 +151,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .topbar {
@@ -224,6 +225,7 @@ body {
   padding: 12px;
   grid-template-columns: 380px 1fr;
   align-items: start;
+  min-height: 0;
 }
 
 .grid.single {
@@ -251,14 +253,22 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .controls {
   padding: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .feed {
   padding: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* ---------- Typography ---------- */
@@ -288,6 +298,7 @@ label {
   gap: 6px;
   font-size: 12px;
   color: var(--heading-color);
+  line-height: 1.4;
 }
 
 input,
@@ -326,6 +337,8 @@ select option {
 .hint {
   font-size: 11px;
   color: var(--muted);
+  line-height: 1.4;
+  margin-top: 2px;
 }
 
 /* ---------- Text Utilities ---------- */
@@ -2388,6 +2401,8 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: 0;
+  min-height: 0;
+  flex: 1;
 }
 
 .controlViewHeader {

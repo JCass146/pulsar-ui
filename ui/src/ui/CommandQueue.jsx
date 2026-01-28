@@ -22,6 +22,18 @@ const STATUS_CONFIG = {
 };
 
 /**
+ * StatusBadge - Shows command status with icon and color
+ */
+function StatusBadge({ status }) {
+  const config = STATUS_CONFIG[status] || STATUS_CONFIG.failed;
+  return (
+    <span className={`statusBadge ${config.className}`} title={config.label}>
+      {config.icon} {config.label}
+    </span>
+  );
+}
+
+/**
  * StagedCommandRow - A command waiting for review before sending
  */
 function StagedCommandRow({ cmd, onExecute, onCancel, isBroadcast = false }) {

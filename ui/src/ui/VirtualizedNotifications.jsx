@@ -218,35 +218,6 @@ function VirtualizedNotifications({
     if (onAcknowledgeFault) onAcknowledgeFault(fault);
   };
 
-  // Row renderer for virtualized list
-  const Row = ({ index, style }) => {
-    const notif = filteredNotifications[index];
-    const level = notif.level || 'info';
-    const cat = CATEGORIES[level] || CATEGORIES.info;
-
-    return (
-      <div style={style} className="notifRowWrapper">
-        <div className={`notifRow ${level}`}>
-          <div className="notifTop">
-            <span className="notifCategoryLabel">
-              <span className="notifIcon">{cat.icon}</span>
-            </span>
-            <span className="mono notifTitle">{notif.title}</span>
-            <span className="mono muted notifTime">
-              {formatTime(notif.t_ms)}
-            </span>
-          </div>
-          {notif.detail && (
-            <div className="muted notifDetail">{notif.detail}</div>
-          )}
-          {notif.deviceId && notif.deviceId !== notif.title && (
-            <div className="notifDeviceTag mono">{notif.deviceId}</div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="notificationsRail">
       {/* Sticky fault chips */}
@@ -349,7 +320,7 @@ function VirtualizedNotifications({
       {notifItems.length > 0 && (
         <div className="notifFooter">
           <span className="muted">
-            {filteredNotifications.length} of {notifItems.length} shown
+            {filteredGroups.length} of {groupedNotifications.length} groups shown
           </span>
         </div>
       )}
