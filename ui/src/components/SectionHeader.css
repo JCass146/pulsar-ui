@@ -1,0 +1,57 @@
+/**
+ * SectionHeader Component Styling
+ * Visual section dividers with title and optional actions
+ */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--border-divider);
+}
+
+.section-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  flex: 1;
+  min-width: 0;
+}
+
+.section-header__title {
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--heading-color);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+}
+
+.section-header__content {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: var(--lh-normal);
+}
+
+.section-header__actions {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Compact variant - less padding */
+.section-header--compact {
+  padding: var(--space-sm) 0;
+}
+
+/* Large variant - more prominent */
+.section-header--large {
+  padding: var(--space-lg) 0;
+}
+
+.section-header--large .section-header__title {
+  font-size: var(--font-xl);
+}

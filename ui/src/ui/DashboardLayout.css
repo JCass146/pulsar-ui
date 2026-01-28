@@ -1,0 +1,150 @@
+/**
+ * DashboardLayout Styling
+ * Three-column grid with responsive behavior
+ */
+
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--surface-bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* Top bar - global controls */
+.dashboard-layout__top {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-divider);
+  background: var(--surface-default);
+  z-index: 100;
+}
+
+/* Main three-column area */
+.dashboard-layout__main {
+  display: grid;
+  grid-template-columns: 280px 1fr 240px;
+  gap: var(--space-md);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--space-md);
+}
+
+/* Left sidebar: Fleet status + control panel */
+.dashboard-layout__sidebar-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  overflow-y: auto;
+  background: var(--surface-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  min-height: 0;
+}
+
+/* Fleet status strip */
+.dashboard-layout__fleet-strip {
+  flex-shrink: 0;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-divider);
+}
+
+/* Control panel sections */
+.dashboard-layout__control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Center: Chart grid + notifications */
+.dashboard-layout__center {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Chart grid wall */
+.dashboard-layout__chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: var(--space-md);
+  overflow-y: auto;
+  padding: var(--space-md);
+  background: var(--surface-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  flex: 1;
+}
+
+/* Notifications at bottom of center area */
+.dashboard-layout__notifications {
+  flex-shrink: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: var(--space-md);
+  background: var(--surface-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Right sidebar: Metrics rail */
+.dashboard-layout__sidebar-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  overflow-y: auto;
+  background: var(--surface-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  min-height: 0;
+}
+
+/* Responsive: Stack to two columns on medium screens */
+@media (max-width: 1400px) {
+  .dashboard-layout__main {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-layout__sidebar-left {
+    display: none;
+  }
+  
+  .dashboard-layout__sidebar-right {
+    display: none;
+  }
+}
+
+/* Responsive: Single column on small screens */
+@media (max-width: 768px) {
+  .dashboard-layout__main {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+  }
+  
+  .dashboard-layout__sidebar-left {
+    display: none;
+  }
+  
+  .dashboard-layout__sidebar-right {
+    display: none;
+  }
+  
+  .dashboard-layout__chart-grid {
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+  }
+  
+  .dashboard-layout__notifications {
+    max-height: 150px;
+    padding: var(--space-sm);
+  }
+}

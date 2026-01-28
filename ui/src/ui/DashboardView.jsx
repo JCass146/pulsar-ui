@@ -5,6 +5,7 @@ import TopControlBar from "./TopControlBar.jsx";
 import LiveMetricsRail from "./LiveMetricsRail.jsx";
 import RetainedSnapshotBar from "./RetainedSnapshotBar.jsx";
 import DeviceChip from "./DeviceChip.jsx";
+import { DashboardLayout, FleetStatusStrip, ControlPanel } from "./dashboardIndex.js";
 import { useDebounceCallback } from "../hooks/useDebounce.js";
 import { APP_CONFIG } from "../config-constants.js";
 import { loadPinnedMetrics } from "../utils/persistence.js";
@@ -233,146 +234,142 @@ export default function DashboardView({
   const selectedDevObj = selectedDevice ? devicesRef.current.get(selectedDevice) : null;
   const selectedRole = selectedDevObj ? getDeviceRole(selectedDevObj) : "—";
 
-  return (
-    <div className="dashSimple">
-      {/* Selected Device Indicator */}
-      {selectedDevice && (
-        <div className="selectedDeviceIndicator">
-          <span className="selectedDeviceLabel">Selected:</span>
-          <DeviceChip
-            deviceId={selectedDevice}
-            devicesRef={devicesRef}
-            size="small"
-            showRole
-            showLastSeen
-          />
-        </div>
-      )}
+  // Prepare data for new dashboard components
+  // Fleet device list for FleetStatusStrip
+  const displayDevices = useMemo(() => {
+    return devicesOrdered;
+  }, [devicesOrdered]);
 
-      {/* MAIN CONTENT */}
-      <div className="dashSimpleMain">
-        {/* LEFT RAIL - Control Station & Notifications */}
-        <aside className="dashSimpleLeft">
-          {/* Control Station */}
-          <section className="card controls">
-            <div className="dashControlsRow">
-              <div className="dashTitleBlock">
-                <div className="dashTitle">🎛️ Control Station</div>
-                <div className="muted" style={{ fontSize: 12 }}>
-                  Observe live telemetry • Charts always visible
-                </div>
+  // Control panel sections configuration
+  const controlPanelSections = useMemo(() => {
+    return [
+      {
+        id: "config",
+        title: "⚙️ Config",
+        content: (
+          <div className="form">
+            <label>
+              Watched fields (comma separated)
+              <input
+                value={watchedText}
+                onChange={(e) => setWatchedText(e.target.value)}
+                placeholder="pressure_psi, mass_g, temp_c"
+                spellCheck={false}
+              />
+              <div style={{ fontSize: 12, marginTop: 6, opacity: 0.7 }}>
+                These fields become charts for each device.
               </div>
+            </label>
 
-              <div className="statusStrip">
-                <span className="pillTag2 mono">selected {selectedDevice || "—"}</span>
-                <span className="pillTag2">{selectedRole}</span>
-                <span className="pillTag2 mono">watched {watchedFields.length}</span>
-                <span className="pillTag2 mono">charts {wallSeries.length}</span>
-              </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button type="button" style={{ flex: 1 }} onClick={applyWatched}>
+                Apply
+              </button>
+              <button
+                type="button"
+                style={{ flex: 1 }}
+                onClick={() => setShowOnlyOnline((v) => !v)}
+              >
+                {showOnlyOnline ? "Online only" : "All devices"}
+              </button>
             </div>
-          </section>
 
+            <label style={{ marginTop: 12 }}>
+              Max points (history)
+              <input
+                type="number"
+                min="200"
+                max="20000"
+                step="100"
+                value={maxPoints}
+                onChange={(e) => setMaxPoints(Number(e.target.value || 1500))}
+              />
+            </label>
+          </div>
+        ),
+      },
+      {
+        id: "notifications",
+        title: `🔔 Notifications ${notifItems.length > 0 ? `(${notifItems.length})` : ""}`,
+        content: (
+          <>
+            <VirtualizedNotifications
+              notifItems={notifItems}
+              clearNotifs={clearNotifs}
+              showStickyFaults={true}
+              maxHeight={360}
+            />
+            <div style={{ fontSize: 12, marginTop: 8, opacity: 0.7 }}>
+              Full message history in <span style={{ fontFamily: "monospace" }}>Raw</span> tab.
+            </div>
+          </>
+        ),
+      },
+    ];
+  }, [watchedText, showOnlyOnline, maxPoints, notifItems, applyWatched, clearNotifs]);
+
+  // Build chart cards
+  const chartCards = useMemo(() => {
+    return wallSeries.map(({ seriesKey }) => (
+      <PlotCard
+        key={seriesKey}
+        seriesRef={seriesRef}
+        seriesKey={seriesKey}
+        height={220}
+        devicesRef={devicesRef}
+      />
+    ));
+  }, [wallSeries, seriesRef, devicesRef]);
+
+  // Empty state for charts
+  const emptyChartsContent = useMemo(() => {
+    if (wallSeries.length === 0) {
+      return (
+        <div style={{ padding: "24px 12px", textAlign: "center" }}>
+          <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>No charts yet</div>
+          <div style={{ opacity: 0.7, marginBottom: 12 }}>
+            Waiting for telemetry on watched fields.
+          </div>
+          <div style={{ fontSize: 12, opacity: 0.6 }}>
+            Default fields: <span style={{ fontFamily: "monospace" }}>{watchedFields.join(", ")}</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }, [wallSeries, watchedFields]);
+
+  return (
+    <DashboardLayout
+      topBar={
+        <>
+          {selectedDevice && (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 12px" }}>
+              <span style={{ fontSize: 14, opacity: 0.8 }}>Selected:</span>
+              <DeviceChip
+                deviceId={selectedDevice}
+                devicesRef={devicesRef}
+                size="small"
+                showRole
+                showLastSeen
+              />
+            </div>
+          )}
+        </>
+      }
+      leftSidebar={
+        <>
+          <FleetStatusStrip devices={displayDevices} />
           <TopControlBar
-            deviceList={deviceList}
+            deviceList={displayDevices}
             devicesRef={devicesRef}
             broadcastCommand={broadcastCommand}
           />
-
-          {/* Dashboard Config - collapsible */}
-          <section className="card controls" style={{ marginTop: 12 }}>
-            <div
-              className="row"
-              style={{ alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
-              onClick={() => setConfigCollapsed((v) => !v)}
-            >
-              <h2 style={{ margin: 0 }}>⚙️ Config</h2>
-              <span className="muted">{configCollapsed ? "▶" : "▼"}</span>
-            </div>
-
-            {!configCollapsed && (
-              <div className="form" style={{ marginTop: 12 }}>
-                <label>
-                  Watched fields (comma separated)
-                  <input
-                    value={watchedText}
-                    onChange={(e) => setWatchedText(e.target.value)}
-                    placeholder="pressure_psi, mass_g, temp_c"
-                    spellCheck={false}
-                  />
-                  <div className="hint">
-                    These fields become charts for each device.
-                  </div>
-                </label>
-
-                <div className="row">
-                  <button type="button" className="secondary" onClick={applyWatched}>
-                    Apply
-                  </button>
-                  <button
-                    type="button"
-                    className={showOnlyOnline ? "secondary" : ""}
-                    onClick={() => setShowOnlyOnline((v) => !v)}
-                  >
-                    {showOnlyOnline ? "Online only" : "All devices"}
-                  </button>
-                </div>
-
-                <label>
-                  Max points (history)
-                  <input
-                    type="number"
-                    min="200"
-                    max="20000"
-                    step="100"
-                    value={maxPoints}
-                    onChange={(e) => setMaxPoints(Number(e.target.value || 1500))}
-                  />
-                </label>
-              </div>
-            )}
-          </section>
-
-          {/* Notifications - Collapsed by default */}
-          <section className="card controls" style={{ marginTop: 12 }}>
-            <div
-              className="row"
-              style={{ alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
-              onClick={() => setNotifCollapsed((v) => !v)}
-            >
-              <h2 style={{ margin: 0 }}>🔔 Notifications {notifItems.length > 0 && `(${notifItems.length})`}</h2>
-              <div className="row" style={{ gap: 8 }}>
-                {!notifCollapsed && (
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={(e) => { e.stopPropagation(); clearNotifs(); }}
-                  >
-                    Clear
-                  </button>
-                )}
-                <span className="muted">{notifCollapsed ? "▶" : "▼"}</span>
-              </div>
-            </div>
-
-            {!notifCollapsed && (
-              <>
-                <VirtualizedNotifications
-                  notifItems={notifItems}
-                  clearNotifs={clearNotifs}
-                  showStickyFaults={true}
-                  maxHeight={360}
-                />
-                <div className="hint" style={{ marginTop: 8 }}>
-                  Full message history in <span className="mono">Raw</span> tab.
-                </div>
-              </>
-            )}
-          </section>
-        </aside>
-
-        {/* CENTER - Charts Wall */}
-        <section className="dashSimpleCenter">
-          {/* Retained State Strip */}
+          <ControlPanel sections={controlPanelSections} />
+        </>
+      }
+      centerContent={
+        <>
           {pinnedMetrics && pinnedMetrics.length > 0 && (
             <RetainedSnapshotBar
               pinnedMetrics={pinnedMetrics}
@@ -380,45 +377,31 @@ export default function DashboardView({
               latestRef={latestRef}
             />
           )}
-
-          {/* CHART WALL */}
-          <div className="plotsGrid">
-            {wallSeries.length ? (
-              wallSeries.map(({ seriesKey }) => (
-                <PlotCard
-                  key={seriesKey}
-                  seriesRef={seriesRef}
-                  seriesKey={seriesKey}
-                  height={220}
-                  devicesRef={devicesRef}
-                />
-              ))
-            ) : (
-              <div className="card controls">
-                <div className="emptyTitle">No charts yet</div>
-                <div className="muted">
-                  Waiting for telemetry on watched fields.
-                </div>
-                <div className="hint" style={{ marginTop: 12 }}>
-                  Default fields: <span className="mono">{watchedFields.join(", ")}</span>
-                </div>
-              </div>
-            )}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
+            {emptyChartsContent || chartCards}
           </div>
-        </section>
-
-        {/* RIGHT RAIL - Pinned Metrics */}
-        <aside className="dashSimpleRight">
-          <LiveMetricsRail
-            devicesRef={devicesRef}
-            latestRef={latestRef}
-            seriesRef={seriesRef}
-            deviceList={deviceList}
-            selectedDevice={selectedDevice}
-            pushNotif={pushNotif}
+        </>
+      }
+      rightSidebar={
+        <LiveMetricsRail
+          devicesRef={devicesRef}
+          latestRef={latestRef}
+          seriesRef={seriesRef}
+          deviceList={deviceList}
+          selectedDevice={selectedDevice}
+          pushNotif={pushNotif}
+        />
+      }
+      bottomNotifications={
+        notifItems.length > 0 ? (
+          <VirtualizedNotifications
+            notifItems={notifItems}
+            clearNotifs={clearNotifs}
+            showStickyFaults={false}
+            maxHeight={200}
           />
-        </aside>
-      </div>
-    </div>
+        ) : null
+      }
+    />
   );
 }

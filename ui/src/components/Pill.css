@@ -1,0 +1,85 @@
+/**
+ * Pill Component Styling
+ * Compact badge/label element for status and tags
+ */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.25rem var(--space-sm);
+  border-radius: 999px;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1;
+  background: var(--glass-light);
+  color: var(--text);
+  border: 1px solid var(--border-divider);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.pill__icon {
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pill__text {
+  display: inline;
+}
+
+/* Size variants */
+.pill--sm {
+  padding: 0.2rem var(--space-xs);
+  font-size: var(--font-2xs);
+}
+
+.pill--md {
+  padding: 0.3rem var(--space-sm);
+  font-size: var(--font-xs);
+}
+
+.pill--lg {
+  padding: 0.4rem var(--space-md);
+  font-size: var(--font-sm);
+}
+
+/* Color variants */
+.pill--default {
+  background: var(--surface-raised);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.pill--primary {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: rgba(59, 130, 246, 0.95);
+}
+
+.pill--success {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: rgba(34, 197, 94, 0.95);
+}
+
+.pill--warning {
+  background: rgba(251, 146, 60, 0.2);
+  border-color: rgba(251, 146, 60, 0.4);
+  color: rgba(251, 146, 60, 0.95);
+}
+
+.pill--danger {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: rgba(239, 68, 68, 0.95);
+}
+
+.pill--muted {
+  background: var(--glass-light);
+  border-color: var(--border-divider);
+  color: var(--text-secondary);
+}

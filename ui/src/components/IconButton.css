@@ -1,0 +1,107 @@
+/**
+ * IconButton Component Styling
+ * Minimal icon-only button for toolbar/header actions
+ */
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: var(--font-base);
+  line-height: 1;
+}
+
+.icon-button:hover:not(.icon-button--disabled) {
+  background: var(--glass-light);
+  color: var(--text);
+}
+
+.icon-button:active:not(.icon-button--disabled) {
+  background: var(--glass-medium);
+}
+
+.icon-button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: var(--text-secondary);
+}
+
+.icon-button__icon {
+  width: 1.2em;
+  height: 1.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button__label {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Size variants */
+.icon-button--sm {
+  width: 28px;
+  height: 28px;
+  font-size: var(--font-sm);
+}
+
+.icon-button--md {
+  width: 36px;
+  height: 36px;
+  font-size: var(--font-base);
+}
+
+.icon-button--lg {
+  width: 44px;
+  height: 44px;
+  font-size: var(--font-lg);
+}
+
+/* Variant styles */
+.icon-button--default {
+  color: var(--text-secondary);
+}
+
+.icon-button--default:hover:not(.icon-button--disabled) {
+  color: var(--text);
+  background: var(--glass-light);
+}
+
+.icon-button--primary {
+  color: rgba(59, 130, 246, 0.8);
+}
+
+.icon-button--primary:hover:not(.icon-button--disabled) {
+  color: rgba(59, 130, 246, 1);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.icon-button--danger {
+  color: rgba(239, 68, 68, 0.8);
+}
+
+.icon-button--danger:hover:not(.icon-button--disabled) {
+  color: rgba(239, 68, 68, 1);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.icon-button--success {
+  color: rgba(34, 197, 94, 0.8);
+}
+
+.icon-button--success:hover:not(.icon-button--disabled) {
+  color: rgba(34, 197, 94, 1);
+  background: rgba(34, 197, 94, 0.1);
+}

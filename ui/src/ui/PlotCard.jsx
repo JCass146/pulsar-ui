@@ -5,12 +5,16 @@ import {
   Line,
   XAxis,
   YAxis,
-  Tooltip
+  Tooltip,
+  Grid
 } from "recharts";
+import { Card, CardHeader, CardTitle, CardMeta, CardBody } from "../components/Card.jsx";
+import { Pill } from "../components/Pill.jsx";
 import { fmt, inferUnit } from "./MetricCard.jsx";
 import DeviceChip from "./DeviceChip.jsx";
 import ChartSettingsModal from "./ChartSettingsModal.jsx";
 import { getFriendlyFieldLabel } from "../utils/health.js";
+import "./PlotCard.css";
 
 function splitSeriesKey(seriesKey) {
   const s = String(seriesKey || "");
@@ -27,6 +31,31 @@ function fmtRelSec(x) {
   if (a < 90) return `${s}s`;
   const m = Math.round(s / 60);
   return `${m}m`;
+}
+
+// Custom tooltip for better visual integration
+function CustomChartTooltip({ active, payload, label, friendlyLabel }) {
+  if (!active || !payload || !payload.length) return null;
+  
+  const value = payload[0].value;
+  return (
+    <div style={{
+      backgroundColor: 'var(--surface-default)',
+      border: '1px solid var(--border-divider)',
+      borderRadius: 'var(--radius-md)',
+      padding: '8px 12px',
+      boxShadow: 'var(--shadow-sm)',
+      fontSize: '13px',
+      color: 'var(--text)',
+    }}>
+      <div style={{ marginBottom: '4px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+        {typeof label === 'number' ? `t ${fmtRelSec(label)}` : label}
+      </div>
+      <div style={{ fontWeight: 600 }}>
+        {fmt(value)} {friendlyLabel}
+      </div>
+    </div>
+  );
 }
 
 function PlotCard({
@@ -77,47 +106,40 @@ function PlotCard({
   }, [tick, seriesKey, seriesRef, currentWindow]);
 
   return (
-    <div
-      className="plotCard"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div className="plotHdr">
-        <div className="plotHdrLeft">
-          {/* DeviceChip in header - MANDATORY for device source visibility */}
-          <div className="plotDeviceChip">
-            <DeviceChip
-              deviceId={device}
-              devicesRef={devicesRef}
-              size="small"
-              compact
-            />
+    <Card interactive>
+      <CardHeader divider>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 'var(--space-sm)',
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <CardTitle size="sm" title={`${friendlyLabel} (${field})`}>
+              {friendlyLabel}
+            </CardTitle>
+            <CardMeta>
+              {friendlyLabel !== field && (
+                <span className="mono" style={{ fontSize: 'var(--font-2xs)' }}>
+                  {field}
+                </span>
+              )}
+            </CardMeta>
           </div>
-          <div className="plotTitle" title={`${friendlyLabel} (${field})`}>
-            <span className="metricLabel__friendly">{friendlyLabel}</span>
-            {friendlyLabel !== field && (
-              <span className="metricLabel__technical mono">{field}</span>
-            )}
-          </div>
-          <div className="plotValue mono">
-            {fmt(lastV)}
-            {unit ? <span className="plotUnit">{unit}</span> : null}
-          </div>
+          <button
+            className="plot-card__settings-btn"
+            type="button"
+            title="Plot options"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSettingsOpen(true);
+            }}
+          >
+            ⚙
+          </button>
         </div>
-
-        <button
-          className={`plotGear ${hovered ? "show" : ""}`}
-          type="button"
-          title="Plot options"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setSettingsOpen(true);
-          }}
-        >
-          ⚙
-        </button>
-      </div>
+      </CardHeader>
 
       <ChartSettingsModal
         isOpen={settingsOpen}
@@ -130,26 +152,76 @@ function PlotCard({
         onPausedChange={setChartPaused}
       />
 
-      <div className="plotInner" style={{ height: 220, position: "relative" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <XAxis
-              dataKey="x"
-              type="number"
-              domain={[-currentWindow, 0]}
-              tickFormatter={fmtRelSec}
-              hide={!showXAxis}
-            />
-            <YAxis width={46} />
-            <Tooltip
-              labelFormatter={(x) => `t ${fmtRelSec(x)} (now)`}
-              formatter={(v) => [v, friendlyLabel]}
-            />
-            <Line dataKey="v" dot={false} isAnimationActive={false} type="monotone" />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+      <CardBody style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        {/* Current value display */}
+        <div className="plot-card__value-display">
+          <div className="plot-card__value">
+            {fmt(lastV)}
+          </div>
+          {unit && (
+            <div className="plot-card__unit">
+              {unit}
+            </div>
+          )}
+          <div className="plot-card__status-badges">
+            {device && devicesRef?.current?.get?.(device)?.online && (
+              <Pill variant="success" size="sm">Active</Pill>
+            )}
+            {device && (
+              <DeviceChip
+                deviceId={device}
+                devicesRef={devicesRef}
+                size="small"
+                compact
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div className="plot-card__chart-container">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 8, right: 12, left: -30, bottom: 20 }}>
+              <Grid 
+                strokeDasharray="3 3" 
+                stroke="var(--border-divider)" 
+                opacity={0.25}
+                vertical={false}
+              />
+              <XAxis
+                dataKey="x"
+                type="number"
+                domain={[-currentWindow, 0]}
+                tickFormatter={fmtRelSec}
+                hide={!showXAxis}
+                stroke="var(--text-secondary)"
+                opacity={0.5}
+                tick={{ fontSize: 12, fill: 'var(--text-secondary)' }}
+              />
+              <YAxis 
+                width={40}
+                stroke="var(--text-secondary)"
+                opacity={0.5}
+                tick={{ fontSize: 12, fill: 'var(--text-secondary)' }}
+              />
+              <Tooltip
+                content={<CustomChartTooltip friendlyLabel={friendlyLabel} />}
+                cursor={{ stroke: 'var(--text-secondary)', opacity: 0.3 }}
+              />
+              <Line 
+                dataKey="v" 
+                dot={false} 
+                isAnimationActive={false} 
+                type="monotone"
+                stroke="var(--primary-line, #3b82f6)"
+                strokeWidth={2}
+                strokeOpacity={0.9}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardBody>
+    </Card>
   );
 }
 

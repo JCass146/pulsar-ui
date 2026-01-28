@@ -1,0 +1,31 @@
+/**
+ * FleetStatusStrip Styling
+ * Fleet health summary display
+ */
+
+.fleet-status-strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.fleet-status-strip__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.fleet-status-strip__label {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fleet-status-strip__number {
+  font-size: var(--font-xl);
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}

@@ -1,80 +1,135 @@
 :root {
-  --bg: #0b0f14;
-  --panel: #0f1621;
-  --panel2: #0c121b;
-  --text: #e7eef7;
-  --muted: #9bb0c6;
-  --border: #1b2a3a;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  --radius: 14px;
+  /* ===== TYPOGRAPHY ===== */
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
   --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
     "Apple Color Emoji", "Segoe UI Emoji";
   
-  /* Theme-aware overlay and glass colors */
-  --glass-bg: rgba(8, 12, 18, 0.65);
-  --glass-light: rgba(255, 255, 255, 0.04);
-  --glass-medium: rgba(255, 255, 255, 0.06);
-  --glass-strong: rgba(255, 255, 255, 0.12);
-  --overlay-bg: rgba(0, 0, 0, 0.25);
-  --overlay-light: rgba(0, 0, 0, 0.18);
-  --card-gradient-start: rgba(255, 255, 255, 0.03);
-  --card-gradient-end: rgba(255, 255, 255, 0.015);
-  --heading-color: #cfe1f7;
+  /* Font Sizes */
+  --font-2xs: 9px;
+  --font-xs: 10px;
+  --font-sm: 11px;
+  --font-base: 13px;
+  --font-md: 13px;
+  --font-lg: 14px;
+  --font-xl: 16px;
   
-  /* Background gradient colors */
-  --bg-gradient-start: #0e1a2a;
-  --bg-gradient-end: #070a0f;
+  /* Line Heights */
+  --lh-tight: 1.2;
+  --lh-snug: 1.3;
+  --lh-normal: 1.4;
+  --lh-relaxed: 1.5;
+  --line-xs: 1.2;
+  --line-sm: 1.3;
+  --line-md: 1.4;
+  --line-lg: 1.5;
   
-  /* Density & Spacing System */
-  --gap-xs: 4px;
-  --gap-sm: 6px;
-  --gap-md: 10px;
-  --gap-lg: 14px;
-  --gap-xl: 18px;
-  --gap-xxl: 24px;
+  /* ===== SPACING (8px scale) ===== */
+  --space-2xs: 4px;
+  --space-xs: 6px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
   
+  /* Legacy aliases (for migration) */
+  --gap-xs: var(--space-xs);
+  --gap-sm: var(--space-sm);
+  --gap-md: var(--space-md);
+  --gap-lg: var(--space-lg);
+  --gap-xl: var(--space-xl);
+  --gap-xxl: var(--space-2xl);
   --pad-xs: 6px;
   --pad-sm: 8px;
   --pad-md: 12px;
   --pad-lg: 16px;
   --pad-xl: 20px;
   
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* ===== BORDER RADIUS ===== */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius: 14px;
   
-  --font-xs: 10px;
-  --font-sm: 11px;
-  --font-md: 13px;
-  --font-lg: 14px;
-  --font-xl: 16px;
+  /* ===== SHADOWS ===== */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.18);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   
+  /* ===== SURFACES (3-layer system) ===== */
+  /* Layer 0: Background (darkest/lightest) */
+  --surface-bg: #0b0f14;
+  
+  /* Layer 1: Surface (mid tone) */
+  --surface-default: #0f1621;
+  
+  /* Layer 2: Raised (lightest/darkest overlay) */
+  --surface-raised: #0c121b;
+  
+  /* ===== COLORS ===== */
+  --text: #e7eef7;
+  --text-secondary: #9bb0c6;
+  --muted: #9bb0c6;
+  
+  /* Single border token (dividers/tables only) */
+  --border: #1b2a3a;
+  --border-divider: rgba(255, 255, 255, 0.08);
+  
+  /* ===== GLASS & OVERLAY ===== */
+  --glass-bg: rgba(8, 12, 18, 0.65);
+  --glass-light: rgba(255, 255, 255, 0.04);
+  --glass-medium: rgba(255, 255, 255, 0.06);
+  --glass-strong: rgba(255, 255, 255, 0.12);
+  --overlay-bg: rgba(0, 0, 0, 0.25);
+  --overlay-light: rgba(0, 0, 0, 0.18);
+  
+  /* ===== CARD GRADIENTS ===== */
+  --card-gradient-start: rgba(255, 255, 255, 0.03);
+  --card-gradient-end: rgba(255, 255, 255, 0.015);
+  --heading-color: #cfe1f7;
+  
+  /* ===== BACKGROUND GRADIENTS ===== */
+  --bg-gradient-start: #0e1a2a;
+  --bg-gradient-end: #070a0f;
+  
+  /* ===== CHART COLORS ===== */
+  --primary-line: #3b82f6;
+  --secondary-line: #8b5cf6;
+  --success-line: #10b981;
+  --warning-line: #f59e0b;
+  --danger-line: #ef4444;
+  
+  /* ===== LEGACY ALIASES (for migration) ===== */
+  --bg: #0b0f14;
+  --panel: #0f1621;
+  --panel2: #0c121b;
+  
+  /* ===== COMPONENT HEIGHTS ===== */
   --btn-h-sm: 24px;
   --btn-h: 30px;
   --btn-h-lg: 36px;
   
   --chip-h: 22px;
   --chip-h-lg: 28px;
-  
-  --line-xs: 1.2;
-  --line-sm: 1.3;
-  --line-md: 1.4;
-  --line-lg: 1.5;
 }
 
 /* Light theme variables */
 [data-theme="light"] {
-  --bg: #f5f7fa;
-  --panel: #ffffff;
-  --panel2: #f0f2f5;
+  --surface-bg: #f5f7fa;
+  --surface-default: #ffffff;
+  --surface-raised: #f0f2f5;
   --text: #1a202c;
+  --text-secondary: #718096;
   --muted: #718096;
   --border: #e2e8f0;
+  --border-divider: rgba(0, 0, 0, 0.08);
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   
-  /* Light theme overlay and glass colors */
   --glass-bg: rgba(255, 255, 255, 0.85);
   --glass-light: rgba(0, 0, 0, 0.03);
   --glass-medium: rgba(0, 0, 0, 0.05);
@@ -85,22 +140,32 @@
   --card-gradient-end: rgba(0, 0, 0, 0.02);
   --heading-color: #2d3748;
   
-  /* Light background gradient colors */
   --bg-gradient-start: #e8ecf2;
   --bg-gradient-end: #f5f7fa;
+  
+  /* ===== CHART COLORS (Light Theme) ===== */
+  --primary-line: #2563eb;
+  --secondary-line: #7c3aed;
+  --success-line: #059669;
+  --warning-line: #d97706;
+  --danger-line: #dc2626;
 }
 
 /* Dark theme variables (default) */
 [data-theme="dark"] {
-  --bg: #0b0f14;
-  --panel: #0f1621;
-  --panel2: #0c121b;
+  --surface-bg: #0b0f14;
+  --surface-default: #0f1621;
+  --surface-raised: #0c121b;
   --text: #e7eef7;
+  --text-secondary: #9bb0c6;
   --muted: #9bb0c6;
   --border: #1b2a3a;
+  --border-divider: rgba(255, 255, 255, 0.08);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.18);
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   
-  /* Dark theme overlay and glass colors */
   --glass-bg: rgba(8, 12, 18, 0.65);
   --glass-light: rgba(255, 255, 255, 0.04);
   --glass-medium: rgba(255, 255, 255, 0.06);
@@ -111,9 +176,15 @@
   --card-gradient-end: rgba(255, 255, 255, 0.015);
   --heading-color: #cfe1f7;
   
-  /* Dark background gradient colors */
   --bg-gradient-start: #0e1a2a;
   --bg-gradient-end: #070a0f;
+  
+  /* ===== CHART COLORS (Dark Theme) ===== */
+  --primary-line: #3b82f6;
+  --secondary-line: #8b5cf6;
+  --success-line: #10b981;
+  --warning-line: #f59e0b;
+  --danger-line: #ef4444;
 }
 
 *,
