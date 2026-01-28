@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import PlotCard from "./PlotCard.jsx";
-import DeviceList from "./DeviceList.jsx";
 import VirtualizedNotifications from "./VirtualizedNotifications.jsx";
 import TopControlBar from "./TopControlBar.jsx";
 import LiveMetricsRail from "./LiveMetricsRail.jsx";
-import RetainedStateBank from "./RetainedStateBank.jsx";
+import HealthSummaryBar from "./HealthSummaryBar.jsx";
 import { useDebounceCallback } from "../hooks/useDebounce.js";
 import { APP_CONFIG } from "../config-constants.js";
 
@@ -134,11 +133,16 @@ export default function DashboardView({
   // new props for Milestone 1
   sendCommand,
   pushNotif,
+  // NEW: HealthSummaryBar navigation props
+  onNavigateToRaw,
+  onHealthFilterChange,
+  healthFilter = "all",
 }) {
   // Watched fields (no multi-select dropdown needed)
   const [watchedFields, setWatchedFields] = useState(() => loadWatchedFields());
   const [watchedText, setWatchedText] = useState(() => loadWatchedFields().join(", "));
   const [showOnlyOnline, setShowOnlyOnline] = useState(true);
+  const [configCollapsed, setConfigCollapsed] = useState(true);
 
   useEffect(() => {
     // keep text in sync if loaded
@@ -222,212 +226,160 @@ export default function DashboardView({
   const selectedRole = selectedDevObj ? getDeviceRole(selectedDevObj) : "—";
 
   return (
-    <div className="dashDense">
-      {/* LEFT RAIL */}
-      <aside className="dashLeft">
-        <section className="card controls">
-          <h2>Fleet</h2>
-          <DeviceList
-            title="Devices"
-            devices={deviceList}
-            selectedDevice={selectedDevice}
-            onSelect={(id) => setSelectedDevice(id)}
-            compact={false}
-            groupByRole
-            showTags={true}
-            devicesRef={devicesRef}
-          />
-        </section>
+    <div className="dashSimple">
+      {/* HEALTH SUMMARY BAR - Global fleet health at top */}
+      <HealthSummaryBar
+        deviceList={deviceList}
+        onFilterChange={onHealthFilterChange}
+        activeFilter={healthFilter}
+        onNavigateToRaw={onNavigateToRaw}
+      />
 
-        <section className="card controls" style={{ marginTop: 12 }}>
-          <h2>Dashboard config</h2>
-
-          <div className="form">
-            <label>
-              Watched fields (comma separated)
-              <input
-                value={watchedText}
-                onChange={(e) => setWatchedText(e.target.value)}
-                placeholder="pressure_psi, mass_g, temp_c"
-                spellCheck={false}
-              />
-              <div className="hint">
-                These become the chart wall for each device (Option A).
-              </div>
-            </label>
-
-            <div className="row">
-              <button type="button" className="secondary" onClick={applyWatched}>
-                Apply watched fields
-              </button>
-              <button
-                type="button"
-                className={showOnlyOnline ? "secondary" : ""}
-                onClick={() => setShowOnlyOnline((v) => !v)}
-              >
-                {showOnlyOnline ? "Showing: online only" : "Showing: all devices"}
-              </button>
-            </div>
-
-            <label>
-              Max points (history)
-              <input
-                type="number"
-                min="200"
-                max="20000"
-                step="100"
-                value={maxPoints}
-                onChange={(e) => setMaxPoints(Number(e.target.value || 1500))}
-              />
-              <div className="hint">
-                Applies to all timeseries buffers.
-              </div>
-            </label>
-          </div>
-        </section>
-
-        <section className="card controls" style={{ marginTop: 12 }}>
-          <div className="row" style={{ alignItems: "center", justifyContent: "space-between" }}>
-            <h2 style={{ margin: 0 }}>Notifications</h2>
-            <button type="button" className="secondary" onClick={clearNotifs}>
-              Clear
-            </button>
-          </div>
-
-          <VirtualizedNotifications
-            notifItems={notifItems}
-            clearNotifs={clearNotifs}
-            showStickyFaults={true}
-            maxHeight={360}
-          />
-
-          <div className="hint" style={{ marginTop: 8 }}>
-            Full packet history lives in <span className="mono">Raw</span>.
-          </div>
-        </section>
-      </aside>
-
-      {/* CENTER */}
-      <section className="dashCenter">
-        <section className="card controls">
-          <div className="dashControlsRow">
-            <div className="dashTitleBlock">
-              <div className="dashTitle">Control Station</div>
-              <div className="muted" style={{ fontSize: 12 }}>
-                Multi-device wall • status buttons from retained/meta/status • charts always visible
-              </div>
-            </div>
-
-            <div className="statusStrip">
-              <span className="pillTag2 mono">selected {selectedDevice || "—"}</span>
-              <span className="pillTag2">{selectedRole}</span>
-              <span className="pillTag2 mono">watched {watchedFields.length}</span>
-              <span className="pillTag2 mono">charts {wallSeries.length}</span>
-            </div>
-          </div>
-        </section>
-
-        <TopControlBar
-          deviceList={deviceList}
-          devicesRef={devicesRef}
-          broadcastCommand={broadcastCommand}
-        />
-
-        {/* STATUS BUTTONS PER DEVICE */}
-        <section className="card controls" style={{ marginTop: 12 }}>
-          <h2>Status buttons</h2>
-
-          <div className="statusWall">
-            {devicesOrdered.slice(0, 12).map((d) => {
-              const dev = devicesRef.current.get(d.id);
-              const latest = latestRef.current.get(d.id);
-              const role = dev ? getDeviceRole(dev) : d.role || "unknown";
-
-              const badges = [
-                { label: d.online ? (d.stale ? "STALE" : "LIVE") : "OFFLINE", state: null, tone: devStatusClass(d) },
-                { label: role, state: null, tone: "neutral" },
-                ...extractStatusBadges(dev),
-                ...extractRelayBadges(dev, latest)
-              ].slice(0, 12);
-
-              return (
-                <div key={d.id} className="deviceStatusCard">
-                  <div className="deviceStatusHdr">
-                    <button
-                      type="button"
-                      className="deviceStatusName mono"
-                      onClick={() => setSelectedDevice(d.id)}
-                      title="Click to select device"
-                    >
-                      {d.id}
-                    </button>
-                    <span className="muted mono" style={{ fontSize: 12 }}>
-                      {d.lastSeenMs ? new Date(d.lastSeenMs).toLocaleTimeString() : "—"}
-                    </span>
-                  </div>
-
-                  <div className="statusBtnGrid">
-                    {badges.map((b, idx) => {
-                      const tone =
-                        b.tone ||
-                        (b.state === null ? "neutral" : pillClassForBool(b.state));
-
-                      return (
-                        <div key={`${d.id}-${idx}`} className={`statusBtn ${tone}`}>
-                          <span className="mono">{b.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
+      {/* MAIN CONTENT */}
+      <div className="dashSimpleMain">
+        {/* LEFT RAIL - Control Station & Notifications */}
+        <aside className="dashSimpleLeft">
+          {/* Control Station */}
+          <section className="card controls">
+            <div className="dashControlsRow">
+              <div className="dashTitleBlock">
+                <div className="dashTitle">🎛️ Control Station</div>
+                <div className="muted" style={{ fontSize: 12 }}>
+                  Observe live telemetry • Charts always visible
                 </div>
-              );
-            })}
+              </div>
 
-            {devicesOrdered.length === 0 ? (
-              <div className="muted">No devices yet.</div>
-            ) : null}
+              <div className="statusStrip">
+                <span className="pillTag2 mono">selected {selectedDevice || "—"}</span>
+                <span className="pillTag2">{selectedRole}</span>
+                <span className="pillTag2 mono">watched {watchedFields.length}</span>
+                <span className="pillTag2 mono">charts {wallSeries.length}</span>
+              </div>
+            </div>
+          </section>
+
+          <TopControlBar
+            deviceList={deviceList}
+            devicesRef={devicesRef}
+            broadcastCommand={broadcastCommand}
+          />
+
+          {/* Dashboard Config - collapsible */}
+          <section className="card controls" style={{ marginTop: 12 }}>
+            <div
+              className="row"
+              style={{ alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+              onClick={() => setConfigCollapsed((v) => !v)}
+            >
+              <h2 style={{ margin: 0 }}>⚙️ Config</h2>
+              <span className="muted">{configCollapsed ? "▶" : "▼"}</span>
+            </div>
+
+            {!configCollapsed && (
+              <div className="form" style={{ marginTop: 12 }}>
+                <label>
+                  Watched fields (comma separated)
+                  <input
+                    value={watchedText}
+                    onChange={(e) => setWatchedText(e.target.value)}
+                    placeholder="pressure_psi, mass_g, temp_c"
+                    spellCheck={false}
+                  />
+                  <div className="hint">
+                    These fields become charts for each device.
+                  </div>
+                </label>
+
+                <div className="row">
+                  <button type="button" className="secondary" onClick={applyWatched}>
+                    Apply
+                  </button>
+                  <button
+                    type="button"
+                    className={showOnlyOnline ? "secondary" : ""}
+                    onClick={() => setShowOnlyOnline((v) => !v)}
+                  >
+                    {showOnlyOnline ? "Online only" : "All devices"}
+                  </button>
+                </div>
+
+                <label>
+                  Max points (history)
+                  <input
+                    type="number"
+                    min="200"
+                    max="20000"
+                    step="100"
+                    value={maxPoints}
+                    onChange={(e) => setMaxPoints(Number(e.target.value || 1500))}
+                  />
+                </label>
+              </div>
+            )}
+          </section>
+
+          {/* Notifications */}
+          <section className="card controls" style={{ marginTop: 12 }}>
+            <div className="row" style={{ alignItems: "center", justifyContent: "space-between" }}>
+              <h2 style={{ margin: 0 }}>🔔 Notifications</h2>
+              <button type="button" className="secondary" onClick={clearNotifs}>
+                Clear
+              </button>
+            </div>
+
+            <VirtualizedNotifications
+              notifItems={notifItems}
+              clearNotifs={clearNotifs}
+              showStickyFaults={true}
+              maxHeight={360}
+            />
+
+            <div className="hint" style={{ marginTop: 8 }}>
+              Full message history in <span className="mono">Raw</span> tab.
+            </div>
+          </section>
+        </aside>
+
+        {/* CENTER - Charts Wall */}
+        <section className="dashSimpleCenter">
+          {/* CHART WALL */}
+          <div className="plotsGrid">
+            {wallSeries.length ? (
+              wallSeries.map(({ seriesKey }) => (
+                <PlotCard
+                  key={seriesKey}
+                  seriesRef={seriesRef}
+                  seriesKey={seriesKey}
+                  height={220}
+                  devicesRef={devicesRef}
+                />
+              ))
+            ) : (
+              <div className="card controls">
+                <div className="emptyTitle">No charts yet</div>
+                <div className="muted">
+                  Waiting for telemetry on watched fields.
+                </div>
+                <div className="hint" style={{ marginTop: 12 }}>
+                  Default fields: <span className="mono">{watchedFields.join(", ")}</span>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
-        {/* CHART WALL */}
-        <div className="plotsGrid" style={{ marginTop: 12 }}>
-          {wallSeries.length ? (
-            wallSeries.map(({ seriesKey }) => (
-              <PlotCard key={seriesKey} seriesRef={seriesRef} seriesKey={seriesKey} height={220} />
-            ))
-          ) : (
-            <div className="card controls">
-              <div className="emptyTitle">No charts yet</div>
-              <div className="muted">
-                Waiting for telemetry on the watched fields for online devices.
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* RIGHT RAIL */}
-      <aside className="dashRight">
-        {/* Live Metrics Rail (Milestone 1.1) */}
-        <LiveMetricsRail
-          devicesRef={devicesRef}
-          latestRef={latestRef}
-          seriesRef={seriesRef}
-          deviceList={deviceList}
-          selectedDevice={selectedDevice}
-          pushNotif={pushNotif}
-        />
-
-        {/* Retained State Bank (Milestone 1.2) */}
-        <RetainedStateBank
-          devicesRef={devicesRef}
-          latestRef={latestRef}
-          deviceList={deviceList}
-          selectedDevice={selectedDevice}
-          onSendCommand={sendCommand}
-          broadcastCommand={broadcastCommand}
-        />
-      </aside>
+        {/* RIGHT RAIL - Pinned Metrics */}
+        <aside className="dashSimpleRight">
+          <LiveMetricsRail
+            devicesRef={devicesRef}
+            latestRef={latestRef}
+            seriesRef={seriesRef}
+            deviceList={deviceList}
+            selectedDevice={selectedDevice}
+            pushNotif={pushNotif}
+          />
+        </aside>
+      </div>
     </div>
   );
 }

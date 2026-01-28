@@ -3,6 +3,7 @@ import DeviceList from "./DeviceList.jsx";
 import CommandQueue from "./CommandQueue.jsx";
 import CommandTemplates from "./CommandTemplates.jsx";
 import AuthorityControl, { CommandGate } from "./AuthorityControl.jsx";
+import { DeviceChipGroup } from "./DeviceChip.jsx";
 
 function safeJsonStringify(v) {
   try {
@@ -109,6 +110,23 @@ export default function ControlView({
           onArmedExpire={handleArmedExpire}
         />
       </div>
+
+      {/* Safe Mode Indicator (shown when authority is "control" level) */}
+      {authorityLevel === "control" && (
+        <div className="controlSafeMode">
+          <span className="controlSafeMode__icon">🛡️</span>
+          <span className="controlSafeMode__text">
+            <strong>Safe Commands Only</strong> — Dangerous operations (firmware, calibration apply) require ARMED mode.
+          </span>
+          <button
+            type="button"
+            className="controlAdvancedToggle"
+            onClick={() => setAuthorityLevel("armed")}
+          >
+            Enter ARMED Mode
+          </button>
+        </div>
+      )}
 
       <div className="grid">
         <section className="card controls">

@@ -3458,3 +3458,704 @@ button.danger {
   max-height: 150px;
   overflow-y: auto;
 }
+
+/* ============================================================
+   NEW-USER USABILITY REDESIGN
+   - DeviceChip
+   - HealthSummaryBar
+   - Simplified Dashboard
+   ============================================================ */
+
+/* Health CSS Variables */
+:root {
+  --health-healthy: #40ffb6;
+  --health-warning: #ffd040;
+  --health-offline: #ff4078;
+  --health-unknown: #9bb0c6;
+}
+
+/* ---------- DeviceChip Component ---------- */
+
+.deviceChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--chip-gap, 6px);
+  padding: var(--chip-padding, 4px 10px);
+  font-size: var(--chip-font-size, 12px);
+  background: var(--chip-bg, var(--glass-light));
+  border: 1px solid var(--chip-border, var(--border));
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.deviceChip--clickable {
+  cursor: pointer;
+}
+
+.deviceChip--clickable:hover {
+  background: var(--glass-medium);
+  border-color: var(--chip-color, var(--border));
+}
+
+.deviceChip--selected {
+  background: var(--chip-bg, var(--glass-medium));
+  border-color: var(--chip-color, var(--border));
+  box-shadow: 0 0 0 2px var(--chip-bg, transparent);
+}
+
+.deviceChip__dot {
+  font-size: var(--chip-dot-size, 8px);
+  line-height: 1;
+  color: var(--chip-color, var(--muted));
+}
+
+.deviceChip__dot--healthy { color: var(--health-healthy); }
+.deviceChip__dot--warning { color: var(--health-warning); }
+.deviceChip__dot--offline { color: var(--health-offline); }
+.deviceChip__dot--unknown { color: var(--health-unknown); }
+
+.deviceChip__identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deviceChip__name {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.deviceChip__id {
+  color: var(--text);
+}
+
+.deviceChip--compact .deviceChip__id {
+  font-size: 11px;
+}
+
+.deviceChip__role {
+  font-size: 10px;
+  padding: 1px 5px;
+  background: var(--glass-light);
+  border-radius: 6px;
+  color: var(--muted);
+}
+
+.deviceChip__lastSeen {
+  font-size: 10px;
+}
+
+/* DeviceChipGroup */
+.deviceChipGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.deviceChipGroup__more {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: var(--glass-light);
+  border-radius: 999px;
+}
+
+/* DeviceChipLegend */
+.deviceChipLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ---------- HealthSummaryBar Component ---------- */
+
+.healthSummaryBar {
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+}
+
+.healthSummaryBar__inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.healthSummaryBar__total {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.healthSummaryBar__totalLabel {
+  color: var(--muted);
+}
+
+.healthSummaryBar__totalCount {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.healthSummaryBar__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+.healthSummaryBar__stats {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Individual health stat button */
+.healthStat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: var(--stat-bg, var(--glass-light));
+  border: 1px solid var(--stat-border, var(--border));
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.healthStat:hover {
+  background: var(--glass-medium);
+  border-color: var(--stat-color, var(--border));
+}
+
+.healthStat--active {
+  background: var(--stat-bg, var(--glass-medium));
+  border-color: var(--stat-color, var(--border));
+  box-shadow: 0 0 0 2px var(--stat-bg, transparent);
+}
+
+.healthStat__icon {
+  color: var(--stat-color, var(--muted));
+  font-size: 10px;
+}
+
+.healthStat__count {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.healthStat__label {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* Alert badge */
+.healthAlertBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: rgba(255, 64, 120, 0.12);
+  border: 1px solid rgba(255, 64, 120, 0.35);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.healthAlertBadge:hover {
+  background: rgba(255, 64, 120, 0.18);
+}
+
+.healthAlertBadge--active {
+  box-shadow: 0 0 0 2px rgba(255, 64, 120, 0.2);
+}
+
+.healthAlertBadge__icon {
+  color: var(--health-offline);
+}
+
+.healthAlertBadge__count {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.healthAlertBadge__label {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.healthSummaryBar__clearFilter {
+  padding: 4px 10px;
+  font-size: 11px;
+  background: var(--glass-light);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.healthSummaryBar__clearFilter:hover {
+  background: var(--glass-medium);
+  color: var(--text);
+}
+
+/* Compact health summary for inline use */
+.healthSummaryCompact {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.healthSummaryCompact__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.healthSummaryCompact__stat--healthy .healthSummaryCompact__icon { color: var(--health-healthy); }
+.healthSummaryCompact__stat--warning .healthSummaryCompact__icon { color: var(--health-warning); }
+.healthSummaryCompact__stat--offline .healthSummaryCompact__icon { color: var(--health-offline); }
+
+/* ---------- Plot Card with DeviceChip ---------- */
+
+.plotCard .plotHdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.plotHdrLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.plotCard .plotTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--heading-color);
+  margin: 0;
+}
+
+.plotCard .plotValue {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.plotUnit {
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: 2px;
+}
+
+.plotCard .plotDeviceChip {
+  margin-top: 4px;
+}
+
+.plotOrigin {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.plotGear {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding: 4px 8px;
+  font-size: 14px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.plotGear.show,
+.plotCard:hover .plotGear {
+  opacity: 0.6;
+}
+
+.plotGear:hover {
+  opacity: 1;
+  color: var(--text);
+}
+
+/* ---------- Simplified Dashboard Layout ---------- */
+
+.dashSimple {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  height: calc(100vh - 140px);
+}
+
+.dashSimpleMain {
+  display: grid;
+  grid-template-columns: 300px 1fr 280px;
+  gap: 12px;
+  padding: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashSimpleLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.dashSimpleCenter {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.dashSimpleRight {
+  overflow-y: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .dashSimpleMain {
+    grid-template-columns: 280px 1fr;
+  }
+  
+  .dashSimpleRight {
+    display: none;
+  }
+}
+
+@media (max-width: 800px) {
+  .dashSimpleMain {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashSimpleLeft {
+    max-height: 300px;
+  }
+}
+
+.dashSimple__controlStation {
+  /* Control station card styling */
+}
+
+.dashSimple__charts {
+  /* Charts wall */
+}
+
+.dashSimple__pinnedMetrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* ---------- Fleet Panel for Raw Tab ---------- */
+
+.fleetPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fleetPanel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fleetPanel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.fleetDevice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--overlay-light);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fleetDevice:hover {
+  background: var(--glass-medium);
+  border-color: var(--glass-strong);
+}
+
+.fleetDevice--selected {
+  background: var(--glass-medium);
+  border-color: rgba(46, 231, 255, 0.35);
+}
+
+.fleetDevice__health {
+  font-size: 12px;
+}
+
+.fleetDevice__identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fleetDevice__name {
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fleetDevice__id {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.fleetDevice__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.fleetDevice__role {
+  padding: 2px 6px;
+  background: var(--glass-light);
+  border-radius: 6px;
+}
+
+/* ---------- Device Details Panel (Raw Tab) ---------- */
+
+.deviceDetailsPanel {
+  position: sticky;
+  top: 16px;
+}
+
+.deviceDetailsPanel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.deviceDetailsPanel__close {
+  padding: 4px 8px;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.deviceDetailsPanel__close:hover {
+  color: var(--text);
+}
+
+/* ---------- Control Tab Guardrails ---------- */
+
+.controlSafeMode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(64, 255, 182, 0.08);
+  border: 1px solid rgba(64, 255, 182, 0.25);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.controlSafeMode__icon {
+  color: var(--health-healthy);
+}
+
+.controlSafeMode__text {
+  flex: 1;
+  color: var(--muted);
+}
+
+.controlAdvancedToggle {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: var(--glass-light);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.controlAdvancedToggle:hover {
+  background: var(--glass-medium);
+  color: var(--text);
+}
+
+/* ---------- Raw View Layout (Fleet & Debug Hub) ---------- */
+
+.rawViewLayout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 140px);
+  padding: 8px;
+  gap: 12px;
+}
+
+.rawViewMain {
+  display: grid;
+  grid-template-columns: 280px 320px 1fr;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.rawViewFleet {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.rawViewControls {
+  overflow-y: auto;
+}
+
+.rawViewFeed {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Responsive adjustments for Raw view */
+@media (max-width: 1200px) {
+  .rawViewMain {
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  
+  .rawViewControls {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  
+  .rawViewFeed {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 800px) {
+  .rawViewMain {
+    grid-template-columns: 1fr;
+  }
+  
+  .rawViewFleet {
+    max-height: 200px;
+  }
+  
+  .rawViewControls {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  
+  .rawViewFeed {
+    grid-column: 1;
+    grid-row: 3;
+    max-height: 400px;
+  }
+}
+
+/* Multi-device command confirmation modal */
+.multiDeviceConfirm {
+  padding: 16px;
+}
+
+.multiDeviceConfirm__title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.multiDeviceConfirm__warning {
+  padding: 10px 12px;
+  background: rgba(255, 208, 64, 0.12);
+  border: 1px solid rgba(255, 208, 64, 0.35);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--health-warning);
+  margin-bottom: 16px;
+}
+
+.multiDeviceConfirm__devices {
+  margin-bottom: 16px;
+}
+
+.multiDeviceConfirm__devicesLabel {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.multiDeviceConfirm__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ---------- Tooltips for technical terms ---------- */
+
+.tooltipTrigger {
+  position: relative;
+  border-bottom: 1px dotted var(--muted);
+  cursor: help;
+}
+
+.tooltipTrigger:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+/* User-friendly metric label */
+.metricLabel {
+  display: flex;
+  flex-direction: column;
+}
+
+.metricLabel__friendly {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.metricLabel__technical {
+  font-size: 10px;
+  color: var(--muted);
+}

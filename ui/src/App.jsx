@@ -86,6 +86,7 @@ export default function App() {
   const [maxPoints, setMaxPoints] = useState(1500);
   const [rawDeviceFilter, setRawDeviceFilter] = useState("all");
   const [rawFamilyFilter, setRawFamilyFilter] = useState("all");
+  const [healthFilter, setHealthFilter] = useState("all");
 
   // Command/Calibration
   const [cmdAction, setCmdAction] = useState("relay.set");
@@ -605,6 +606,13 @@ export default function App() {
             clearNotifs={clearNotifs}
             sendCommand={sendCommand}
             pushNotif={pushNotif}
+            // NEW: HealthSummaryBar props
+            onNavigateToRaw={() => setTab("raw")}
+            onHealthFilterChange={(filter) => {
+              setHealthFilter(filter);
+              setTab("raw");
+            }}
+            healthFilter={healthFilter}
           />
         </main>
       ) : tab === "control" ? (
@@ -672,7 +680,15 @@ export default function App() {
           plotDevices={plotDevices}
           deviceList={deviceList}
           setSelectedDevice={setSelectedDevice}
+          selectedDevice={selectedDevice}
           filteredMessages={filteredMessages}
+          // NEW: Fleet panel props
+          devicesRef={devicesRef}
+          latestRef={latestRef}
+          sendCommand={sendCommand}
+          broadcastCommand={handleBroadcast}
+          healthFilter={healthFilter}
+          onHealthFilterChange={setHealthFilter}
         />
       )}
 

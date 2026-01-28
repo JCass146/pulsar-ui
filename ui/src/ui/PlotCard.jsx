@@ -8,6 +8,8 @@ import {
   Tooltip
 } from "recharts";
 import { fmt, inferUnit } from "./MetricCard.jsx";
+import DeviceChip from "./DeviceChip.jsx";
+import { getFriendlyFieldLabel } from "../utils/health.js";
 
 function splitSeriesKey(seriesKey) {
   const s = String(seriesKey || "");
@@ -31,7 +33,8 @@ function PlotCard({
   seriesKey,
   height = 220,
   windowSec = 60,          // <- default window (seconds)
-  showXAxis = true
+  showXAxis = true,
+  devicesRef = null,       // NEW: ref to devices Map for DeviceChip
 }) {
   const [tick, setTick] = useState(0);
   const [hovered, setHovered] = useState(false);
@@ -43,6 +46,7 @@ function PlotCard({
 
   const { device, field } = useMemo(() => splitSeriesKey(seriesKey), [seriesKey]);
   const unit = useMemo(() => inferUnit(field), [field]);
+  const friendlyLabel = useMemo(() => getFriendlyFieldLabel(field), [field]);
 
   const { data, lastV, nowMs } = useMemo(() => {
     const now = Date.now();
@@ -74,8 +78,20 @@ function PlotCard({
     >
       <div className="plotHdr">
         <div className="plotHdrLeft">
-          <div className="plotTitle mono" title={seriesKey}>
-            {field || seriesKey}
+          {/* DeviceChip in header - MANDATORY for device source visibility */}
+          <div className="plotDeviceChip">
+            <DeviceChip
+              deviceId={device}
+              devicesRef={devicesRef}
+              size="small"
+              compact
+            />
+          </div>
+          <div className="plotTitle" title={`${friendlyLabel} (${field})`}>
+            <span className="metricLabel__friendly">{friendlyLabel}</span>
+            {friendlyLabel !== field && (
+              <span className="metricLabel__technical mono">{field}</span>
+            )}
           </div>
           <div className="plotValue mono">
             {fmt(lastV)}
@@ -110,16 +126,11 @@ function PlotCard({
             <YAxis width={46} />
             <Tooltip
               labelFormatter={(x) => `t ${fmtRelSec(x)} (now)`}
-              formatter={(v) => [v, field]}
+              formatter={(v) => [v, friendlyLabel]}
             />
             <Line dataKey="v" dot={false} isAnimationActive={false} type="monotone" />
           </LineChart>
         </ResponsiveContainer>
-
-        {/* device origin tag bottom-right */}
-        <div className="plotOrigin mono" title="Device origin">
-          {device}
-        </div>
       </div>
     </div>
   );

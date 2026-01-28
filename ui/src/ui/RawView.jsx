@@ -1,5 +1,30 @@
-import React from "react";
+/**
+ * RawView.jsx - REDESIGNED as Fleet & Debug Hub
+ *
+ * Raw tab responsibilities:
+ * - MQTT message feed
+ * - Topic filters
+ * - Device filters
+ * - Retained snapshots
+ * - Timeline links
+ * - Fleet list with device health
+ *
+ * This tab is for EXPERTS - do NOT simplify it.
+ */
+import React, { useMemo, useState } from "react";
 import { formatBytes } from "../topic.js";
+import DeviceChip from "./DeviceChip.jsx";
+import HealthSummaryBar from "./HealthSummaryBar.jsx";
+import RetainedStateBank from "./RetainedStateBank.jsx";
+import {
+  computeDeviceHealth,
+  getHealthConfig,
+  filterDevicesByHealth,
+  formatLastSeen,
+  getDeviceFriendlyName,
+  formatShortDeviceId,
+} from "../utils/health.js";
+import { getDeviceRole } from "../services/device-registry.js";
 
 function safeJsonStringify(v) {
   try {
@@ -34,14 +59,141 @@ export default function RawView({
   plotDevices,
   deviceList,
   setSelectedDevice,
+  selectedDevice,
 
   // feed
-  filteredMessages
+  filteredMessages,
+
+  // NEW: Device registry and state for Fleet panel
+  devicesRef,
+  latestRef,
+  sendCommand,
+  broadcastCommand,
+  healthFilter = "all",
+  onHealthFilterChange,
 }) {
+  // State for expanded device details panel
+  const [expandedDevice, setExpandedDevice] = useState(null);
+
+  // Filter devices by health status
+  const filteredDeviceList = useMemo(() => {
+    return filterDevicesByHealth(deviceList, healthFilter);
+  }, [deviceList, healthFilter]);
+
+  // Get expanded device details
+  const expandedDeviceObj = expandedDevice && devicesRef?.current
+    ? devicesRef.current.get(expandedDevice)
+    : null;
+
   return (
-    <main className="grid">
-      <section className="card controls">
-        <h2>Connection</h2>
+    <div className="rawViewLayout">
+      {/* Health Summary Bar at top */}
+      <HealthSummaryBar
+        deviceList={deviceList}
+        onFilterChange={onHealthFilterChange}
+        activeFilter={healthFilter}
+      />
+
+      <main className="rawViewMain">
+        {/* LEFT PANEL: Fleet List */}
+        <aside className="rawViewFleet">
+          <section className="card controls">
+            <h2>🛰️ Fleet</h2>
+            <div className="hint" style={{ marginBottom: 12 }}>
+              {filteredDeviceList.length} device{filteredDeviceList.length !== 1 ? "s" : ""}
+              {healthFilter !== "all" && ` (filtered: ${healthFilter})`}
+            </div>
+
+            <div className="fleetPanel__list">
+              {filteredDeviceList.map((d) => {
+                const dev = devicesRef?.current?.get(d.id);
+                const healthConfig = getHealthConfig(d);
+                const friendlyName = getDeviceFriendlyName(dev, devicesRef);
+                const role = getDeviceRole(dev || d);
+                const isSelected = expandedDevice === d.id;
+
+                return (
+                  <div
+                    key={d.id}
+                    className={`fleetDevice ${isSelected ? "fleetDevice--selected" : ""}`}
+                    onClick={() => setExpandedDevice(isSelected ? null : d.id)}
+                  >
+                    <span
+                      className="fleetDevice__health"
+                      style={{ color: healthConfig.color }}
+                      title={healthConfig.label}
+                    >
+                      {healthConfig.icon}
+                    </span>
+
+                    <div className="fleetDevice__identity">
+                      {friendlyName ? (
+                        <>
+                          <span className="fleetDevice__name">{friendlyName}</span>
+                          <span className="fleetDevice__id mono">{formatShortDeviceId(d.id)}</span>
+                        </>
+                      ) : (
+                        <span className="fleetDevice__name mono">{formatShortDeviceId(d.id)}</span>
+                      )}
+                    </div>
+
+                    <div className="fleetDevice__meta">
+                      {role && role !== "unknown" && (
+                        <span className="fleetDevice__role">{role}</span>
+                      )}
+                      <span className="mono">{formatLastSeen(d.lastSeenMs)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredDeviceList.length === 0 && (
+                <div className="muted" style={{ padding: 12 }}>
+                  {healthFilter !== "all"
+                    ? `No ${healthFilter} devices.`
+                    : "No devices detected yet."}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Device Details Panel */}
+          {expandedDeviceObj && (
+            <section className="card controls deviceDetailsPanel" style={{ marginTop: 12 }}>
+              <div className="deviceDetailsPanel__header">
+                <DeviceChip
+                  device={expandedDeviceObj}
+                  devicesRef={devicesRef}
+                  showRole
+                  showLastSeen
+                />
+                <button
+                  type="button"
+                  className="deviceDetailsPanel__close"
+                  onClick={() => setExpandedDevice(null)}
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <h3>Retained State</h3>
+              <RetainedStateBank
+                devicesRef={devicesRef}
+                latestRef={latestRef}
+                deviceList={[{ id: expandedDevice, ...expandedDeviceObj }]}
+                selectedDevice={expandedDevice}
+                onSendCommand={sendCommand}
+                broadcastCommand={broadcastCommand}
+                compact
+              />
+            </section>
+          )}
+        </aside>
+
+        {/* CENTER: Connection + Filters */}
+        <section className="card controls rawViewControls">
+          <h2>🔌 Connection</h2>
 
         <form className="form" onSubmit={resubscribe}>
           <label>
@@ -108,7 +260,7 @@ export default function RawView({
           </div>
         </div>
 
-        <h3>Raw filters</h3>
+        <h3>🔍 Message Filters</h3>
         <div className="form">
           <label>
             Device
@@ -128,7 +280,7 @@ export default function RawView({
               <option value="all">all</option>
               <option value="status">status</option>
               <option value="meta">meta</option>
-              <option value="state">state</option>
+              <option value="state">state (retained)</option>
               <option value="telemetry">telemetry</option>
               <option value="event">event</option>
               <option value="cmd">cmd</option>
@@ -136,30 +288,10 @@ export default function RawView({
             </select>
           </label>
         </div>
+        </section>
 
-        <h3>Devices</h3>
-        <div className="chips">
-          {deviceList.slice(0, 12).map((d) => {
-            const label = d.online ? (d.stale ? "stale" : "online") : "offline";
-            return (
-              <span
-                key={d.id}
-                className="chip"
-                onClick={() => setSelectedDevice(d.id)}
-                style={{ cursor: "pointer" }}
-                title={`${d.role} • ${label} • pending=${d.pending}`}
-              >
-                <span className="mono">{d.id}</span>
-                <span className="muted mono">{label}</span>
-              </span>
-            );
-          })}
-          {deviceList.length === 0 && <span className="muted">No device IDs detected yet.</span>}
-        </div>
-      </section>
-
-      <section className="card feed">
-        <h2>Message feed</h2>
+      <section className="card feed rawViewFeed">
+        <h2>📨 Message Feed</h2>
 
         <div className="feedList">
           {filteredMessages.map((m) => (
@@ -182,9 +314,17 @@ export default function RawView({
 
               {m.topicParsed?.isPulsar && (
                 <div className="msgFooter">
-                  <span className="badge">
-                    device: <span className="mono">{m.topicParsed.device || "?"}</span>
-                  </span>
+                  <DeviceChip
+                    deviceId={m.topicParsed.device}
+                    devicesRef={devicesRef}
+                    size="small"
+                    compact
+                    clickable
+                    onClick={(id) => {
+                      setExpandedDevice(id);
+                      setSelectedDevice(id);
+                    }}
+                  />
                   <span className="badge">
                     kind: <span className="mono">{m.topicParsed.kind || "?"}</span>
                   </span>
@@ -209,6 +349,7 @@ export default function RawView({
           )}
         </div>
       </section>
-    </main>
+      </main>
+    </div>
   );
 }
