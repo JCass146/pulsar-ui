@@ -31,7 +31,6 @@
   height: 220px;
   position: relative;
   border-radius: var(--radius-md);
-  overflow: hidden;
 }
 
 /* Current value display - emphasize the metric */

@@ -9,7 +9,6 @@
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 /* Interactive variant with hover effect */
@@ -68,11 +67,11 @@
 .card__body {
   padding: var(--space-md);
   flex: 1;
-  min-height: 0;
 }
 
 .card__body--scrollable {
   overflow-y: auto;
+  max-height: 500px;
 }
 
 /* Card footer - bottom section */

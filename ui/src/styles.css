@@ -222,7 +222,6 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .topbar {
@@ -296,7 +295,6 @@ body {
   padding: 12px;
   grid-template-columns: 380px 1fr;
   align-items: start;
-  min-height: 0;
 }
 
 .grid.single {
@@ -323,22 +321,18 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .controls {
   padding: 12px;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
 }
 
 .feed {
   padding: 12px;
   flex: 1;
-  min-height: 0;
+  max-height: 600px;
   overflow-y: auto;
 }
 
@@ -453,12 +447,11 @@ select option {
 
 .scrollY {
   overflow-y: auto;
-  min-height: 0;
+  max-height: 500px;
 }
 
 .scrollX {
   overflow-x: auto;
-  min-width: 0;
 }
 
 /* ---------- Buttons ---------- */
@@ -629,7 +622,6 @@ button.danger {
 .plotsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-  grid-template-rows: repeat(auto-fit, 268px); /* Fixed height rows */
   gap: 12px;
 }
 
@@ -643,7 +635,6 @@ button.danger {
   padding: 10px;
   background: var(--overlay-bg);
   min-width: 0;
-  height: 268px; /* Fixed: 48px header + 220px chart */
   display: flex;
   flex-direction: column;
 }
@@ -656,8 +647,6 @@ button.danger {
 
 .plotInner {
   height: 220px; /* Fixed chart height */
-  flex: 1;
-}
   min-width: 0;
 }
 
@@ -2472,8 +2461,6 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: 0;
-  min-height: 0;
-  flex: 1;
 }
 
 .controlViewHeader {
@@ -3850,8 +3837,8 @@ button.danger {
 .timelineView {
   display: flex;
   flex-direction: column;
-  height: 100%;
   gap: 16px;
+  padding: 12px;
 }
 
 .timelineControls {
@@ -3894,7 +3881,7 @@ button.danger {
 }
 
 .timelineContainer {
-  flex: 1;
+  max-height: 600px;
   overflow-y: auto;
   padding: 0 4px;
 }
@@ -4567,6 +4554,8 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .fleetDevice {
@@ -4700,10 +4689,8 @@ button.danger {
 .rawViewLayout {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 140px);
   padding: 0;
   gap: 0;
-  overflow: hidden;
 }
 
 .rawViewMain {
@@ -4711,22 +4698,19 @@ button.danger {
   grid-template-columns: 260px 1fr 280px;
   gap: 10px;
   padding: 10px;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  align-items: start;
 }
 
 .rawViewConnection {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 0;
 }
 
 .rawViewFeed {
-  min-height: 0;
   display: flex;
   flex-direction: column;
+  max-height: 600px;
   overflow-y: auto;
 }
 
@@ -4734,7 +4718,6 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 0;
 }
 
 /* Responsive adjustments for Raw view */
