@@ -2,11 +2,15 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+# Copy package files first (better layer caching)
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm ci --only=production=false
 
+# Copy source files including CSS modules
 COPY . .
-RUN node ./node_modules/vite/bin/vite.js build
+
+# Build the production bundle
+RUN npm run build
 
 # ---- runtime stage ----
 FROM nginx:1.27-alpine
