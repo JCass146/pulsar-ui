@@ -21,6 +21,11 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built site
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Ensure generated HTML has no `crossorigin` attributes (some browsers/extensions can cause CSSOM issues)
+RUN if [ -d /usr/share/nginx/html ]; then \
+			find /usr/share/nginx/html -type f -name '*.html' -exec sed -i 's/ crossorigin//g' {} \; || true; \
+		fi
+
 # Copy runtime config template into the served directory
 COPY config.template.json /usr/share/nginx/html/config.template.json
 
