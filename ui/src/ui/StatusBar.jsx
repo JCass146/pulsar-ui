@@ -22,9 +22,9 @@ function computeFleetStats(deviceList) {
   return stats;
 }
 
-function computeSystemHealth(stats, mqttStatus) {
+function computeSystemHealth(stats, mqttStatus, deviceCount) {
   if (mqttStatus !== 'connected') return 'critical';
-  if (stats.online === 0 && deviceList.length > 0) return 'critical';
+  if (stats.online === 0 && deviceCount > 0) return 'critical';
   if (stats.stale > 0) return 'warn';
   return 'ok';
 }
@@ -37,7 +37,7 @@ export function StatusBar({
   onTogglePause,
 }) {
   const stats = useMemo(() => computeFleetStats(deviceList), [deviceList]);
-  const health = useMemo(() => computeSystemHealth(stats, mqttStatus), [stats, mqttStatus]);
+  const health = useMemo(() => computeSystemHealth(stats, mqttStatus, deviceList.length), [stats, mqttStatus, deviceList.length]);
 
   const statusClass = mqttStatus === 'connected' ? 'ok' :
     mqttStatus === 'reconnecting' ? 'warn' : 'critical';
