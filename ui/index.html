@@ -4,6 +4,42 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pulsar UI</title>
+    <style id="pulsar-critical-vars">
+      :root {
+        --surface-bg: #ffffff;
+        --surface-default: #f8fafc;
+        --text: #0f172a;
+        --text-secondary: #475569;
+        --primary-line: #2563eb;
+        --accent: #06b6d4;
+        --success: #10b981;
+        --danger: #ef4444;
+      }
+
+      [data-theme="dark"] {
+        --surface-bg: #0b1220;
+        --surface-default: #0f1724;
+        --text: #e6eef8;
+        --text-secondary: #98a2b3;
+        --primary-line: #60a5fa;
+        --accent: #2dd4bf;
+        --success: #34d399;
+        --danger: #fb7185;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) {
+          --surface-bg: #0b1220;
+          --surface-default: #0f1724;
+          --text: #e6eef8;
+          --text-secondary: #98a2b3;
+          --primary-line: #60a5fa;
+          --accent: #2dd4bf;
+          --success: #34d399;
+          --danger: #fb7185;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
