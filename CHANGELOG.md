@@ -4,6 +4,93 @@ All notable changes to Pulsar UI are documented in this file.
 
 ## [Unreleased] - 2026-01-28
 
+### Phase 4: Chart Polish ✅
+- **Enhanced PlotCard Styling**: Created PlotCard.css with 106 lines of professional styling
+  - Settings button with hover/active states and smooth transitions
+  - Large value display (28px → responsive 24px/20px on smaller screens)
+  - Chart container with proper spacing and rounded corners
+  - Card elevation on hover (--shadow-md) with smooth transitions
+  - CSS-only animations (no JavaScript overhead)
+
+- **Custom Chart Components**: 
+  - CustomChartTooltip component for Recharts with design system integration
+  - Tooltip shows relative time (e.g., "-45s", "-2m") and formatted values with units
+  - Styled with design tokens (surface, borders, shadows)
+
+- **Chart Customization**:
+  - Muted axes: opacity 0.5, secondary text color (subtle but readable)
+  - Subtle gridlines via recharts default (not distracting)
+  - Proper chart margins: top 8px, right 12px, left -30px, bottom 20px
+  - Line styling: stroke 2px, opacity 0.9, smooth curves (type="monotone")
+
+- **Theme-Aware Chart Colors**: Added to styles.css
+  - Dark theme: --primary-line (#3b82f6), --secondary-line (#8b5cf6), --success-line (#10b981), --warning-line (#f59e0b), --danger-line (#ef4444)
+  - Light theme: Darker shades for contrast (--primary-line #2563eb, etc.)
+  - Both themes WCAG AA compliant for color contrast
+
+- **Responsive Design**:
+  - Desktop (any width): 28px value numbers
+  - Tablet (max-width: 768px): 24px value numbers
+  - Mobile (max-width: 480px): 20px value numbers
+  - Font scaling maintains readability at all sizes
+
+- **Build Fix**: Removed invalid Grid import from Recharts (not exported)
+
+### Phase 3: Dashboard Layout Refactoring ✅
+- **DashboardLayout Component** (43 lines + 74 lines CSS):
+  - Three-column grid layout: 280px (left) | 1fr (center) | 240px (right)
+  - Responsive breakpoints: 1400px (3 cols) → 768px (single column)
+  - Sections: Top bar (full width), left sidebar, center content, right sidebar
+  - Flex column structure with proper gap spacing (var(--space-md))
+  - Scrollable sidebars with proper containment (min-height: 0)
+
+- **FleetStatusStrip Component** (52 lines + 24 lines CSS):
+  - Displays fleet health: online count, stale count, offline count
+  - Uses Card + CardBody primitives for consistency
+  - Status items use Pill components with color coding
+  - Calculates counts dynamically from devices array
+
+- **ControlPanel Component** (73 lines + 60 lines CSS):
+  - Collapsible section headers with ChevronIcon SVG
+  - Smooth slide-down animations (250ms transition)
+  - Expandable sections: Config, Notifications
+  - State-based expansion with Set data structure
+  - Proper scrolling and containment
+
+- **PlotCard Refactored**: Integrated with Card primitives
+  - Card interactive wrapper for elevation
+  - CardHeader with divider containing title and settings button
+  - CardTitle with friendly name, CardMeta with technical field name
+  - CardBody with current value (large), unit, status pill, device chip
+  - Recharts ResponsiveContainer/LineChart fully preserved
+  - All functionality maintained (settings modal, time window control, etc.)
+
+- **DashboardView Integration**:
+  - Prepared data: displayDevices, controlPanelSections, chartCards
+  - Built memoized data structures for performance
+  - Proper prop passing to DashboardLayout components
+  - Fixed prop name mismatch (leftSidebar → fleetStrip + topControlBar + controlPanel)
+
+- **Responsive Grid Layout**:
+  - Auto-fill grid for charts: repeat(auto-fill, minmax(280px, 1fr))
+  - Desktop: 3-column grid visible
+  - Tablet/Mobile: Single column, sidebars hidden, full-width charts
+
+- **Zero Compilation Errors**: All components verified with get_errors tool
+
+- **Rendering Fix**: Resolved prop name mismatch that prevented dashboard from displaying
+  - DashboardView now sends correct prop names (fleetStrip, topControlBar, controlPanel, chartGrid, metricsRail, notifications)
+  - DashboardLayout accepts all required props and renders correctly
+  - Added .dashboard-layout__top-control-bar CSS styling
+
+### Phase 1-2: Design System & UI Primitives ✅
+- **Design System Foundation**: 50+ CSS tokens (spacing, colors, shadows, borders, radius)
+- **Three-Surface Layer System**: Hierarchical depth for visual structure
+- **8px Spacing Scale**: Consistent application across all components
+- **WCAG AA Color Contrast**: Light and dark themes verified
+- **UI Primitive Components**: Card, Pill, IconButton, SectionHeader families
+- **Dynamic Theming**: Runtime theme switching via CSS custom properties
+
 ### Added - UI Polish & Layout Fixes
 - Fixed missing `StatusBadge` component in CommandQueue.jsx with proper status icons and colors
 - Fixed missing `DeviceChip` import in DashboardView.jsx

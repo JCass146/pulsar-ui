@@ -10,6 +10,7 @@ A modern, enterprise-grade React web dashboard for real-time monitoring and cont
 
 - [Features](#features)
 - [Quick Start](#quick-start)
+- [Recent Updates](#recent-updates)
 - [Architecture](#architecture)
 - [Technology Stack](#technology-stack)
 - [Project Structure](#project-structure)
@@ -64,6 +65,38 @@ npm run preview
 docker-compose up -d
 ```
 Access at `http://localhost:8080`
+
+## Recent Updates
+
+### Phase 1: Design System Foundation (January 2026)
+- **CSS Token System**: 50+ custom properties (spacing, colors, shadows, borders, radius)
+- **Three-Surface Layers**: Hierarchical depth (bg, default, raised) for visual structure
+- **8px Spacing Scale**: Consistent padding/gaps across entire application
+- **WCAG AA Compliance**: Color contrast verified in light and dark themes
+- **Dynamic Theming**: CSS custom properties enable runtime theme switching
+
+### Phase 2: UI Primitive Components (January 2026)
+- **Card Family**: Card, CardHeader, CardTitle, CardMeta, CardBody - reusable elevation system
+- **Pill Component**: Status indicators with variants (success, warn, error, neutral)
+- **IconButton Component**: Icon controls with hover states and accessibility
+- **SectionHeader Component**: Collapsible section headers for organization
+- **Zero Compilation Errors**: All primitives tested and verified
+
+### Phase 3: Dashboard Layout Refactoring (January 2026)
+- **DashboardLayout Component**: Three-column responsive grid (280px | 1fr | 240px)
+- **FleetStatusStrip**: Fleet health summary with device counts and status pills
+- **ControlPanel**: Collapsible sections (Config, Notifications) with smooth animations
+- **PlotCard Refactored**: Updated to use Card primitives, maintains Recharts functionality
+- **Responsive Breakpoints**: 3 breakpoints (1400px, 768px, mobile) with proper stacking
+- **Zero Errors**: All components compile without errors, full responsive testing
+
+### Phase 4: Chart Polish (January 2026)
+- **PlotCard.css**: Comprehensive styling for settings buttons, value displays, hover effects
+- **Custom Tooltip**: Design-integrated Recharts tooltip showing formatted values with units
+- **Muted Axes**: Subtle axis labels (--text-secondary @ 0.5 opacity) reduce visual noise
+- **Chart Colors**: Token-based colors (--primary-line, --secondary-line, etc.) for both themes
+- **Large Value Display**: 28px numbers on desktop (responsive: 24px tablet, 20px mobile)
+- **Responsive Design**: Works perfectly at all viewport sizes with proper scaling
 
 ## Architecture
 
