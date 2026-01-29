@@ -178,8 +178,8 @@ function PlotCard({
         </div>
 
         {/* Chart */}
-        <div className="plot-card__chart-container">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="plot-card__chart-container" style={{ height, minHeight: 180 }}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={height}>
             <LineChart data={data} margin={{ top: 8, right: 12, left: -30, bottom: 20 }}>
               <XAxis
                 dataKey="x"

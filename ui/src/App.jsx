@@ -6,7 +6,7 @@ import { pushPoint } from "./timeseries.js";
 import { useRafBatching } from "./hooks/useRafBatching.js";
 import { useNotifications } from "./hooks/useNotifications.js";
 import { APP_CONFIG } from "./config-constants.js";
-import { errorHandler } from "./services/error-handler.js";
+import { errorHandler, safeExecute } from "./services/error-handler.js";
 
 // Utilities
 import { isFiniteNumber, newId, nowIsoMs, safeJsonStringify } from "./utils/helpers.js";
@@ -178,7 +178,7 @@ export default function App() {
 
   // Check device stale/online status (called periodically and when device changes)
   function checkDeviceStatus() {
-    return errorHandler.safeExecute(() => {
+    return safeExecute("checkDeviceStatus", () => {
       let changed = false;
 
       for (const dev of devicesRef.current.values()) {
@@ -200,7 +200,7 @@ export default function App() {
       }
 
       if (changed) bumpDeviceTick();
-    }, "checkDeviceStatus");
+    }, null, { deviceCount: devicesRef.current?.size || 0 });
   }
 
   // Handle command sent
