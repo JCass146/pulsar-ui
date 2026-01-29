@@ -5,40 +5,122 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pulsar UI</title>
     <style id="pulsar-critical-vars">
-      :root {
-        --surface-bg: #ffffff;
-        --surface-default: #f8fafc;
-        --text: #0f172a;
-        --text-secondary: #475569;
-        --primary-line: #2563eb;
-        --accent: #06b6d4;
-        --success: #10b981;
-        --danger: #ef4444;
-      }
+/* Design Tokens (inlined to ensure variables exist before CSS loads) */
+:root {
+  /* Typography */
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  
+  /* Font Sizes */
+  --font-xs: 10px;
+  --font-sm: 11px;
+  --font-base: 13px;
+  --font-lg: 14px;
+  --font-xl: 16px;
+  
+  /* Line Heights */
+  --lh-tight: 1.2;
+  --lh-normal: 1.4;
+  --lh-relaxed: 1.5;
+  
+  /* Spacing (8px scale) */
+  --space-xs: 6px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+  
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.18);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.35);
+  
+  /* Component Heights */
+  --btn-h-sm: 24px;
+  --btn-h: 30px;
+  --btn-h-lg: 36px;
+  --chip-h: 22px;
+}
 
-      [data-theme="dark"] {
-        --surface-bg: #0b1220;
-        --surface-default: #0f1724;
-        --text: #e6eef8;
-        --text-secondary: #98a2b3;
-        --primary-line: #60a5fa;
-        --accent: #2dd4bf;
-        --success: #34d399;
-        --danger: #fb7185;
-      }
+/* Dark theme (default) */
+:root,
+[data-theme="dark"] {
+  /* Surfaces */
+  --surface-bg: #0b0f14;
+  --surface-default: #0f1621;
+  --surface-raised: #0c121b;
+  
+  /* Text */
+  --text: #e7eef7;
+  --text-secondary: #9bb0c6;
+  --heading-color: #cfe1f7;
+  
+  /* Borders */
+  --border: #1b2a3a;
+  --border-divider: rgba(255, 255, 255, 0.08);
+  
+  /* Glass & Overlay */
+  --glass-bg: rgba(8, 12, 18, 0.65);
+  --glass-light: rgba(255, 255, 255, 0.04);
+  --glass-medium: rgba(255, 255, 255, 0.06);
+  --glass-strong: rgba(255, 255, 255, 0.12);
+  --overlay-bg: rgba(0, 0, 0, 0.25);
+  --overlay-light: rgba(0, 0, 0, 0.18);
+  
+  /* Gradients */
+  --card-gradient-start: rgba(255, 255, 255, 0.03);
+  --card-gradient-end: rgba(255, 255, 255, 0.015);
+  --bg-gradient-start: #0e1a2a;
+  --bg-gradient-end: #070a0f;
+  
+  /* Chart Colors */
+  --primary-line: #3b82f6;
+  --secondary-line: #8b5cf6;
+  --success-line: #10b981;
+  --warning-line: #f59e0b;
+  --danger-line: #ef4444;
+}
 
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme]) {
-          --surface-bg: #0b1220;
-          --surface-default: #0f1724;
-          --text: #e6eef8;
-          --text-secondary: #98a2b3;
-          --primary-line: #60a5fa;
-          --accent: #2dd4bf;
-          --success: #34d399;
-          --danger: #fb7185;
-        }
-      }
+/* Light theme */
+[data-theme="light"] {
+  --surface-bg: #f5f7fa;
+  --surface-default: #ffffff;
+  --surface-raised: #f0f2f5;
+  --text: #1a202c;
+  --text-secondary: #718096;
+  --heading-color: #2d3748;
+  --border: #e2e8f0;
+  --border-divider: rgba(0, 0, 0, 0.08);
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.08);
+  
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-light: rgba(0, 0, 0, 0.03);
+  --glass-medium: rgba(0, 0, 0, 0.05);
+  --glass-strong: rgba(0, 0, 0, 0.08);
+  --overlay-bg: rgba(0, 0, 0, 0.04);
+  --overlay-light: rgba(0, 0, 0, 0.03);
+  --card-gradient-start: rgba(0, 0, 0, 0.01);
+  --card-gradient-end: rgba(0, 0, 0, 0.02);
+  
+  --bg-gradient-start: #e8ecf2;
+  --bg-gradient-end: #f5f7fa;
+  
+  --primary-line: #2563eb;
+  --secondary-line: #7c3aed;
+  --success-line: #059669;
+  --warning-line: #d97706;
+  --danger-line: #dc2626;
+}
     </style>
   </head>
   <body>
