@@ -8,6 +8,7 @@ import React from 'react';
 import './DashboardLayout.css';
 
 export function DashboardLayout({
+  sidebarCollapsed = false,
   topBar = null,
   fleetStrip = null,
   topControlBar = null,
@@ -16,6 +17,8 @@ export function DashboardLayout({
   metricsRail = null,
   notifications = null,
 }) {
+  const hasLeftSidebar = fleetStrip || topControlBar || controlPanel;
+  
   return (
     <div className="dashboard-layout">
       {/* Top bar - full width */}
@@ -25,7 +28,7 @@ export function DashboardLayout({
         </div>
       )}
       
-      {/* Main three-column layout */}
+      {/* Main layout - 2 columns */}
       <div className="dashboard-layout__main">
         {/* Left column: Fleet status strip + control + notifications */}
         <aside className="dashboard-layout__sidebar-left">

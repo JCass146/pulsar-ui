@@ -19,14 +19,16 @@
   z-index: 100;
 }
 
-/* Main three-column area */
+/* Main two-column area - removes empty left sidebar */
 .dashboard-layout__main {
   display: grid;
-  grid-template-columns: 280px 1fr 240px;
+  grid-template-columns: 1fr 300px;
   gap: var(--space-md);
   padding: var(--space-md);
   align-items: start;
 }
+
+/* Remove the collapsed state margin - let grid naturally expand */
 
 /* Left sidebar: Fleet status + control panel */
 .dashboard-layout__sidebar-left {
@@ -65,6 +67,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  transition: width 0.3s ease;
 }
 
 /* Chart grid wall */
@@ -76,6 +79,7 @@
   background: var(--surface-default);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
 }
 
 /* Notifications at bottom of center area */
@@ -98,15 +102,15 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Responsive: Stack to two columns on medium screens */
+/* Responsive: Stack to single column on medium screens */
 @media (max-width: 1400px) {
   .dashboard-layout__main {
     grid-template-columns: 1fr;
+    margin-left: 0;
   }
   
-  .dashboard-layout__sidebar-left {
-    display: none;
-  }
+  .dashboard-layout__main--sidebar-collapsed {
+    margin-left: 0;
   
   .dashboard-layout__sidebar-right {
     display: none;
@@ -119,11 +123,11 @@
     grid-template-columns: 1fr;
     gap: var(--space-sm);
     padding: var(--space-sm);
+    margin-left: 0;
   }
   
-  .dashboard-layout__sidebar-left {
-    display: none;
-  }
+  .dashboard-layout__main--sidebar-collapsed {
+    margin-left: 0;
   
   .dashboard-layout__sidebar-right {
     display: none;

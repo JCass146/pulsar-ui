@@ -286,46 +286,49 @@ export default function ControlView({
 
   return (
     <main className="controlViewMain">
-      {/* Authority Control Header (M3.3) */}
+      {/* Unified Header Bar */}
       <div className="controlViewHeader">
-        <AuthorityControl
-          level={authorityLevel}
-          onLevelChange={setAuthorityLevel}
-          armedExpiresAt={armedExpiresAt}
-          onArmedExpire={handleArmedExpire}
-        />
-      </div>
-
-      {/* Global Selected Device Indicator */}
-      {selectedDevice && (
-        <div className="selectedDeviceIndicator">
-          <span className="selectedDeviceLabel">Selected:</span>
-          <DeviceChip
-            device={selectedDevice}
-            isSelected={true}
-            onClick={() => {}}
-            showRole={true}
-            compact={false}
+        <div className="controlViewHeaderRow">
+          {/* Authority Control */}
+          <AuthorityControl
+            level={authorityLevel}
+            onLevelChange={setAuthorityLevel}
+            armedExpiresAt={armedExpiresAt}
+            onArmedExpire={handleArmedExpire}
           />
-        </div>
-      )}
 
-      {/* Safe Mode Indicator (shown when authority is "control" level) */}
-      {authorityLevel === "control" && (
-        <div className="controlSafeMode">
-          <span className="controlSafeMode__icon">🛡️</span>
-          <span className="controlSafeMode__text">
-            <strong>SAFE MODE</strong> — All commands require preview confirmation. Dangerous operations (reboot, firmware, calibration apply) are blocked.
-          </span>
-          <button
-            type="button"
-            className="controlAdvancedToggle"
-            onClick={() => setAuthorityLevel("armed")}
-          >
-            Enter ARMED Mode
-          </button>
+          {/* Selected Device Indicator */}
+          {selectedDevice && (
+            <div className="selectedDeviceIndicator">
+              <span className="selectedDeviceLabel">Selected:</span>
+              <DeviceChip
+                device={selectedDevice}
+                isSelected={true}
+                onClick={() => {}}
+                showRole={true}
+                compact={false}
+              />
+            </div>
+          )}
+
+          {/* Safe Mode Banner */}
+          {authorityLevel === "control" && (
+            <div className="controlSafeMode">
+              <span className="controlSafeMode__icon">🛡️</span>
+              <span className="controlSafeMode__text">
+                <strong>SAFE MODE</strong> — All commands require preview confirmation. Dangerous operations blocked.
+              </span>
+              <button
+                type="button"
+                className="controlAdvancedToggle"
+                onClick={() => setAuthorityLevel("armed")}
+              >
+                Enter ARMED Mode
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="grid">
         <section className="card controls">

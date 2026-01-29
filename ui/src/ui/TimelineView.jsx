@@ -178,9 +178,11 @@ function TimelineView({
   };
 
   return (
-    <div className="timelineView">
-      <div className="timelineControls">
-        <div className="timelineFilters">
+    <main className="timelineViewMain">
+      <div className="view-grid">
+        <section className="card" style={{ gridColumn: "1 / -1" }}>
+          <div className="timelineControls">
+            <div className="timelineFilters">
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
@@ -204,18 +206,20 @@ function TimelineView({
           </select>
         </div>
 
-        <div className="timelineSearch">
-          <input
-            type="text"
-            placeholder="Search timeline..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="timelineSearchInput"
-          />
-        </div>
-      </div>
+            <div className="timelineSearch">
+              <input
+                type="text"
+                placeholder="Search timeline..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="timelineSearchInput"
+              />
+            </div>
+          </div>
+        </section>
 
-      <div className="timelineContainer">
+        <section className="card feed" style={{ gridColumn: "1 / -1" }}>
+          <div className="timelineContainer">
         {Object.keys(groupedItems).length === 0 ? (
           <div className="timelineEmpty">
             <p>No timeline items match the current filters.</p>
@@ -235,8 +239,10 @@ function TimelineView({
               </div>
             ))
         )}
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 

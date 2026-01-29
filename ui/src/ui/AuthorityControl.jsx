@@ -118,6 +118,8 @@ function AuthoritySelector({ currentLevel, onSelect, onClose }) {
 
   const handleConfirmArmed = () => {
     if (armedConfirmText.toLowerCase() === "arm") {
+      setConfirmArmed(false);
+      setArmedConfirmText("");
       onSelect("armed");
       onClose();
     }
@@ -162,7 +164,6 @@ function AuthoritySelector({ currentLevel, onSelect, onClose }) {
             <div className="authoritySelectorConfirmTitle">Enable ARMED Mode?</div>
             <div className="authoritySelectorConfirmText">
               ARMED mode enables dangerous commands that could affect hardware.
-              This mode will auto-expire after 30 seconds of inactivity.
             </div>
             <div className="authoritySelectorConfirmInput">
               <label>
@@ -202,73 +203,21 @@ function AuthoritySelector({ currentLevel, onSelect, onClose }) {
  * @returns {Object} Authority control state and functions
  */
 export function useAuthorityControl(options = {}) {
-  const { armedTimeoutMs = 30000, onLevelChange } = options;
+  const { onLevelChange } = options;
 
   const [level, setLevel] = useState("control");
-  const [armedExpiresAt, setArmedExpiresAt] = useState(null);
-  const timeoutRef = useRef(null);
-
-  // Clear timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
 
   // Handle level change
   const changeLevel = useCallback(
     (newLevel) => {
-      // Clear existing timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-
       setLevel(newLevel);
-      setArmedExpiresAt(null);
-
-      // Set auto-expire for ARMED mode
-      if (newLevel === "armed") {
-        const expiresAt = Date.now() + armedTimeoutMs;
-        setArmedExpiresAt(expiresAt);
-
-        timeoutRef.current = setTimeout(() => {
-          setLevel("control");
-          setArmedExpiresAt(null);
-        }, armedTimeoutMs);
-      }
 
       if (onLevelChange) {
         onLevelChange(newLevel);
       }
     },
-    [armedTimeoutMs, onLevelChange]
+    [onLevelChange]
   );
-
-  // Refresh ARMED timeout (call on activity)
-  const refreshArmed = useCallback(() => {
-    if (level === "armed") {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      const expiresAt = Date.now() + armedTimeoutMs;
-      setArmedExpiresAt(expiresAt);
-
-      timeoutRef.current = setTimeout(() => {
-        setLevel("control");
-        setArmedExpiresAt(null);
-      }, armedTimeoutMs);
-    }
-  }, [level, armedTimeoutMs]);
-
-  // Handle armed expiry
-  const handleArmedExpire = useCallback(() => {
-    setLevel("control");
-    setArmedExpiresAt(null);
-  }, []);
 
   // Check if command is allowed
   const canExecuteCommand = useCallback(
@@ -284,10 +233,9 @@ export function useAuthorityControl(options = {}) {
   return {
     level,
     setLevel: changeLevel,
-    armedExpiresAt,
-    refreshArmed,
-    handleArmedExpire,
-    canExecuteCommand,
+    armedExpiresAt: null,
+    refreshArmed: () => {},
+    handleArmedExpire: () => {},
     config: AUTHORITY_LEVELS[level],
   };
 }

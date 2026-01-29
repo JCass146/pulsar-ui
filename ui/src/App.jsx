@@ -19,11 +19,12 @@ import { publishCommand, broadcastCommand } from "./services/command-publisher.j
 import { getEventsForChart, getEventsForTimeline, purgeOldEvents } from "./services/event-handler.js";
 
 import DashboardView from "./ui/DashboardView.jsx";
-import ControlView from "./ui/ControlView.jsx";
+import FleetView from "./ui/FleetView.jsx";
+import CommandsView from "./ui/CommandsView.jsx";
 import RawView from "./ui/RawView.jsx";
 import TimelineView from "./ui/TimelineView.jsx";
-import ThemeToggle from "./ui/ThemeToggle.jsx";
-import GlobalStatusBar from "./ui/GlobalStatusBar.jsx";
+import Sidebar from "./ui/Sidebar.jsx";
+import StatusBar from "./ui/StatusBar.jsx";
 
 // Milestone 3: Command Workflows
 import AuthorityControl, { useAuthorityControl, AuthorityBadge } from "./ui/AuthorityControl.jsx";
@@ -53,6 +54,9 @@ export default function App() {
   useEffect(() => {
     pausedRef.current = paused;
   }, [paused]);
+
+  // Sidebar state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Tabs
   const [tab, setTab] = useState("dashboard");
@@ -98,6 +102,10 @@ export default function App() {
   // Events (M4.1)
   const [events, setEvents] = useState([]);
   const [eventsTick, setEventsTick] = useState(0);
+
+  // UI Modals
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Milestone 3: Authority Control
   const {
@@ -539,154 +547,155 @@ export default function App() {
         </div>
       )}
 
-      <header className="topbar">
-        <div className="brand">
-          <div className="logo" />
-          <div>
-            <div className="title">Pulsar UI</div>
-            <div className="subtitle">Live telemetry + control via MQTT over WebSockets</div>
-          </div>
-        </div>
-        <div className="status">
-          <span className={`pill ${status.status || "idle"}`}>{status.status || "idle"}</span>
-          <span className="muted mono">{status.url || "(url pending)"}</span>
-        </div>
-        <div className="topbar-actions">
-          <ThemeToggle />
-        </div>
-      </header>
-
-      {/* Global Status Bar (Milestone 2.1, enhanced M3.3) */}
-      <GlobalStatusBar
-        mqttStatus={status.status}
-        mqttUrl={status.url}
-        deviceList={deviceList}
-        devicesRef={devicesRef}
-        paused={paused}
-        onTogglePause={() => setPaused((p) => !p)}
-        // Milestone 3.3: Authority (shown only when not on Control tab)
-        authorityLevel={tab !== "control" ? authorityLevel : null}
+      {/* Sidebar Navigation */}
+      <Sidebar
+        currentTab={tab}
+        onTabChange={setTab}
+        notificationCount={notifItems.length}
+        onOpenNotifications={() => setNotificationsOpen(true)}
+        onOpenBroadcast={() => {/* TODO: Implement broadcast panel */}}
+        onOpenTags={() => {/* TODO: Implement tags filter */}}
+        onOpenSettings={() => setSettingsOpen(true)}
+        authorityLevel={authorityLevel}
         armedExpiresAt={armedExpiresAt}
         onAuthorityClick={() => setTab("control")}
-        currentTab={tab}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={setSidebarCollapsed}
       />
 
-      <div className="tabs">
-        <button className={tab === "dashboard" ? "tab active" : "tab"} onClick={() => setTab("dashboard")}>
-          Dashboard
-        </button>
-        <button className={tab === "control" ? "tab active" : "tab"} onClick={() => setTab("control")}>
-          Control
-        </button>
-        <button className={tab === "timeline" ? "tab active" : "tab"} onClick={() => setTab("timeline")}>
-          Timeline
-        </button>
-        <button className={tab === "raw" ? "tab active" : "tab"} onClick={() => setTab("raw")}>
-          Raw
-        </button>
-      </div>
-
-      {tab === "dashboard" ? (
-        <main className="grid single">
-          <DashboardView
-            selectedDevice={selectedDevice}
-            setSelectedDevice={setSelectedDevice}
-            plotDevices={plotDevices}
-            deviceList={deviceList}
-            availableFields={availableFields}
-            selectedFields={selectedFields}
-            setSelectedFields={setSelectedFields}
-            maxPoints={maxPoints}
-            setMaxPoints={setMaxPoints}
-            broadcastCommand={doBroadcastCommand}
-            devicesRef={devicesRef}
-            latestRef={latestRef}
-            seriesRef={seriesRef}
-            getDeviceRole={getDeviceRole}
-            notifItems={notifItems}
-            clearNotifs={clearNotifs}
-            sendCommand={sendCommand}
-            pushNotif={pushNotif}
-          />
-        </main>
-      ) : tab === "control" ? (
-        <ControlView
-          selectedDevice={selectedDevice}
-          setSelectedDevice={setSelectedDevice}
-          plotDevices={plotDevices}
+      {/* Main Content Area */}
+      <div className="main-content">
+        {/* Status Bar */}
+        <StatusBar
+          mqttStatus={status.status}
+          mqttUrl={status.url}
           deviceList={deviceList}
-          deviceTick={deviceTick}
-          devicesRef={devicesRef}
-          getDeviceRole={getDeviceRole}
-          cmdAction={cmdAction}
-          setCmdAction={setCmdAction}
-          cmdArgsText={cmdArgsText}
-          setCmdArgsText={setCmdArgsText}
-          sendGenericCommand={sendGenericCommand}
-          cmdHistory={cmdHistory}
-          commandTimeoutMs={commandTimeoutMs}
-          calEditorText={calEditorText}
-          setCalEditorText={setCalEditorText}
-          calAutoSync={calAutoSync}
-          setCalAutoSync={setCalAutoSync}
-          sendCalibration={sendCalibration}
-          resetCalEditorToCurrent={resetCalEditorToCurrent}
-          // Milestone 3: Command Workflows
-          authorityLevel={authorityLevel}
-          setAuthorityLevel={setAuthorityLevel}
-          armedExpiresAt={armedExpiresAt}
-          handleArmedExpire={handleArmedExpire}
-          canExecuteCommand={canExecuteCommand}
-          refreshArmed={refreshArmed}
-          onCancelCommand={handleCancelCommand}
-          onRetryCommand={handleRetryCommand}
-          sendCommand={sendCommand}
-        />
-      ) : tab === "timeline" ? (
-        <TimelineView
-          events={events}
-          commandHistory={cmdHistory}
-          devices={deviceList}
-          onDeviceSelect={setSelectedDevice}
-          selectedDeviceId={selectedDevice?.id}
-        />
-      ) : (
-        <RawView
-          wsUrl={wsUrl}
-          setWsUrl={setWsUrl}
-          subTopic={subTopic}
-          setSubTopic={setSubTopic}
-          subscribeTopics={subscribeTopics}
-          setSubscribeTopics={setSubscribeTopics}
-          resubscribe={resubscribe}
           paused={paused}
-          setPaused={setPaused}
-          clearMessages={() => {
-            messagesRef.current = [];
-            setRawTick((x) => x + 1);
-          }}
-          messagesCount={messagesRef.current.length}
-          devicesSeenCount={deviceList.length}
-          rawDeviceFilter={rawDeviceFilter}
-          setRawDeviceFilter={setRawDeviceFilter}
-          rawFamilyFilter={rawFamilyFilter}
-          setRawFamilyFilter={setRawFamilyFilter}
-          plotDevices={plotDevices}
-          deviceList={deviceList}
-          setSelectedDevice={setSelectedDevice}
-          selectedDevice={selectedDevice}
-          filteredMessages={filteredMessages}
-          // NEW: Fleet panel props
-          devicesRef={devicesRef}
-          latestRef={latestRef}
-          sendCommand={sendCommand}
-          broadcastCommand={doBroadcastCommand}
-          healthFilter={healthFilter}
-          onHealthFilterChange={setHealthFilter}
+          onTogglePause={() => setPaused((p) => !p)}
         />
-      )}
 
-      <footer className="footer muted">Built for Pulsar telemetry • nginx runtime config • MQTT.js</footer>
+        {/* Content Views */}
+        <div className="content-area">
+          {tab === "dashboard" && (
+            <DashboardView
+              selectedDevice={selectedDevice}
+              setSelectedDevice={setSelectedDevice}
+              plotDevices={plotDevices}
+              deviceList={deviceList}
+              availableFields={availableFields}
+              selectedFields={selectedFields}
+              setSelectedFields={setSelectedFields}
+              maxPoints={maxPoints}
+              setMaxPoints={setMaxPoints}
+              broadcastCommand={doBroadcastCommand}
+              devicesRef={devicesRef}
+              latestRef={latestRef}
+              seriesRef={seriesRef}
+              getDeviceRole={getDeviceRole}
+              notifItems={notifItems}
+              clearNotifs={clearNotifs}
+              sendCommand={sendCommand}
+              pushNotif={pushNotif}
+              onOpenSettings={() => setSettingsOpen(true)}
+              sidebarCollapsed={sidebarCollapsed}
+            />
+          )}
+
+          {tab === "fleet" && (
+            <FleetView
+              deviceList={deviceList}
+              devicesRef={devicesRef}
+              latestRef={latestRef}
+              selectedDevice={selectedDevice}
+              setSelectedDevice={setSelectedDevice}
+              getDeviceRole={getDeviceRole}
+              broadcastCommand={doBroadcastCommand}
+              deviceTick={deviceTick}
+              calEditorText={calEditorText}
+              setCalEditorText={setCalEditorText}
+              calAutoSync={calAutoSync}
+              setCalAutoSync={setCalAutoSync}
+              sendCalibration={sendCalibration}
+              resetCalEditorToCurrent={resetCalEditorToCurrent}
+              authorityLevel={authorityLevel}
+              canExecuteCommand={canExecuteCommand}
+              refreshArmed={refreshArmed}
+            />
+          )}
+
+          {tab === "commands" && (
+            <CommandsView
+              selectedDevice={selectedDevice}
+              setSelectedDevice={setSelectedDevice}
+              plotDevices={plotDevices}
+              deviceList={deviceList}
+              deviceTick={deviceTick}
+              devicesRef={devicesRef}
+              cmdAction={cmdAction}
+              setCmdAction={setCmdAction}
+              cmdArgsText={cmdArgsText}
+              setCmdArgsText={setCmdArgsText}
+              sendGenericCommand={sendGenericCommand}
+              cmdHistory={cmdHistory}
+              commandTimeoutMs={commandTimeoutMs}
+              authorityLevel={authorityLevel}
+              setAuthorityLevel={setAuthorityLevel}
+              armedExpiresAt={armedExpiresAt}
+              handleArmedExpire={handleArmedExpire}
+              canExecuteCommand={canExecuteCommand}
+              refreshArmed={refreshArmed}
+              onCancelCommand={handleCancelCommand}
+              onRetryCommand={handleRetryCommand}
+              sendCommand={sendCommand}
+            />
+          )}
+
+          {tab === "timeline" && (
+            <TimelineView
+              events={events}
+              commandHistory={cmdHistory}
+              devices={deviceList}
+              onDeviceSelect={setSelectedDevice}
+              selectedDeviceId={selectedDevice?.id}
+            />
+          )}
+
+          {tab === "raw" && (
+            <RawView
+              wsUrl={wsUrl}
+              setWsUrl={setWsUrl}
+              subTopic={subTopic}
+              setSubTopic={setSubTopic}
+              subscribeTopics={subscribeTopics}
+              setSubscribeTopics={setSubscribeTopics}
+              resubscribe={resubscribe}
+              paused={paused}
+              setPaused={setPaused}
+              clearMessages={() => {
+                messagesRef.current = [];
+                setRawTick((x) => x + 1);
+              }}
+              messagesCount={messagesRef.current.length}
+              devicesSeenCount={deviceList.length}
+              rawDeviceFilter={rawDeviceFilter}
+              setRawDeviceFilter={setRawDeviceFilter}
+              rawFamilyFilter={rawFamilyFilter}
+              setRawFamilyFilter={setRawFamilyFilter}
+              plotDevices={plotDevices}
+              deviceList={deviceList}
+              setSelectedDevice={setSelectedDevice}
+              selectedDevice={selectedDevice}
+              filteredMessages={filteredMessages}
+              devicesRef={devicesRef}
+              latestRef={latestRef}
+              sendCommand={sendCommand}
+              broadcastCommand={doBroadcastCommand}
+              healthFilter={healthFilter}
+              onHealthFilterChange={setHealthFilter}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import TopControlBar from "./TopControlBar.jsx";
 import LiveMetricsRail from "./LiveMetricsRail.jsx";
 import RetainedSnapshotBar from "./RetainedSnapshotBar.jsx";
 import DeviceChip from "./DeviceChip.jsx";
+import DashboardSettings from "./DashboardSettings.jsx";
 import { DashboardLayout, FleetStatusStrip, ControlPanel } from "./dashboardIndex.js";
 import { useDebounceCallback } from "../hooks/useDebounce.js";
 import { APP_CONFIG } from "../config-constants.js";
@@ -136,22 +137,15 @@ export default function DashboardView({
   // new props for Milestone 1
   sendCommand,
   pushNotif,
+  onOpenSettings,
+  sidebarCollapsed = false,
 }) {
   // Watched fields (no multi-select dropdown needed)
   const [watchedFields, setWatchedFields] = useState(() => loadWatchedFields());
   const [watchedText, setWatchedText] = useState(() => loadWatchedFields().join(", "));
   const [showOnlyOnline, setShowOnlyOnline] = useState(true);
-  const [configCollapsed, setConfigCollapsed] = useState(true);
-  const [notifCollapsed, setNotifCollapsed] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [pinnedMetrics] = useState(() => loadPinnedMetrics());
-
-  // Auto-expand notifications on errors/warnings
-  useEffect(() => {
-    const hasErrors = notifItems.some(n => n.level === "bad" || n.level === "warn");
-    if (hasErrors && notifCollapsed) {
-      setNotifCollapsed(false);
-    }
-  }, [notifItems, notifCollapsed]);
 
   useEffect(() => {
     // keep text in sync if loaded
@@ -340,32 +334,51 @@ export default function DashboardView({
   }, [wallSeries, watchedFields]);
 
   return (
-    <DashboardLayout
-      topBar={
-        <>
-          {selectedDevice && (
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 12px" }}>
-              <span style={{ fontSize: 14, opacity: 0.8 }}>Selected:</span>
-              <DeviceChip
-                deviceId={selectedDevice}
-                devicesRef={devicesRef}
-                size="small"
-                showRole
-                showLastSeen
-              />
+    <>
+      <DashboardLayout
+        sidebarCollapsed={sidebarCollapsed}
+        topBar={
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {selectedDevice && (
+                <>
+                  <span style={{ fontSize: 14, opacity: 0.8 }}>Selected:</span>
+                  <DeviceChip
+                    deviceId={selectedDevice}
+                    devicesRef={devicesRef}
+                    size="small"
+                    showRole
+                    showLastSeen
+                  />
+                </>
+              )}
             </div>
-          )}
-        </>
-      }
-      fleetStrip={<FleetStatusStrip devices={displayDevices} />}
-      topControlBar={
-        <TopControlBar
-          deviceList={displayDevices}
-          devicesRef={devicesRef}
-          broadcastCommand={broadcastCommand}
-        />
-      }
-      controlPanel={<ControlPanel sections={controlPanelSections} />}
+            <button
+              className="dashboard-settings-btn"
+              onClick={() => setSettingsOpen(true)}
+              title="Dashboard Settings"
+              style={{
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1px solid var(--border-divider)",
+                background: "var(--glass-light)",
+                color: "var(--text)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "13px",
+                fontWeight: 500,
+              }}
+            >
+              <span>⚙️</span>
+              <span>Settings</span>
+            </button>
+          </div>
+        }
+        fleetStrip={null}
+        topControlBar={null}
+        controlPanel={null}
       chartGrid={
         <>
           {pinnedMetrics && pinnedMetrics.length > 0 && (
@@ -390,16 +403,20 @@ export default function DashboardView({
           pushNotif={pushNotif}
         />
       }
-      notifications={
-        notifItems.length > 0 ? (
-          <VirtualizedNotifications
-            notifItems={notifItems}
-            clearNotifs={clearNotifs}
-            showStickyFaults={false}
-            maxHeight={200}
-          />
-        ) : null
-      }
+      notifications={null}
     />
+
+    <DashboardSettings
+      isOpen={settingsOpen}
+      onClose={() => setSettingsOpen(false)}
+      watchedText={watchedText}
+      setWatchedText={setWatchedText}
+      showOnlyOnline={showOnlyOnline}
+      setShowOnlyOnline={setShowOnlyOnline}
+      maxPoints={maxPoints}
+      setMaxPoints={setMaxPoints}
+      onApply={applyWatched}
+    />
+  </>
   );
 }

@@ -219,9 +219,23 @@ body {
 /* ---------- App layout ---------- */
 
 .app {
-  min-height: 100vh;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-content {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--surface-bg);
 }
 
 .topbar {
@@ -243,7 +257,7 @@ body {
 .logo {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: linear-gradient(135deg, #2ee7ff 0%, #7c4dff 55%, #ff2e88 110%);
   box-shadow: var(--shadow);
 }
@@ -319,18 +333,19 @@ body {
     var(--card-gradient-end)
   );
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Prevent content from bleeding outside border-radius */
 }
 
 .controls {
-  padding: 12px;
+  padding: 16px;
 }
 
 .feed {
-  padding: 12px;
+  padding: 16px;
   flex: 1;
   max-height: 600px;
   overflow-y: auto;
@@ -343,12 +358,14 @@ h2 {
   font-size: 14px;
   letter-spacing: 0.2px;
   color: var(--heading-color);
+  padding: 0 2px; /* Prevent text clipping at card corners */
 }
 
 h3 {
   margin: 14px 0 10px;
   font-size: 13px;
   color: var(--heading-color);
+  padding: 0 2px; /* Prevent text clipping at card corners */
 }
 
 /* ---------- Forms ---------- */
@@ -373,7 +390,7 @@ textarea {
   background: var(--overlay-bg);
   color: var(--text);
   border: 1px solid var(--glass-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 10px 12px;
   outline: none;
   font: inherit;
@@ -464,7 +481,7 @@ select option {
 
 button {
   padding: 8px 10px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--glass-medium);
   color: var(--text);
@@ -497,7 +514,7 @@ button.danger {
 
 .stat {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 8px;
   background: var(--overlay-light);
 }
@@ -522,7 +539,7 @@ button.danger {
 
 .msg {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--overlay-light);
 }
 
@@ -582,7 +599,7 @@ button.danger {
 
 .tab {
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--overlay-bg);
   cursor: pointer;
@@ -612,7 +629,7 @@ button.danger {
 
 .healthItem {
   border: 1px solid var(--glass-medium);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 10px;
   background: var(--overlay-light);
 }
@@ -631,7 +648,7 @@ button.danger {
 
 .plotCard {
   border: 1px solid var(--glass-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 10px;
   background: var(--overlay-bg);
   min-width: 0;
@@ -684,7 +701,7 @@ button.danger {
 .deviceSearch {
   width: min(320px, 100%);
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--overlay-bg);
   color: inherit;
@@ -708,7 +725,7 @@ button.danger {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
   color: inherit;
@@ -850,7 +867,7 @@ button.danger {
 
 .metricCard {
   border: 1px solid var(--glass-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 10px;
   background: var(--overlay-bg);
 }
@@ -897,7 +914,7 @@ button.danger {
 .pinBtn {
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 6px 8px;
   font-weight: 800;
   line-height: 1;
@@ -932,7 +949,7 @@ button.danger {
   justify-content: space-between;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
   text-align: left;
@@ -941,7 +958,7 @@ button.danger {
 
 .favBtn {
   padding: 6px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
   font-weight: 900;
@@ -992,7 +1009,7 @@ button.danger {
 
 .deviceStatusCard {
   border: 1px solid var(--glass-strong);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--overlay-light);
   padding: 12px;
 }
@@ -1007,7 +1024,7 @@ button.danger {
 
 .deviceStatusName {
   padding: 6px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
   font-weight: 900;
@@ -1024,7 +1041,7 @@ button.danger {
 }
 
 .statusBtn {
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 10px 10px;
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
@@ -1067,7 +1084,7 @@ button.danger {
 }
 
 .notifRow {
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 10px 10px;
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
@@ -1117,7 +1134,7 @@ button.danger {
   pointer-events: none;
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 6px 8px;
   font-size: 12px;
   line-height: 1;
@@ -1186,7 +1203,7 @@ button.danger {
   right: 20px;
   background: rgba(255, 80, 80, 0.9);
   border: 1px solid rgba(255, 80, 80, 0.3);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 16px;
   max-width: 400px;
   z-index: 1001;
@@ -1268,7 +1285,7 @@ button.danger {
   align-items: baseline;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
 }
@@ -1412,7 +1429,7 @@ button.danger {
 /* Pinned metric tile */
 .pinnedMetric {
   border: 1px solid var(--glass-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 10px;
   background: var(--overlay-light);
 }
@@ -1526,7 +1543,7 @@ button.danger {
 .clearPinnedBtn {
   margin-top: 8px;
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
   font-size: 12px;
@@ -1561,7 +1578,7 @@ button.danger {
   gap: 8px;
   padding: 10px;
   background: var(--overlay-light);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   margin-bottom: 12px;
 }
 
@@ -1636,7 +1653,7 @@ button.danger {
   align-items: center;
   gap: 4px;
   padding: 10px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-strong);
   background: var(--glass-light);
 }
@@ -1744,7 +1761,7 @@ button.danger {
 /* Sticky faults section */
 .stickyFaultsSection {
   border: 1px solid rgba(255,80,80,0.35);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: rgba(255,80,80,0.08);
   padding: 10px;
 }
@@ -1987,7 +2004,7 @@ button.danger {
   background: var(--bg-accent);
   color: var(--text-accent);
   padding: 2px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-weight: 600;
   min-width: 20px;
   text-align: center;
@@ -2463,10 +2480,260 @@ button.danger {
   gap: 0;
 }
 
-.controlViewHeader {
+.commandsViewMain,
+.fleetViewMain,
+.timelineViewMain,
+.rawViewMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  background: var(--surface-bg);
+  color: var(--text);
+}
+
+/* Consistent grid layout for all views */
+.view-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-md);
+  padding: var(--space-md);
+  align-items: start;
+}
+
+/* Single column layout for specific content */
+.view-grid.single-column {
+  grid-template-columns: 1fr;
+}
+
+/* Commands view specific grid layout */
+.view-grid--commands {
+  grid-template-columns: 280px 1fr 1fr;
+  align-items: stretch;
+}
+
+.commands-device-selection {
+  grid-row: 1 / -1; /* Span all rows */
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.commands-command-center {
+  max-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.commands-templates {
+  max-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+@media (max-width: 1200px) {
+  .view-grid--commands {
+    grid-template-columns: 280px 1fr;
+  }
+  
+  .commands-templates {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 968px) {
+  .view-grid--commands {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+  
+  .commands-device-selection {
+    grid-row: auto;
+    max-height: 400px;
+  }
+  
+  .commands-command-center,
+  .commands-templates {
+    max-height: 600px;
+  }
+}
+
+/* Raw view specific 3-column layout */
+.view-grid--raw {
+  grid-template-columns: 350px 1fr 300px;
+}
+
+@media (max-width: 1400px) {
+  .view-grid--raw {
+    grid-template-columns: 1fr 1fr;
+  }
+  .view-grid--raw .rawViewFleet {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 968px) {
+  .view-grid--raw {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Fleet View Master-Detail Grid */
+.fleet-view-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-column: 1 / -1; /* Span all columns in parent view-grid */
+  gap: 16px;
+  transition: grid-template-columns 0.3s ease;
+  align-items: start;
+}
+
+.fleet-view-grid.with-detail {
+  grid-template-columns: 1fr 420px;
+}
+
+.fleet-view-grid__list {
+  min-width: 0; /* Prevent overflow */
+}
+
+/* Fleet Device Detail Panel */
+.fleet-device-detail {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  height: fit-content;
+  max-height: calc(100vh - 140px); /* Account for status bar + padding */
+  animation: slideInRight 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fleet-device-detail__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--glass-light);
+}
+
+.fleet-device-detail__header button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.fleet-device-detail__header button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.fleet-device-detail__tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-base);
+}
+
+.fleet-device-detail__tabs button {
+  flex: 1;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fleet-device-detail__tabs button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.fleet-device-detail__tabs button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--glass-light);
+}
+
+.fleet-device-detail__content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* Responsive: Mobile - Full screen overlay */
+@media (max-width: 968px) {
+  .fleet-view-grid.with-detail {
+    grid-template-columns: 1fr;
+    position: relative;
+  }
+  
+  .fleet-device-detail {
+    position: fixed;
+    top: 48px; /* Status bar height */
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    max-height: none;
+    border-radius: 0;
+    animation: slideInFromBottom 0.3s ease;
+  }
+  
+  @keyframes slideInFromBottom {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+
+.commandsViewHeader,
+.fleetViewHeader,
+.timelineViewHeader,
+.rawViewHeader {
   padding: 12px 20px;
   background: var(--glass-light);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.commandsViewHeaderRow,
+.fleetViewHeaderRow,
+.timelineViewHeaderRow,
+.rawViewHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 /* GlobalStatusBar Authority Badge */
@@ -2619,7 +2886,7 @@ button.danger {
 
 .cmdQueueRow {
   border: 1px solid var(--glass-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 10px;
   background: var(--overlay-light);
 }
@@ -3128,7 +3395,7 @@ button.danger {
 
 .cmdTemplateCard {
   border: 1px solid var(--glass-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 10px;
   background: var(--overlay-light);
 }
@@ -3607,7 +3874,7 @@ button.danger {
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   cursor: pointer;
 }
 
@@ -3701,7 +3968,7 @@ button.danger {
   flex-direction: column;
   gap: 6px;
   padding: 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   text-align: left;
   cursor: pointer;
 }
@@ -3922,7 +4189,7 @@ button.danger {
   color: var(--muted);
   background: var(--panel);
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .timelineItems {
@@ -3979,7 +4246,7 @@ button.danger {
   color: var(--text);
   background: var(--panel2);
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -4015,7 +4282,7 @@ button.danger {
 .eventDetails .eventSeverity {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -4062,7 +4329,7 @@ button.danger {
   display: inline-block;
   margin-left: 8px;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -4219,9 +4486,10 @@ button.danger {
   gap: 6px;
   align-items: center;
 }
-
-/* ---------- Selected Device Indicator ---------- */
-
+6px 12px;
+  background: var(--glass-medium);
+  border: 1px solid var(--border);
+  border-radius: 8px
 .selectedDeviceIndicator {
   display: flex;
   align-items: center;
@@ -4565,7 +4833,7 @@ button.danger {
   padding: 10px 12px;
   background: var(--overlay-light);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -4652,11 +4920,13 @@ button.danger {
 .controlSafeMode {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 8px;6px 12px;
   background: rgba(64, 255, 182, 0.08);
   border: 1px solid rgba(64, 255, 182, 0.25);
   border-radius: 8px;
+  font-size: 12px;
+  flex: 1;
+  min-width: 300: 8px;
   font-size: 12px;
 }
 

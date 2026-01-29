@@ -1,0 +1,182 @@
+/**
+ * StatusBar Styling
+ * Horizontal bar with connection, fleet, health, and controls
+ */
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--surface-default);
+  border-bottom: 1px solid var(--border-divider);
+  height: 48px;
+  flex-shrink: 0;
+}
+
+/* Connection Status */
+.status-bar__connection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-sm);
+  height: 32px;
+}
+
+.status-bar__dot {
+  font-size: 14px;
+}
+
+.status-bar__connection.ok .status-bar__dot {
+  color: var(--success-line);
+}
+
+.status-bar__connection.warn .status-bar__dot {
+  color: var(--warning-line);
+}
+
+.status-bar__connection.critical .status-bar__dot {
+  color: var(--danger-line);
+}
+
+.status-bar__status-text {
+  font-weight: 600;
+  text-transform: lowercase;
+  color: var(--text);
+  line-height: 1;
+}
+
+.status-bar__url {
+  color: var(--text-secondary);
+  font-size: var(--font-xs);
+}
+
+/* Fleet Stats */
+.status-bar__fleet {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding-left: var(--space-lg);
+  border-left: 1px solid var(--border-divider);
+  height: 32px;
+}
+
+.status-bar__stat {
+  font-size: var(--font-base);
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--glass-light);
+  line-height: 1;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-bar__stat.ok {
+  color: var(--success-line);
+}
+
+.status-bar__stat.warn {
+  color: var(--warning-line);
+}
+
+.status-bar__stat.bad {
+  color: var(--danger-line);
+}
+
+.status-bar__stat.neutral {
+  color: var(--text-secondary);
+}
+
+/* System Health */
+.status-bar__health {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-sm);
+  padding-left: var(--space-lg);
+  border-left: 1px solid var(--border-divider);
+  height: 32px;
+}
+
+.status-bar__health-dot {
+  font-size: 12px;
+}
+
+.status-bar__health.ok .status-bar__health-dot {
+  color: var(--success-line);
+}
+
+.status-bar__health.warn .status-bar__health-dot {
+  color: var(--warning-line);
+}
+
+.status-bar__health.critical .status-bar__health-dot {
+  color: var(--danger-line);
+}
+
+.status-bar__health-text {
+  font-weight: 600;
+  font-size: var(--font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text);
+  line-height: 1;
+}
+
+/* Controls */
+.status-bar__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-left: auto;
+}
+
+.status-bar__pause {
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-divider);
+  background: var(--glass-light);
+  color: var(--text);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  height: 28px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-bar__pause:hover {
+  background: var(--glass-medium);
+  border-color: var(--glass-strong);
+}
+
+.status-bar__pause.paused {
+  background: rgba(255, 200, 0, 0.15);
+  border-color: rgba(255, 200, 0, 0.35);
+  color: var(--warning-line);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .status-bar__url {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-bar {
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
+  }
+  
+  .status-bar__fleet,
+  .status-bar__health {
+    padding-left: var(--space-sm);
+  }
+}

@@ -86,10 +86,10 @@ export default function RawView({
     : null;
 
   return (
-    <div className="rawViewLayout">
-      <main className="rawViewMain">
-        {/* Global Selected Device Indicator */}
-        {selectedDevice && (
+    <main className="rawViewMain">
+      {/* Global Selected Device Indicator */}
+      {selectedDevice && (
+        <div className="rawViewHeader">
           <div className="selectedDeviceIndicator">
             <span className="selectedDeviceLabel">Selected:</span>
             <DeviceChip
@@ -100,8 +100,10 @@ export default function RawView({
               compact={false}
             />
           </div>
-        )}
+        </div>
+      )}
 
+      <div className="view-grid view-grid--raw">
         {/* LEFT PANEL: Connection + Filters */}
         <section className="card controls rawViewControls">
           <h2>🔌 Connection</h2>
@@ -362,7 +364,7 @@ export default function RawView({
             </section>
           )}
         </aside>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
