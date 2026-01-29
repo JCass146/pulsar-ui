@@ -1,0 +1,108 @@
+/**
+ * Utility Classes
+ * Reusable helper classes for common patterns
+ */
+
+/* Text */
+.mono {
+  font-family: var(--mono);
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.hint {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  line-height: var(--lh-normal);
+  margin-top: 2px;
+}
+
+/* Layout */
+.flexCol {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.flexRow {
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+}
+
+.row {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.scrollY {
+  overflow-y: auto;
+}
+
+.scrollX {
+  overflow-x: auto;
+}
+
+/* Status Indicators */
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  box-shadow: 0 0 0 2px var(--glass-medium) inset;
+}
+
+.dot.online {
+  background: rgba(0, 255, 140, 0.9);
+}
+
+.dot.stale {
+  background: rgba(255, 200, 0, 0.95);
+}
+
+.dot.offline {
+  background: rgba(255, 80, 80, 0.9);
+}
+
+/* Pills */
+.pill {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--glass-light);
+  font-size: var(--font-sm);
+  text-transform: lowercase;
+}
+
+.pill.connected {
+  border-color: rgba(64, 255, 182, 0.35);
+}
+
+.pill.reconnecting,
+.pill.offline {
+  border-color: rgba(255, 208, 64, 0.35);
+}
+
+.pill.error {
+  border-color: rgba(255, 64, 120, 0.45);
+}
+
+/* Badge */
+.badge {
+  font-size: var(--font-xs);
+  padding: 4px var(--space-sm);
+  border-radius: 999px;
+  border: 1px solid var(--glass-medium);
+  background: var(--glass-light);
+  color: var(--text-secondary);
+}

@@ -8,12 +8,16 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { formatDistanceToNow, format } from "date-fns";
 
-function TimelineView({
+/**
+ * TimelineContent - Core timeline component that can be embedded
+ */
+export function TimelineContent({
   events = [],
   commandHistory = [],
   devices = [],
   onDeviceSelect,
-  selectedDeviceId
+  selectedDeviceId,
+  embedded = false,
 }) {
   const [filterType, setFilterType] = useState("all"); // all, events, commands
   const [searchTerm, setSearchTerm] = useState("");
@@ -178,55 +182,55 @@ function TimelineView({
   };
 
   return (
-    <main className="timelineViewMain">
-      <div className="view-grid">
-        <section className="card" style={{ gridColumn: "1 / -1" }}>
-          <div className="timelineControls">
-            <div className="timelineFilters">
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="timelineFilterSelect"
-          >
-            <option value="all">All Types</option>
-            <option value="events">Events Only</option>
-            <option value="commands">Commands Only</option>
-          </select>
+    <>
+      {/* Timeline Controls */}
+      {!embedded && (
+        <div className="timelineControls">
+          <div className="timelineFilters">
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="timelineFilterSelect"
+            >
+              <option value="all">All Types</option>
+              <option value="events">Events Only</option>
+              <option value="commands">Commands Only</option>
+            </select>
 
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="timelineFilterSelect"
-          >
-            <option value="1h">Last Hour</option>
-            <option value="6h">Last 6 Hours</option>
-            <option value="24h">Last 24 Hours</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="all">All Time</option>
-          </select>
-        </div>
-
-            <div className="timelineSearch">
-              <input
-                type="text"
-                placeholder="Search timeline..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="timelineSearchInput"
-              />
-            </div>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="timelineFilterSelect"
+            >
+              <option value="1h">Last Hour</option>
+              <option value="6h">Last 6 Hours</option>
+              <option value="24h">Last 24 Hours</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="all">All Time</option>
+            </select>
           </div>
-        </section>
 
-        <section className="card feed" style={{ gridColumn: "1 / -1" }}>
-          <div className="timelineContainer">
+          <div className="timelineSearch">
+            <input
+              type="text"
+              placeholder="Search timeline..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="timelineSearchInput"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Timeline Container */}
+      <div className="timelineContainer">
         {Object.keys(groupedItems).length === 0 ? (
           <div className="timelineEmpty">
             <p>No timeline items match the current filters.</p>
           </div>
         ) : (
           Object.entries(groupedItems)
-            .sort(([a], [b]) => b.localeCompare(a)) // Sort dates descending
+            .sort(([a], [b]) => b.localeCompare(a))
             .map(([date, items]) => (
               <div key={date} className="timelineDateGroup">
                 <div className="timelineDateHeader">
@@ -239,7 +243,20 @@ function TimelineView({
               </div>
             ))
         )}
-          </div>
+      </div>
+    </>
+  );
+}
+
+/**
+ * TimelineView - Full page timeline view
+ */
+function TimelineView(props) {
+  return (
+    <main className="timelineViewMain">
+      <div className="view-grid">
+        <section className="card" style={{ gridColumn: "1 / -1" }}>
+          <TimelineContent {...props} embedded={false} />
         </section>
       </div>
     </main>

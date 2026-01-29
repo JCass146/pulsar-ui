@@ -1,0 +1,126 @@
+/**
+ * Layout Styles
+ * Main application layout and common containers
+ */
+
+/* App layout */
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--surface-bg);
+}
+
+/* Card */
+.card {
+  background: linear-gradient(
+    180deg,
+    var(--card-gradient-start),
+    var(--card-gradient-end)
+  );
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.controls {
+  padding: var(--space-lg);
+}
+
+.feed {
+  padding: var(--space-lg);
+  flex: 1;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Form layout */
+.form {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+/* Stats */
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.stat {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  background: var(--overlay-light);
+}
+
+.statLabel {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.statValue {
+  font-size: var(--font-xl);
+  margin-top: 4px;
+}
+
+/* Message feed */
+.msg {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--overlay-light);
+}
+
+.msgMeta {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--glass-light);
+  font-size: var(--font-sm);
+}
+
+.topic {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.msgBody {
+  padding: var(--space-sm);
+}
+
+.pre {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--font-sm);
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msgFooter {
+  padding: var(--space-sm);
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  border-top: 1px solid var(--glass-light);
+}

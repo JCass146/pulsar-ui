@@ -11,9 +11,9 @@
 import React, { useState, useMemo } from "react";
 import FleetStatusStrip from "./FleetStatusStrip.jsx";
 import VirtualizedDeviceList from "./VirtualizedDeviceList.jsx";
-import TopControlBar from "./TopControlBar.jsx";
 import HealthSummaryBar from "./HealthSummaryBar.jsx";
 import FleetDeviceDetail from "./FleetDeviceDetail.jsx";
+import { TimelineContent } from "./TimelineView.jsx";
 
 export default function FleetView({
   deviceList,
@@ -22,8 +22,11 @@ export default function FleetView({
   selectedDevice,
   setSelectedDevice,
   getDeviceRole,
-  broadcastCommand,
   deviceTick,
+  
+  // Timeline props
+  events,
+  cmdHistory,
   
   // Calibration props
   calEditorText,
@@ -99,55 +102,16 @@ export default function FleetView({
         onFilterChange={setHealthFilter}
       />
 
-      <div className="view-grid">
-        {/* Broadcast Control Center */}
-        <section className="card" style={{ gridColumn: "1 / -1" }}>
-          <h2>🎯 Fleet Commands</h2>
-          <TopControlBar
-            devicesRef={devicesRef}
-            latestRef={latestRef}
-            deviceList={deviceList}
-            broadcastCommand={broadcastCommand}
-            deviceTick={deviceTick}
-          />
-        </section>
-
-        {/* Tag Filter */}
-        {allTags.length > 0 && (
-          <section className="card" style={{ padding: "12px 16px", gridColumn: "1 / -1" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 13, fontWeight: 500 }}>Filter by tag:</span>
-              <button
-                className={`pill ${!tagFilter ? "active" : ""}`}
-                onClick={() => setTagFilter(null)}
-              >
-                All
-              </button>
-              {allTags.map((tag) => (
-                <button
-                  key={tag}
-                  className={`pill ${tagFilter === tag ? "active" : ""}`}
-                  onClick={() => setTagFilter(tag)}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Master-Detail Grid */}
-        <div className={`fleet-view-grid ${selectedDevice ? 'with-detail' : ''}`}>
-        {/* Device Grid (Master) */}
-        <section className="card feed fleet-view-grid__list">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+      <div className="view-grid view-grid--fleet">
+        {/* Left Column: Device Grid */}
+        <section className="card feed">
+          <div className="fleetDeviceHeader">
             <h2>Devices ({filteredDevices.length})</h2>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+            <div className="fleetDeviceHeaderActions">
               {healthFilter !== "all" && (
                 <button
-                  className="secondary"
+                  className="secondary fleetClearFilterBtn"
                   onClick={() => setHealthFilter("all")}
-                  style={{ fontSize: 12, padding: "4px 8px" }}
                 >
                   Clear filter
                 </button>
@@ -168,25 +132,40 @@ export default function FleetView({
           />
         </section>
 
-        {/* Device Detail Panel (Detail - slides in) */}
-        {selectedDevice && (
-          <FleetDeviceDetail
-            deviceId={selectedDevice}
-            devicesRef={devicesRef}
-            deviceTick={deviceTick}
-            onClose={() => setSelectedDevice(null)}
-            getDeviceRole={getDeviceRole}
-            calEditorText={calEditorText}
-            setCalEditorText={setCalEditorText}
-            calAutoSync={calAutoSync}
-            setCalAutoSync={setCalAutoSync}
-            sendCalibration={sendCalibration}
-            resetCalEditorToCurrent={resetCalEditorToCurrent}
-            authorityLevel={authorityLevel}
-            canExecuteCommand={canExecuteCommand}
-            refreshArmed={refreshArmed}
-          />
-        )}
+        {/* Right Column: Device Detail + Timeline stacked */}
+        <div className="fleet-right-column">
+          {/* Device Detail (always visible when device selected) */}
+          {selectedDevice && (
+            <FleetDeviceDetail
+              deviceId={selectedDevice}
+              devicesRef={devicesRef}
+              deviceTick={deviceTick}
+              onClose={() => setSelectedDevice(null)}
+              getDeviceRole={getDeviceRole}
+              calEditorText={calEditorText}
+              setCalEditorText={setCalEditorText}
+              calAutoSync={calAutoSync}
+              setCalAutoSync={setCalAutoSync}
+              sendCalibration={sendCalibration}
+              resetCalEditorToCurrent={resetCalEditorToCurrent}
+              authorityLevel={authorityLevel}
+              canExecuteCommand={canExecuteCommand}
+              refreshArmed={refreshArmed}
+            />
+          )}
+
+          {/* Timeline */}
+          <section className="card feed fleet-timeline">
+            <h2>⏱️ Timeline</h2>
+            <TimelineContent
+              events={events || []}
+              commandHistory={cmdHistory || []}
+              devices={deviceList}
+              onDeviceSelect={setSelectedDevice}
+              selectedDeviceId={selectedDevice}
+              embedded={true}
+            />
+          </section>
         </div>
       </div>
     </main>

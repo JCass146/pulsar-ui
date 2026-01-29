@@ -50,20 +50,8 @@ export default function App() {
 
   // UI state
   const [paused, setPaused] = useState(false);
-  const pausedRef = useRef(false);
-  useEffect(() => {
-    pausedRef.current = paused;
-  }, [paused]);
-
-  // Sidebar state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  // Tabs
   const [tab, setTab] = useState("dashboard");
-  const tabRef = useRef(tab);
-  useEffect(() => {
-    tabRef.current = tab;
-  }, [tab]);
 
   // Messaging
   const messagesRef = useRef([]);
@@ -101,7 +89,6 @@ export default function App() {
 
   // Events (M4.1)
   const [events, setEvents] = useState([]);
-  const [eventsTick, setEventsTick] = useState(0);
 
   // UI Modals
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -282,14 +269,14 @@ export default function App() {
       seriesMap: seriesRef.current,
       latestMap: latestRef.current,
       messagesRef,
-      paused: pausedRef.current,
+      paused,
       parsePulsarTopic,
       onAckResolved: handleAckResolved,
       onDeviceChanged: bumpDeviceTick,
       onEvent: handleIncomingEvent,
       maxPoints
     });
-  }, [maxPoints]);
+  }, [maxPoints, paused]);
 
   // Periodic stale/offline recompute (background housekeeping)
   useEffect(() => {
@@ -609,8 +596,9 @@ export default function App() {
               selectedDevice={selectedDevice}
               setSelectedDevice={setSelectedDevice}
               getDeviceRole={getDeviceRole}
-              broadcastCommand={doBroadcastCommand}
               deviceTick={deviceTick}
+              events={events}
+              cmdHistory={cmdHistory}
               calEditorText={calEditorText}
               setCalEditorText={setCalEditorText}
               calAutoSync={calAutoSync}

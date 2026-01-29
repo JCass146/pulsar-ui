@@ -1,0 +1,116 @@
+/**
+ * Base Styles
+ * Reset and foundational HTML element styles
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--sans);
+  background: radial-gradient(
+    1200px 800px at 20% 0%,
+    var(--bg-gradient-start) 0%,
+    var(--surface-bg) 55%,
+    var(--bg-gradient-end) 100%
+  );
+  color: var(--text);
+  font-size: var(--font-base);
+  line-height: var(--lh-normal);
+}
+
+/* Typography */
+h2 {
+  margin: 0 0 var(--space-md);
+  font-size: var(--font-lg);
+  letter-spacing: 0.2px;
+  color: var(--heading-color);
+}
+
+h3 {
+  margin: var(--space-lg) 0 var(--space-sm);
+  font-size: var(--font-base);
+  color: var(--heading-color);
+}
+
+/* Forms */
+input,
+select,
+textarea {
+  width: 100%;
+  background: var(--overlay-bg);
+  color: var(--text);
+  border: 1px solid var(--glass-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  outline: none;
+  font: inherit;
+  font-size: var(--font-base);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(46, 231, 255, 0.35);
+}
+
+select {
+  appearance: none;
+}
+
+select[multiple] {
+  appearance: auto;
+  padding: var(--space-sm);
+}
+
+select option {
+  background: var(--surface-default);
+  color: var(--text);
+}
+
+label {
+  display: grid;
+  gap: var(--space-xs);
+  font-size: var(--font-sm);
+  color: var(--heading-color);
+  line-height: var(--lh-normal);
+}
+
+/* Buttons */
+button {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-strong);
+  background: var(--glass-medium);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--font-base);
+  font-family: inherit;
+}
+
+button:hover:not(:disabled) {
+  background: var(--glass-strong);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: rgba(46, 231, 255, 0.08);
+  border-color: rgba(46, 231, 255, 0.18);
+}
+
+button.danger {
+  background: rgba(255, 46, 136, 0.12);
+  border-color: rgba(255, 46, 136, 0.2);
+}
