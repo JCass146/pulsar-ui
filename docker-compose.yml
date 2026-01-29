@@ -2,7 +2,8 @@ services:
   pulsar-ui:
     build:
       context: ./ui
-    image: pulsar/pulsar-ui:latest
+      dockerfile: Dockerfile
+    image: pulsar-ui:latest
     container_name: pulsar-ui
     ports:
       - "8080:80"
