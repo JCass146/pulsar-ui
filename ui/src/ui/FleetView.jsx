@@ -95,8 +95,8 @@ export default function FleetView({
       {/* Health Summary Bar with Filters */}
       <HealthSummaryBar
         deviceList={deviceList}
-        healthFilter={healthFilter}
-        onHealthFilterChange={setHealthFilter}
+        activeFilter={healthFilter}
+        onFilterChange={setHealthFilter}
       />
 
       <div className="view-grid">
