@@ -1,0 +1,52 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.textarea {
+  padding: 0.75rem 1rem;
+  background: var(--surface-default);
+  border: 1px solid var(--border-divider);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+  resize: vertical;
+  transition: all 0.15s ease;
+}
+
+.textarea:hover {
+  background: var(--surface-raised);
+  border-color: var(--border-hover);
+}
+
+.textarea:focus {
+  outline: 2px solid var(--primary-line);
+  outline-offset: 2px;
+  border-color: var(--primary-line);
+}
+
+.error {
+  font-size: 0.75rem;
+  color: var(--warn-bad);
+  font-weight: 600;
+}
+
+.stageButton {
+  align-self: flex-start;
+}

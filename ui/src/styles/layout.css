@@ -4,6 +4,17 @@
  */
 
 /* App layout */
+.app-container {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-container.sidebar-collapsed {
+  grid-template-columns: 60px 1fr;
+}
+
 .app {
   display: flex;
   height: 100vh;
@@ -11,11 +22,9 @@
 }
 
 .main-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--surface-bg);
 }
 
 .content-area {
