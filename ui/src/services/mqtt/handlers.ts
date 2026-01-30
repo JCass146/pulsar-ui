@@ -63,22 +63,34 @@ export function handleMessage(topic: string, payload: Buffer): void {
 
 /**
  * Handle telemetry messages
+ * Expected format: { v: 1, t_ms: timestamp, fields: { metric1: value1, metric2: value2, ... } }
  */
 function handleTelemetry(deviceId: string, metric: string | undefined, payload: Buffer): void {
-  if (!metric) {
-    console.warn('Telemetry message missing metric');
+  const data = JSON.parse(payload.toString());
+  
+  // Check for pulsar-core format with fields object
+  if (data.fields && typeof data.fields === 'object') {
+    const timestamp = data.t_ms || Date.now();
+    
+    // Add a point for each field
+    Object.entries(data.fields).forEach(([metricName, value]) => {
+      if (typeof value === 'number') {
+        useTelemetry.getState().addPoint(deviceId, metricName, {
+          ts: timestamp,
+          value: value,
+        });
+      }
+    });
+  } else if (metric && typeof data.value === 'number') {
+    // Legacy format: single metric with value/ts
+    useTelemetry.getState().addPoint(deviceId, metric, {
+      ts: data.ts || Date.now(),
+      value: data.value,
+    });
+  } else {
+    console.warn('Unknown telemetry format:', data);
     return;
   }
-
-  // Parse and validate payload
-  const data = JSON.parse(payload.toString());
-  const validated = TelemetryMessageSchema.parse(data);
-
-  // Add point to telemetry store
-  useTelemetry.getState().addPoint(deviceId, metric, {
-    ts: validated.ts,
-    value: validated.value,
-  });
 
   // Update device last seen
   updateDeviceLastSeen(deviceId);
@@ -86,6 +98,7 @@ function handleTelemetry(deviceId: string, metric: string | undefined, payload: 
 
 /**
  * Handle status messages
+ * Expected format: { v: 1, online: true, t_ms: timestamp, ip: "...", fw: "...", device_type: "..." }
  */
 function handleStatus(deviceId: string, payload: Buffer): void {
   const data = JSON.parse(payload.toString());
@@ -97,17 +110,18 @@ function handleStatus(deviceId: string, payload: Buffer): void {
     // Register new device
     addDevice({
       id: deviceId,
-      role: data.role || 'unknown',
-      health: DeviceHealth.Healthy,
-      lastSeen: Date.now(),
+      role: data.device_type || data.role || 'unknown',
+      health: data.online ? DeviceHealth.Healthy : DeviceHealth.Offline,
+      lastSeen: data.t_ms || Date.now(),
       capability: data.capability || null,
       metadata: data,
     });
   } else {
     // Update existing device
     updateDevice(deviceId, {
-      lastSeen: Date.now(),
-      health: DeviceHealth.Healthy,
+      lastSeen: data.t_ms || Date.now(),
+      health: data.online ? DeviceHealth.Healthy : DeviceHealth.Offline,
+      role: data.device_type || data.role || existing.role,
       capability: data.capability || existing.capability,
       metadata: { ...existing.metadata, ...data },
     });

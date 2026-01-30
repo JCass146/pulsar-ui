@@ -13,16 +13,17 @@ export function parseTopic(topic: string): ParsedTopic | null {
 
   const deviceId = parts[1];
   const messageType = parts[2] as ParsedTopic['messageType'];
-  const metric = parts[3];
+  const metric = parts[3]; // Optional - may be undefined
 
-  // Validate message type
-  if (!['telemetry', 'event', 'status', 'command'].includes(messageType)) {
+  // Validate message type (accept telemetry/status/event/command/state/meta)
+  const validTypes = ['telemetry', 'event', 'status', 'command', 'state', 'meta'];
+  if (!validTypes.includes(messageType)) {
     return null;
   }
 
   return {
     deviceId,
-    messageType,
+    messageType: messageType as ParsedTopic['messageType'],
     metric,
   };
 }
