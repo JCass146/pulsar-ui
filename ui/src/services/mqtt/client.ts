@@ -21,9 +21,11 @@ class MqttClientService {
    */
   connect(config: MqttConfig): void {
     if (this.client) {
+      console.log('[MQTT Client] Already connected');
       return; // Already connected or connecting
     }
 
+    console.log('[MQTT Client] Connecting to:', config.url);
     this.setConnectionState(ConnectionState.Connecting);
 
     this.client = mqtt.connect(config.url, {
@@ -55,13 +57,16 @@ class MqttClientService {
    */
   subscribe(topic: string | string[], qos: 0 | 1 | 2 = 1): void {
     if (!this.client) {
-      console.warn('Cannot subscribe: MQTT client not connected');
+      console.warn('[MQTT Client] Cannot subscribe: MQTT client not connected');
       return;
     }
 
+    console.log('[MQTT Client] Subscribing to:', topic, 'with QoS', qos);
     this.client.subscribe(topic, { qos }, (err) => {
       if (err) {
-        console.error('Subscribe error:', err);
+        console.error('[MQTT Client] Subscribe error:', err);
+      } else {
+        console.log('[MQTT Client] Successfully subscribed to:', topic);
       }
     });
   }
@@ -104,8 +109,12 @@ class MqttClientService {
    * Add message handler
    */
   onMessage(handler: (topic: string, payload: Buffer) => void): void {
+    console.log('[MQTT Client] Registering message handler');
     if (this.client) {
       this.client.on('message', handler);
+      console.log('[MQTT Client] Message handler registered');
+    } else {
+      console.warn('[MQTT Client] Cannot register handler: client not initialized');
     }
   }
 
@@ -135,7 +144,7 @@ class MqttClientService {
 
     this.client.on('connect', () => {
       this.setConnectionState(ConnectionState.Connected);
-      console.log('MQTT connected');
+      console.log('[MQTT Client] Connected successfully');
     });
 
     this.client.on('reconnect', () => {
