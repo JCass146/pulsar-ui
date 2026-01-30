@@ -1,24 +1,31 @@
+import { useState, useEffect } from 'react';
 import { useNavigation, ViewType } from '@/stores/navigation';
 import { useUiState } from '@/stores/ui';
 import { useMqttConnection } from '@/hooks/useMqtt';
 import { NavItem } from '@/components/atoms/NavItem/NavItem';
 import { StatusBadge } from '@/components/atoms/StatusBadge/StatusBadge';
 import { Button } from '@/components/atoms/Button/Button';
+import { loadRuntimeConfig } from '@/config';
 import styles from './Sidebar.module.css';
 
-function getMqttConfig() {
-  const url = import.meta.env.VITE_MQTT_WS_URL || 'ws://localhost:9001';
-  return { url };
-}
-
 export function Sidebar() {
+  const [mqttConfig, setMqttConfig] = useState<any>(null);
   const currentView = useNavigation((state) => state.currentView);
   const setView = useNavigation((state) => state.setView);
   const collapsed = useUiState((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiState((state) => state.toggleSidebar);
   const toggleTheme = useUiState((state) => state.toggleTheme);
   const theme = useUiState((state) => state.theme);
-  const connectionState = useMqttConnection(getMqttConfig());
+
+  // Load runtime config on mount
+  useEffect(() => {
+    loadRuntimeConfig().then((config) => {
+      console.log('[Sidebar] Using MQTT URL:', config.mqttWsUrl);
+      setMqttConfig({ url: config.mqttWsUrl });
+    });
+  }, []);
+
+  const connectionState = useMqttConnection(mqttConfig || { url: '' });
 
   const navItems: Array<{ view: ViewType; icon: string; label: string }> = [
     { view: 'dashboard', icon: '📊', label: 'Dashboard' },
