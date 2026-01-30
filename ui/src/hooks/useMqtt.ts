@@ -19,25 +19,36 @@ export function useMqttConnection(config: MqttConfig) {
       return;
     }
 
-    // Only initialize once
-    if (isInitialized.current) return;
+    // Only initialize once (check AFTER url validation)
+    if (isInitialized.current) {
+      console.log('[useMqttConnection] Already initialized');
+      return;
+    }
     isInitialized.current = true;
 
-    console.log('[useMqttConnection] Connecting to:', config.url);
+    console.log('[useMqttConnection] Initializing MQTT connection to:', config.url);
 
-    // Initialize message handlers
+    // Initialize message handlers FIRST
     initializeHandlers();
 
     // Subscribe to connection state changes
-    const unsubscribe = mqttClient.onConnectionStateChange(setConnectionState);
+    const unsubscribe = mqttClient.onConnectionStateChange((state) => {
+      setConnectionState(state);
+      
+      // Subscribe to topics when connected
+      if (state === ConnectionState.Connected) {
+        console.log('[useMqttConnection] Connected! Subscribing to topics...');
+        mqttClient.subscribe('pulsar/+/telemetry/#', 1);
+        mqttClient.subscribe('pulsar/+/telemetry', 1);
+        mqttClient.subscribe('pulsar/+/status', 1);
+        mqttClient.subscribe('pulsar/+/event/#', 1);
+        mqttClient.subscribe('pulsar/+/state/#', 1);
+        mqttClient.subscribe('pulsar/+/meta/#', 1);
+      }
+    });
 
     // Connect to broker
     mqttClient.connect(config);
-
-    // Subscribe to telemetry topics
-    mqttClient.subscribe('pulsar/+/telemetry/#', 1);
-    mqttClient.subscribe('pulsar/+/status', 1);
-    mqttClient.subscribe('pulsar/+/event/#', 1);
 
     return () => {
       unsubscribe();
