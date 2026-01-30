@@ -4,13 +4,18 @@ WORKDIR /app
 
 # Copy package files first (better layer caching)
 COPY package.json package-lock.json* ./
+
+# Install dependencies with increased memory for ARM builds
+# Raspberry Pi 4 needs NODE_OPTIONS to avoid OOM during builds
 RUN npm ci --only=production=false
 
 # Copy source files including CSS modules
 COPY . .
 
 # Build the production bundle
-RUN npm run build
+# Increase Node memory limit for ARM architectures (Pi 4)
+# Use 1536MB for 2GB Pi, 3072MB for 4GB+ Pi
+RUN NODE_OPTIONS="--max-old-space-size=1536" npm run build
 
 # ---- runtime stage ----
 FROM nginx:1.27-alpine
