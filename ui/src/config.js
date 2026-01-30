@@ -25,9 +25,19 @@ export async function loadRuntimeConfig() {
 
   try {
     const res = await fetch("/config.json", { cache: "no-store" });
-    if (!res.ok) return defaults;
+    if (!res.ok) {
+      console.warn(`[Config] Failed to fetch config.json (${res.status}), using defaults`);
+      return defaults;
+    }
 
     const cfg = await res.json();
+    console.log("[Config] Loaded config.json:", cfg);
+    
+    // If mqttWsUrl is empty or not provided, use default
+    if (!cfg.mqttWsUrl || cfg.mqttWsUrl.trim() === "") {
+      console.log("[Config] mqttWsUrl empty, using default:", defaults.mqttWsUrl);
+      cfg.mqttWsUrl = defaults.mqttWsUrl;
+    }
 
     const mqttWsUrl =
       (cfg?.mqttWsUrl && String(cfg.mqttWsUrl).trim()) || defaults.mqttWsUrl;
@@ -53,7 +63,7 @@ export async function loadRuntimeConfig() {
       staleAfterMs,
       commandTimeoutMs
     };
-  } catch {
-    return defaults;
+  } catch {    console.error("[Config] Error loading config.json:", err);
+    console.log("[Config] Using defaults:", defaults);    return defaults;
   }
 }

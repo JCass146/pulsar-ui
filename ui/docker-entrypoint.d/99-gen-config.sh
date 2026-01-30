@@ -6,9 +6,9 @@ TEMPLATE="${HTML_DIR}/config.template.json"
 OUT="${HTML_DIR}/config.json"
 
 # Defaults:
-# - MQTT_WS_URL: default to ws(s)://<host>:9001 computed in the app if left blank
+# - MQTT_WS_URL: if not set, default to ws://pulsarpi.local:9001 (standard Pulsar deployment)
 # - MQTT_TOPIC: default to pulsar/+/telemetry/# if blank
-: "${MQTT_WS_URL:=}"
+: "${MQTT_WS_URL:=ws://pulsarpi.local:9001}"
 : "${MQTT_TOPIC:=pulsar/+/telemetry/#}"
 
 if [ -f "$TEMPLATE" ]; then
