@@ -13,9 +13,17 @@ export function useMqttConnection(config: MqttConfig) {
   const isInitialized = useRef(false);
 
   useEffect(() => {
+    // Don't connect if URL is empty (config still loading)
+    if (!config?.url || config.url.trim() === '') {
+      console.log('[useMqttConnection] Waiting for config...');
+      return;
+    }
+
     // Only initialize once
     if (isInitialized.current) return;
     isInitialized.current = true;
+
+    console.log('[useMqttConnection] Connecting to:', config.url);
 
     // Initialize message handlers
     initializeHandlers();
@@ -35,7 +43,7 @@ export function useMqttConnection(config: MqttConfig) {
       unsubscribe();
       mqttClient.disconnect();
     };
-  }, []); // Empty deps - only run once
+  }, [config?.url]); // Re-run when URL changes
 
   return connectionState;
 }
