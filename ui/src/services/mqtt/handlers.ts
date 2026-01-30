@@ -10,6 +10,8 @@ import { DeviceHealth } from '@/types/device';
  * Handle incoming MQTT messages and route to appropriate stores
  */
 export function handleMessage(topic: string, payload: Buffer): void {
+  console.log('[MQTT] Message received:', topic, payload.toString().substring(0, 100));
+  
   const parsed = parseTopic(topic);
   if (!parsed) {
     console.warn('Invalid topic format:', topic);
@@ -17,6 +19,7 @@ export function handleMessage(topic: string, payload: Buffer): void {
   }
 
   const { deviceId, messageType, metric } = parsed;
+  console.log('[MQTT] Parsed:', { deviceId, messageType, metric });
 
   // Capture all messages in raw message store
   try {
