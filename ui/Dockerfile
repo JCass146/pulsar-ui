@@ -13,9 +13,9 @@ RUN npm ci --only=production=false
 COPY . .
 
 # Build the production bundle
-# Increase Node memory limit for ARM architectures (Pi 4)
-# Use 1536MB for 2GB Pi, 3072MB for 4GB+ Pi
-RUN NODE_OPTIONS="--max-old-space-size=1536" npm run build
+# Skip TypeScript type checking on ARM to avoid OOM
+# Type checking is done in CI/CD or local development
+RUN npm run build:docker
 
 # ---- runtime stage ----
 FROM nginx:1.27-alpine

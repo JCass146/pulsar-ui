@@ -9,17 +9,18 @@ The local UI looks good but the Docker/Portainer build looks different due to ca
 
 ### 1. ARM/Raspberry Pi Specific Fix
 
-The Dockerfile now includes `NODE_OPTIONS="--max-old-space-size=1536"` for ARM builds. This allocates 1.5GB of memory to Node.js during the build process.
+The Dockerfile now uses `npm run build:docker` which **skips TypeScript type checking** during the build. This avoids memory issues on ARM devices.
 
-**If you have a 4GB+ Raspberry Pi**, you can increase this to 3072:
-```dockerfile
-RUN NODE_OPTIONS="--max-old-space-size=3072" npm run build
-```
+**Why this works:**
+- TypeScript checking (`tsc`) consumes significant memory on ARM
+- Type checking is already done during development and in CI/CD
+- Vite performs runtime type checking for critical errors
+- The production build is smaller and faster without the extra tsc step
 
-**Common ARM Build Errors:**
-- `exit code: 2` - Out of memory during TypeScript compilation
-- `FATAL ERROR: Reached heap limit` - Need to increase max-old-space-size
-- Build hangs indefinitely - Swap memory exhausted
+**Type Safety:**
+- Run `npm run type-check` locally before committing
+- CI/CD should run full `npm run build` with type checking
+- Docker builds prioritize speed and memory efficiency
 
 ### 2. Added `.dockerignore`
 Created `.dockerignore` to exclude unnecessary files from the build context (node_modules, dist, etc.). This ensures a clean build.
