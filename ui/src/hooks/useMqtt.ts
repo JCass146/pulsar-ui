@@ -28,7 +28,10 @@ export function useMqttConnection(config: MqttConfig) {
 
     console.log('[useMqttConnection] Initializing MQTT connection to:', config.url);
 
-    // Initialize message handlers FIRST
+    // Connect to broker FIRST (this creates the client)
+    mqttClient.connect(config);
+
+    // THEN initialize message handlers (now client exists)
     initializeHandlers();
 
     // Subscribe to connection state changes
@@ -46,9 +49,6 @@ export function useMqttConnection(config: MqttConfig) {
         mqttClient.subscribe('pulsar/+/meta/#', 1);
       }
     });
-
-    // Connect to broker
-    mqttClient.connect(config);
 
     return () => {
       unsubscribe();
