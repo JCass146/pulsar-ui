@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { Command, CommandStatus } from '@/types/command';
+import { mqttClient } from '@/services/mqtt/client';
+import { buildTopic } from '@/services/mqtt/parser';
 
 /**
  * Command queue state
@@ -9,6 +11,7 @@ interface CommandQueueState {
   
   // Actions
   stageCommand: (command: Command) => void;
+  executeCommand: (id: string) => Promise<void>;
   updateCommandStatus: (id: string, status: CommandStatus, error?: string) => void;
   removeCommand: (id: string) => void;
   clearHistory: () => void;
@@ -32,6 +35,42 @@ export const useCommandQueue = create<CommandQueueState>((set, get) => ({
       newCommands.set(command.id, command);
       return { commands: newCommands };
     }),
+
+  executeCommand: async (id) => {
+    const command = get().getCommand(id);
+    if (!command) {
+      console.error('[CommandQueue] Command not found:', id);
+      return;
+    }
+
+    try {
+      // Update status to pending
+      get().updateCommandStatus(id, CommandStatus.Pending);
+
+      // Build MQTT topic: pulsar/{deviceId}/cmd/{action}
+      const topic = buildTopic(command.deviceId, 'cmd', command.action);
+      
+      // Publish command to MQTT
+      await mqttClient.publish(topic, JSON.stringify(command.payload), { qos: 1 });
+      
+      console.log('[CommandQueue] Published command:', { topic, payload: command.payload });
+
+      // Update status to sent
+      get().updateCommandStatus(id, CommandStatus.Sent);
+
+      // Set timeout for command response
+      setTimeout(() => {
+        const cmd = get().getCommand(id);
+        if (cmd && cmd.status === CommandStatus.Sent) {
+          get().updateCommandStatus(id, CommandStatus.Timeout, 'Command timeout - no response received');
+        }
+      }, 5000); // 5 second timeout
+
+    } catch (error) {
+      console.error('[CommandQueue] Failed to publish command:', error);
+      get().updateCommandStatus(id, CommandStatus.Failed, error instanceof Error ? error.message : 'Unknown error');
+    }
+  },
 
   updateCommandStatus: (id, status, error) =>
     set((state) => {

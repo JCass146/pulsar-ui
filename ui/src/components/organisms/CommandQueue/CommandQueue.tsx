@@ -9,7 +9,7 @@ import styles from './CommandQueue.module.css';
 export function CommandQueue() {
   const commands = useCommandQueue((state) => state.commands);
   const removeCommand = useCommandQueue((state) => state.removeCommand);
-  const updateCommandStatus = useCommandQueue((state) => state.updateCommandStatus);
+  const executeCommand = useCommandQueue((state) => state.executeCommand);
 
   const allCommands = useMemo(() => Array.from(commands.values()), [commands]);
   
@@ -36,7 +36,7 @@ export function CommandQueue() {
 
   const executeStaged = () => {
     stagedCommands.forEach((cmd) => {
-      updateCommandStatus(cmd.id, CommandStatus.Pending);
+      executeCommand(cmd.id);
     });
   };
 

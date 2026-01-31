@@ -64,15 +64,10 @@ export const useMqttMessages = create<MqttMessagesState>((set, get) => ({
   buffer: new MessageBuffer(1000),
 
   addMessage: (message) => {
-    const { buffer } = get();
+    const buffer = get().buffer;
     buffer.push(message);
-    // Trigger re-render
-    set({ buffer: new MessageBuffer(1000) });
-    // Copy messages to new buffer to maintain state
-    const messages = get().buffer.getMessages();
-    const newBuffer = new MessageBuffer(1000);
-    messages.forEach((msg) => newBuffer.push(msg));
-    set({ buffer: newBuffer });
+    // Trigger re-render by setting state (Zustand detects object reference change)
+    set({ buffer });
   },
 
   clearMessages: () => {

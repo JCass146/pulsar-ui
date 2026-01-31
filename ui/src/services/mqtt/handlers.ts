@@ -3,6 +3,7 @@ import { parseTopic } from './parser';
 import { useDeviceRegistry } from '@/stores/device-registry';
 import { useTelemetry } from '@/stores/telemetry';
 import { useMqttMessages } from '@/stores/mqtt-messages';
+import { useNotifications, NotificationLevel } from '@/stores/notifications';
 import { TelemetryMessageSchema } from '@/types/telemetry';
 import { DeviceHealth } from '@/types/device';
 
@@ -53,6 +54,12 @@ export function handleMessage(topic: string, payload: Buffer): void {
       case 'event':
         handleEvent(deviceId, payload);
         break;
+      case 'state':
+        handleState(deviceId, metric, payload);
+        break;
+      case 'meta':
+        handleMeta(deviceId, metric, payload);
+        break;
       default:
         console.warn('Unhandled message type:', messageType);
     }
@@ -67,6 +74,19 @@ export function handleMessage(topic: string, payload: Buffer): void {
  */
 function handleTelemetry(deviceId: string, metric: string | undefined, payload: Buffer): void {
   const data = JSON.parse(payload.toString());
+  
+  // Ensure device exists (auto-register on first telemetry)
+  const { addDevice, getDevice } = useDeviceRegistry.getState();
+  if (!getDevice(deviceId)) {
+    addDevice({
+      id: deviceId,
+      role: 'unknown',
+      health: DeviceHealth.Healthy,
+      lastSeen: data.t_ms || Date.now(),
+      capability: null,
+      metadata: {},
+    });
+  }
   
   // Check for pulsar-core format with fields object
   if (data.fields && typeof data.fields === 'object') {
@@ -135,10 +155,94 @@ function handleEvent(deviceId: string, payload: Buffer): void {
   const data = JSON.parse(payload.toString());
   console.log('Event received:', { deviceId, data });
   
+  // Determine notification level based on event data
+  let level = NotificationLevel.Info;
+  if (data.level === 'error' || data.severity === 'error') {
+    level = NotificationLevel.Error;
+  } else if (data.level === 'warning' || data.severity === 'warning') {
+    level = NotificationLevel.Warning;
+  } else if (data.level === 'success' || data.severity === 'success') {
+    level = NotificationLevel.Success;
+  }
+  
+  // Create notification with event message
+  const message = data.message || data.event || data.type || 'Device event';
+  useNotifications.getState().addNotification(deviceId, level, message);
+  
   // Update device last seen
   updateDeviceLastSeen(deviceId);
+}
+
+/**
+ * Handle state messages (state/online, state/relays, state/calibration)
+ * Store in device metadata under 'state' key
+ */
+function handleState(deviceId: string, stateKey: string | undefined, payload: Buffer): void {
+  const { getDevice, updateDevice } = useDeviceRegistry.getState();
+  const device = getDevice(deviceId);
   
-  // TODO: Add to notification store when implemented
+  if (!device) {
+    console.warn('State message for unknown device:', deviceId);
+    return;
+  }
+
+  try {
+    const data = JSON.parse(payload.toString());
+    const stateData = device.metadata?.state || {};
+    
+    if (stateKey) {
+      // Store under state.{stateKey} (e.g., state.online, state.relays)
+      stateData[stateKey] = data;
+    } else {
+      // Store entire payload
+      Object.assign(stateData, data);
+    }
+    
+    updateDevice(deviceId, {
+      metadata: { ...device.metadata, state: stateData },
+      lastSeen: Date.now(),
+    });
+  } catch (error) {
+    // Non-JSON payload (e.g., state/online = "1" or "0")
+    const stateData = device.metadata?.state || {};
+    if (stateKey) {
+      stateData[stateKey] = payload.toString();
+    }
+    updateDevice(deviceId, {
+      metadata: { ...device.metadata, state: stateData },
+      lastSeen: Date.now(),
+    });
+  }
+}
+
+/**
+ * Handle meta messages (meta/info, meta/config)
+ * Store in device metadata under 'meta' key
+ */
+function handleMeta(deviceId: string, metaKey: string | undefined, payload: Buffer): void {
+  const { getDevice, updateDevice } = useDeviceRegistry.getState();
+  const device = getDevice(deviceId);
+  
+  if (!device) {
+    console.warn('Meta message for unknown device:', deviceId);
+    return;
+  }
+
+  const data = JSON.parse(payload.toString());
+  const metaData = device.metadata?.meta || {};
+  
+  if (metaKey) {
+    // Store under meta.{metaKey} (e.g., meta.info, meta.config)
+    metaData[metaKey] = data;
+  } else {
+    // Store entire payload
+    Object.assign(metaData, data);
+  }
+  
+  updateDevice(deviceId, {
+    metadata: { ...device.metadata, meta: metaData },
+    lastSeen: Date.now(),
+  });
 }
 
 /**

@@ -1,0 +1,221 @@
+.rail {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100vh;
+  background: var(--surface-default);
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-4);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--spacing-1);
+  background: var(--danger-red);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: 10px;
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-2);
+}
+
+.notification {
+  background: var(--surface-default);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+  margin-bottom: var(--spacing-2);
+  transition: all 0.2s ease;
+}
+
+.notification:hover {
+  border-color: var(--border-interactive);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.notificationHeader {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: flex-start;
+}
+
+.icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.notificationInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.notificationMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-1);
+}
+
+.deviceId {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.message {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: var(--spacing-1) 0;
+  line-height: 1.4;
+}
+
+.notificationFooter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
+}
+
+.timestamp {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.dismissButton {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dismissButton:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.clearButton {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearButton:hover {
+  background: var(--surface-sunken);
+  border-color: var(--border-interactive);
+}
+
+.level {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.levelInfo {
+  border-left: 3px solid #3b82f6;
+}
+
+.levelInfo .level {
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.levelSuccess {
+  border-left: 3px solid #10b981;
+}
+
+.levelSuccess .level {
+  background: #f0fdf4;
+  color: #065f46;
+}
+
+.levelWarning {
+  border-left: 3px solid #f59e0b;
+}
+
+.levelWarning .level {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.levelError {
+  border-left: 3px solid #ef4444;
+}
+
+.levelError .level {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+/* Empty state for when list is scrolled */
+.list:empty::after {
+  content: 'No notifications';
+  display: block;
+  text-align: center;
+  padding: var(--spacing-8);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+}

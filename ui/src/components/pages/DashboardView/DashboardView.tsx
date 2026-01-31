@@ -11,19 +11,52 @@ import styles from './DashboardView.module.css';
 export function DashboardView() {
   const devicesMap = useDeviceRegistry((state) => state.devices);
   const getPoints = useTelemetry((state) => state.getPoints);
+  const buffers = useTelemetry((state) => state.buffers);
   const [selectedLocalId, setSelectedLocalId] = useState<string | null>(null);
 
   const devices = useMemo(() => Array.from(devicesMap.values()), [devicesMap]);
 
-  const temperatureData = useMemo(() => {
+  // Dynamically discover all metrics for the selected device
+  const availableMetrics = useMemo(() => {
     if (!selectedLocalId) return [];
-    return getPoints(selectedLocalId, 'temperature');
-  }, [selectedLocalId, getPoints]);
+    const deviceBuffers = buffers.get(selectedLocalId);
+    if (!deviceBuffers) return [];
+    return Array.from(deviceBuffers.keys());
+  }, [selectedLocalId, buffers]);
 
-  const pressureData = useMemo(() => {
-    if (!selectedLocalId) return [];
-    return getPoints(selectedLocalId, 'pressure');
-  }, [selectedLocalId, getPoints]);
+  // Generate chart color based on metric index
+  const getChartColor = (index: number) => {
+    const colors = [
+      'var(--primary-line)',
+      'var(--warn-warn)',
+      'var(--success-green)',
+      'var(--info-blue)',
+      'var(--accent-purple)',
+      'var(--danger-red)',
+    ];
+    return colors[index % colors.length];
+  };
+
+  // Get friendly metric names
+  const getMetricLabel = (metric: string) => {
+    const labels: Record<string, { title: string; unit: string }> = {
+      pressure_psi: { title: 'Pressure', unit: ' PSI' },
+      temperature: { title: 'Temperature', unit: '°F' },
+      temperature_c: { title: 'Temperature', unit: '°C' },
+      mass_g: { title: 'Mass', unit: ' g' },
+      load_raw: { title: 'Load Cell (Raw)', unit: '' },
+      rssi_dbm: { title: 'Signal Strength', unit: ' dBm' },
+      heap_free: { title: 'Free Memory', unit: ' bytes' },
+      uptime_ms: { title: 'Uptime', unit: ' ms' },
+      relay_1: { title: 'Relay 1', unit: '' },
+      relay_2: { title: 'Relay 2', unit: '' },
+      relay_3: { title: 'Relay 3', unit: '' },
+      relay_4: { title: 'Relay 4', unit: '' },
+      humidity: { title: 'Humidity', unit: '%' },
+    };
+    
+    return labels[metric] || { title: metric, unit: '' };
+  };
 
   return (
     <div className={styles.dashboard}>
@@ -38,20 +71,35 @@ export function DashboardView() {
       <div className={styles.mainContent}>
         {selectedLocalId ? (
           <>
-            <PlotCard
-              title="Temperature"
-              metric="temperature"
-              unit="°F"
-              data={temperatureData}
-              color="var(--warn-warn)"
-            />
-            <PlotCard
-              title="Pressure"
-              metric="pressure"
-              unit=" PSI"
-              data={pressureData}
-              color="var(--primary-line)"
-            />
+            {availableMetrics.length > 0 ? (
+              availableMetrics.map((metric, index) => {
+                const { title, unit } = getMetricLabel(metric);
+                const data = getPoints(selectedLocalId, metric);
+                
+                return (
+                  <PlotCard
+                    key={metric}
+                    title={title}
+                    metric={metric}
+                    unit={unit}
+                    data={data}
+                    color={getChartColor(index)}
+                  />
+                );
+              })
+            ) : (
+              <Card>
+                <CardBody>
+                  <div className={styles.emptyState}>
+                    <div className={styles.emptyIcon}>📊</div>
+                    <p className={styles.emptyTitle}>No telemetry data</p>
+                    <p className={styles.emptyText}>
+                      Waiting for data from {devicesMap.get(selectedLocalId)?.id || selectedLocalId}
+                    </p>
+                  </div>
+                </CardBody>
+              </Card>
+            )}
           </>
         ) : (
           <Card>
