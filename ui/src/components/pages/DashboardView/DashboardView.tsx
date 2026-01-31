@@ -35,7 +35,18 @@ export function DashboardView() {
 
   // Separate bookmarked to main, bookmarked to live, and unbooked
   const mainPinnedList = useMemo(() => {
-    return allMetricsWithData.filter(m => getBookmarkType(m.deviceId, m.metric) === 'main');
+    // Show main bookmarked metrics OR unbookmarked metrics if no bookmarks exist
+    const mainBookmarked = allMetricsWithData.filter(m => getBookmarkType(m.deviceId, m.metric) === 'main');
+    const hasAnyBookmarks = allMetricsWithData.some(m => getBookmarkType(m.deviceId, m.metric) !== null);
+    
+    // If there are any bookmarks, only show main bookmarked
+    // If no bookmarks, show all unbooked metrics (default view)
+    if (hasAnyBookmarks) {
+      return mainBookmarked;
+    }
+    
+    // Default: show all unbooked metrics on main if nothing is bookmarked
+    return allMetricsWithData.filter(m => getBookmarkType(m.deviceId, m.metric) !== 'live');
   }, [allMetricsWithData, getBookmarkType]);
 
   const liveFeaturedList = useMemo(() => {
