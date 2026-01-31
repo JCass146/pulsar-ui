@@ -5,6 +5,7 @@ import { useDeviceRegistry } from '@/stores/device-registry';
 import { useMqttConnection } from '@/hooks/useMqtt';
 import { loadRuntimeConfig } from '@/config';
 import { DeviceHealth } from '@/types/device';
+import { MqttConfig } from '@/types/mqtt';
 import { Sidebar } from '@/components/organisms/Sidebar/Sidebar';
 import { DashboardView } from '@/components/pages/DashboardView/DashboardView';
 import { FleetView } from '@/components/pages/FleetView/FleetView';
@@ -20,7 +21,7 @@ function App() {
   console.log('[App] Component rendering...');
   const currentView = useNavigation((state) => state.currentView);
   const sidebarCollapsed = useUiState((state) => state.sidebarCollapsed);
-  const [mqttConfig, setMqttConfig] = useState<any>(null);
+  const [mqttConfig, setMqttConfig] = useState<MqttConfig | null>(null);
 
   console.log('[App] Current view:', currentView, 'Sidebar collapsed:', sidebarCollapsed);
 
@@ -35,8 +36,8 @@ function App() {
     });
   }, []);
 
-  // Initialize MQTT connection
-  const connectionState = useMqttConnection(mqttConfig || { url: '' });
+  // Initialize MQTT connection (only when config is loaded)
+  const connectionState = useMqttConnection(mqttConfig);
 
   // Background health monitoring - recalculate device health every 5 seconds
   useEffect(() => {

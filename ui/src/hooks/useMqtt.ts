@@ -6,15 +6,15 @@ import { initializeHandlers } from '@/services/mqtt/handlers';
 /**
  * Hook to manage MQTT connection
  */
-export function useMqttConnection(config: MqttConfig) {
+export function useMqttConnection(config: MqttConfig | null) {
   const [connectionState, setConnectionState] = useState<ConnectionState>(
     () => mqttClient.getConnectionState()
   );
   const isInitialized = useRef(false);
 
   useEffect(() => {
-    // Don't connect if URL is empty (config still loading)
-    if (!config?.url || config.url.trim() === '') {
+    // Don't connect if config is null or URL is empty
+    if (!config || !config.url || config.url.trim() === '') {
       console.log('[useMqttConnection] Waiting for config...');
       return;
     }
@@ -54,7 +54,7 @@ export function useMqttConnection(config: MqttConfig) {
       unsubscribe();
       mqttClient.disconnect();
     };
-  }, [config?.url]); // Re-run when URL changes
+  }, [config]); // Re-run when config object changes
 
   return connectionState;
 }
