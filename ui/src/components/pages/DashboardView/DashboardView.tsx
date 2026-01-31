@@ -1,6 +1,7 @@
 import { useTelemetry } from '@/stores/telemetry';
 import { useDeviceRegistry } from '@/stores/device-registry';
 import { usePinnedMetrics } from '@/stores/pinned-metrics';
+import { useMetricPriority } from '@/hooks/useMetricPriority';
 import { TabBar } from '@/components/atoms/Tab/Tab';
 import { DeviceHealth } from '@/types/device';
 import { PlotCard } from '@/components/organisms/PlotCard/PlotCard';
@@ -10,6 +11,9 @@ import { useMemo, useState } from 'react';
 import styles from './DashboardView.module.css';
 
 export function DashboardView() {
+  // Auto-book metrics based on device firmware metric_priority
+  useMetricPriority();
+
   const buffers = useTelemetry((state) => state.buffers);
   const getPoints = useTelemetry((state) => state.getPoints);
   const devicesMap = useDeviceRegistry((state) => state.devices);
