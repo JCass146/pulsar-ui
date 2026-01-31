@@ -22,6 +22,27 @@
   font-weight: 700;
 }
 
+.pinBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.pinBtn:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.pinBtn.pinned {
+  opacity: 1;
+  color: #fbbf24;
+}
+
 .timeRangeButtons {
   display: flex;
   gap: 0.25rem;

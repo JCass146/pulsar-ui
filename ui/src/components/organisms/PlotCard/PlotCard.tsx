@@ -9,10 +9,13 @@ import styles from './PlotCard.module.css';
 export interface PlotCardProps {
   title: string;
   metric: string;
+  deviceId?: string;
   unit?: string;
   data: TimeSeriesPoint[];
   color?: string;
   showTimeRange?: boolean;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
   className?: string;
 }
 
@@ -31,10 +34,13 @@ const TIME_RANGE_MS: Record<TimeRange, number | null> = {
 export function PlotCard({
   title,
   metric,
+  deviceId,
   unit,
   data,
   color = '#3b82f6', // Use actual hex instead of CSS variable
   showTimeRange = true,
+  isPinned = false,
+  onTogglePin,
   className,
 }: PlotCardProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('15m');
@@ -98,6 +104,15 @@ export function PlotCard({
           <div className={styles.titleRow}>
             <h3 className={styles.title}>{title}</h3>
             <Pill size="sm">{metric}</Pill>
+            {onTogglePin && (
+              <button
+                className={`${styles.pinBtn} ${isPinned ? styles.pinned : ''}`}
+                onClick={onTogglePin}
+                title={isPinned ? 'Unpin from main view' : 'Pin to main view'}
+              >
+                {isPinned ? '⭐' : '☆'}
+              </button>
+            )}
           </div>
 
           {showTimeRange && (

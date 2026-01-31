@@ -1,32 +1,43 @@
 import { useTelemetry } from '@/stores/telemetry';
+import { useDeviceRegistry } from '@/stores/device-registry';
+import { usePinnedMetrics } from '@/stores/pinned-metrics';
 import { DeviceHealth } from '@/types/device';
 import { PlotCard } from '@/components/organisms/PlotCard/PlotCard';
+import { Sparkline } from '@/components/atoms/Sparkline/Sparkline';
 import { Card, CardBody } from '@/components/atoms/Card/Card';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import styles from './DashboardView.module.css';
 
 export function DashboardView() {
   const buffers = useTelemetry((state) => state.buffers);
   const getPoints = useTelemetry((state) => state.getPoints);
+  const devicesMap = useDeviceRegistry((state) => state.devices);
+  const pinnedMetrics = usePinnedMetrics((state) => state.pinnedMetrics);
+  const togglePin = usePinnedMetrics((state) => state.togglePin);
+  const isPinned = usePinnedMetrics((state) => state.isPinned);
 
-  // Find first device with data (device-agnostic)
-  const firstDeviceWithData = useMemo(() => {
+  // Collect all device/metric combinations with data
+  const allMetricsWithData = useMemo(() => {
+    const metrics: Array<{ deviceId: string; metric: string }> = [];
     for (const [deviceId, buffer] of buffers.entries()) {
-      if (buffer.size > 0) return deviceId;
+      for (const metric of buffer.keys()) {
+        // Skip relay and health metrics
+        if (!metric.startsWith('relay_') && metric !== 'health') {
+          metrics.push({ deviceId, metric });
+        }
+      }
     }
-    return null;
+    return metrics;
   }, [buffers]);
 
-  const selectedLocalId = firstDeviceWithData;
+  // Separate pinned and unpinned metrics
+  const pinnedList = useMemo(() => {
+    return allMetricsWithData.filter(m => isPinned(m.deviceId, m.metric));
+  }, [allMetricsWithData, isPinned]);
 
-  // Dynamically discover all metrics for the selected device
-  const availableMetrics = useMemo(() => {
-    if (!selectedLocalId) return [];
-    const deviceBuffers = buffers.get(selectedLocalId);
-    if (!deviceBuffers) return [];
-    const metrics = Array.from(deviceBuffers.keys());
-    return metrics;
-  }, [selectedLocalId, buffers]);
+  const sparklineMetrics = useMemo(() => {
+    return allMetricsWithData.filter(m => !isPinned(m.deviceId, m.metric));
+  }, [allMetricsWithData, isPinned]);
 
   // Generate chart color based on metric index
   const getChartColor = (index: number) => {
@@ -65,56 +76,76 @@ export function DashboardView() {
   return (
     <div className={styles.dashboard}>
       <div className={styles.mainContent}>
-        {selectedLocalId ? (
-          <>
-            {availableMetrics.length > 0 ? (
-              <div className={styles.chartsGrid}>
-                {availableMetrics
-                  .filter(m => !m.startsWith('relay_') && m !== 'health')
-                  .map((metric, index) => {
-                    const { title, unit } = getMetricLabel(metric);
-                    const data = getPoints(selectedLocalId, metric);
-                    
-                    return (
-                      <PlotCard
-                        key={metric}
-                        title={title}
-                        metric={metric}
-                        unit={unit}
-                        data={data}
-                        color={getChartColor(index)}
-                      />
-                    );
-                  })}
-              </div>
-            ) : (
-              <Card>
-                <CardBody>
-                  <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>📊</div>
-                    <p className={styles.emptyTitle}>No telemetry data</p>
-                    <p className={styles.emptyText}>
-                      Waiting for data from devices...
-                    </p>
-                  </div>
-                </CardBody>
-              </Card>
-            )}
-          </>
+        {pinnedList.length > 0 ? (
+          <div className={styles.chartsGrid}>
+            {pinnedList.map((item, index) => {
+              const { title, unit } = getMetricLabel(item.metric);
+              const data = getPoints(item.deviceId, item.metric);
+              const device = devicesMap.get(item.deviceId);
+              
+              return (
+                <PlotCard
+                  key={`${item.deviceId}:${item.metric}`}
+                  title={`${title} ${device ? `(${device.id})` : ''}`}
+                  metric={item.metric}
+                  deviceId={item.deviceId}
+                  unit={unit}
+                  data={data}
+                  color={getChartColor(index)}
+                  isPinned={true}
+                  onTogglePin={() => togglePin(item.deviceId, item.metric)}
+                />
+              );
+            })}
+          </div>
         ) : (
           <Card>
             <CardBody>
               <div className={styles.emptyState}>
                 <div className={styles.emptyIcon}>📊</div>
-                <p className={styles.emptyTitle}>No devices with data</p>
+                <p className={styles.emptyTitle}>No pinned plots</p>
                 <p className={styles.emptyText}>
-                  Waiting for telemetry from connected devices...
+                  Star plots on the right sidebar to display them here
                 </p>
               </div>
             </CardBody>
           </Card>
         )}
       </div>
+
+      <aside className={styles.sparklineSidebar}>
+        <h3 className={styles.sidebarTitle}>All Metrics</h3>
+        <div className={styles.sparklineGrid}>
+          {sparklineMetrics.length > 0 ? (
+            sparklineMetrics.map((item, index) => {
+              const { title } = getMetricLabel(item.metric);
+              const data = getPoints(item.deviceId, item.metric);
+              const device = devicesMap.get(item.deviceId);
+              
+              return (
+                <div key={`${item.deviceId}:${item.metric}`} className={styles.sparklineCard}>
+                  <div className={styles.sparklineHeader}>
+                    <div className={styles.sparklineLabel}>
+                      <span className={styles.metricTitle}>{title}</span>
+                      <span className={styles.deviceName}>{device?.id}</span>
+                    </div>
+                  </div>
+                  <Sparkline
+                    data={data}
+                    color={getChartColor(index)}
+                    isPinned={false}
+                    onTogglePin={() => togglePin(item.deviceId, item.metric)}
+                  />
+                </div>
+              );
+            })
+          ) : (
+            <div className={styles.emptySparklines}>
+              <p>All metrics are pinned!</p>
+            </div>
+          )}
+        </div>
+      </aside>
     </div>
   );
 }
