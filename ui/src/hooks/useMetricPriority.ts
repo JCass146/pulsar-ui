@@ -44,9 +44,10 @@ export function useMetricPriority() {
     // Collect all devices and their metrics
     for (const [deviceId, deviceInfo] of devicesMap.entries()) {
       // Get device capabilities from metadata
-      // Note: Device.metadata is just a Record<string, unknown>, capabilities come from meta MQTT messages
-      // We access it through the device info's metadata field
-      const capabilitiesObj = deviceInfo.metadata?.['capabilities'];
+      // Meta messages are stored as: metadata.meta[metaKey]
+      // So capabilities is at: metadata?.meta?.capabilities
+      const metaObj = deviceInfo.metadata?.meta as Record<string, unknown>;
+      const capabilitiesObj = metaObj?.capabilities;
       if (!capabilitiesObj) continue;
 
       const capabilities = capabilitiesObj as DeviceCapabilities;
