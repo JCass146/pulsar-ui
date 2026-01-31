@@ -64,7 +64,7 @@ export function NotificationRail() {
               <div className={styles.notificationInfo}>
                 <div className={styles.notificationMeta}>
                   <span className={styles.deviceId}>{notification.deviceId}</span>
-                  <span className={styles.level}>{notification.level}</span>
+                  <span className={styles.level}>{String(notification.level)}</span>
                 </div>
                 <p className={styles.message}>{notification.message}</p>
                 <div className={styles.notificationFooter}>
