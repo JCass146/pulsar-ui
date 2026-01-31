@@ -47,8 +47,9 @@
 .bookmarkButton > * {
   display: flex;
 }
-}
 
-.pinButton:hover {
-  transform: scale(1.2);
+@media (max-width: 640px) {
+  .sparkline {
+    height: 50px;
+  }
 }
