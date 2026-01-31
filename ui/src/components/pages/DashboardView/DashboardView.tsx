@@ -31,12 +31,12 @@ export function DashboardView() {
   // Generate chart color based on metric index
   const getChartColor = (index: number) => {
     const colors = [
-      'var(--primary-line)',
-      'var(--warn-warn)',
-      'var(--success-green)',
-      'var(--info-blue)',
-      'var(--accent-purple)',
-      'var(--danger-red)',
+      '#3b82f6', // primary-line
+      '#8b5cf6', // secondary-line
+      '#10b981', // success-line
+      '#f59e0b', // warning-line
+      '#ef4444', // danger-line
+      '#06b6d4', // cyan
     ];
     return colors[index % colors.length];
   };

@@ -33,7 +33,7 @@ export function PlotCard({
   metric,
   unit,
   data,
-  color = 'var(--primary-line)',
+  color = '#3b82f6', // Use actual hex instead of CSS variable
   showTimeRange = true,
   className,
 }: PlotCardProps) {
