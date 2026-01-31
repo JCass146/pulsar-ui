@@ -54,7 +54,7 @@ export function useMqttConnection(config: MqttConfig | null) {
       unsubscribe();
       mqttClient.disconnect();
     };
-  }, [config?.url]); // Only depend on URL string, not entire config object
+  }, [config]); // Memoized config object from App means this only runs when URL changes
 
   return connectionState;
 }

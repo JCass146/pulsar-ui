@@ -1,8 +1,18 @@
 import { useNotifications, NotificationLevel } from '@/stores/notifications';
+import { useMemo } from 'react';
 import styles from './NotificationRail.module.css';
 
 export function NotificationRail() {
-  const notifications = useNotifications((state) => state.getUnacknowledged());
+  // Get the raw notifications map from the store
+  const notificationsMap = useNotifications((state) => state.notifications);
+  
+  // Memoize the filtered list to prevent infinite re-renders
+  const notifications = useMemo(() => {
+    return Array.from(notificationsMap.values())
+      .filter((n) => !n.acknowledged)
+      .sort((a, b) => b.timestamp - a.timestamp);
+  }, [notificationsMap]);
+  
   const acknowledgeNotification = useNotifications((state) => state.acknowledgeNotification);
   const acknowledgeAll = useNotifications((state) => state.acknowledgeAll);
 
