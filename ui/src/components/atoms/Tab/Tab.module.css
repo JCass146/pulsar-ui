@@ -1,0 +1,61 @@
+.tabBar {
+  display: flex;
+  border-bottom: 2px solid var(--border-color);
+  background: var(--surface-primary);
+  gap: 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.tab.active {
+  color: var(--primary-line);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary-line);
+}
+
+.icon {
+  display: flex;
+  font-size: 1rem;
+}
+
+.label {
+  display: inline-block;
+}
+
+@media (max-width: 640px) {
+  .tab {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .icon {
+    font-size: 0.875rem;
+  }
+}

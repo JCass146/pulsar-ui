@@ -7,25 +7,17 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s ease;
-  overflow: hidden;
+  overflow: visible;
   padding: 0.5rem;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
 }
 
 .sparkline:hover {
   background: var(--glass-medium);
   border-color: var(--border-hover, var(--border-divider));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.sparkline.pinned {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: #3b82f6;
-}
-
-.sparkline.pinned:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: #3b82f6;
 }
 
 .empty {
@@ -37,27 +29,24 @@
   font-size: 0.75rem;
 }
 
-.pinButton {
+.bookmarkButton {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  background: transparent;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 2px 4px;
-  line-height: 1;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
   opacity: 0;
   transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
-.sparkline:hover .pinButton {
+.sparkline:hover .bookmarkButton {
   opacity: 1;
+  pointer-events: auto;
 }
 
-.pinButton.pinned {
-  opacity: 1;
-  color: #fbbf24;
+.bookmarkButton > * {
+  display: flex;
+}
 }
 
 .pinButton:hover {

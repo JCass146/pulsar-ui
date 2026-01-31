@@ -1,22 +1,24 @@
 import { useMemo } from 'react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import { BookmarkMenu } from '@/components/atoms/BookmarkMenu/BookmarkMenu';
 import { TimeSeriesPoint } from '@/types/telemetry';
+import { BookmarkType } from '@/stores/pinned-metrics';
 import styles from './Sparkline.module.css';
 
 export interface SparklineProps {
   data: TimeSeriesPoint[];
   color?: string;
   onClick?: () => void;
-  isPinned?: boolean;
-  onTogglePin?: () => void;
+  bookmarkType?: BookmarkType;
+  onBookmark?: (type: BookmarkType) => void;
 }
 
 export function Sparkline({
   data,
   color = '#3b82f6',
   onClick,
-  isPinned = false,
-  onTogglePin,
+  bookmarkType,
+  onBookmark,
 }: SparklineProps) {
   // Use only the last 100 points for sparkline
   const sparkData = useMemo(() => {
@@ -36,7 +38,7 @@ export function Sparkline({
   }
 
   return (
-    <div className={`${styles.sparkline} ${isPinned ? styles.pinned : ''}`} onClick={onClick}>
+    <div className={styles.sparkline} onClick={onClick}>
       <ResponsiveContainer width="100%" height={40}>
         <LineChart data={sparkData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
           <Line
@@ -50,17 +52,13 @@ export function Sparkline({
         </LineChart>
       </ResponsiveContainer>
       
-      {onTogglePin && (
-        <button
-          className={`${styles.pinButton} ${isPinned ? styles.pinned : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onTogglePin();
-          }}
-          title={isPinned ? 'Unpin from main view' : 'Pin to main view'}
-        >
-          {isPinned ? '⭐' : '☆'}
-        </button>
+      {onBookmark && (
+        <div className={styles.bookmarkButton} onClick={(e) => e.stopPropagation()}>
+          <BookmarkMenu
+            currentType={bookmarkType || null}
+            onBookmark={onBookmark}
+          />
+        </div>
       )}
     </div>
   );

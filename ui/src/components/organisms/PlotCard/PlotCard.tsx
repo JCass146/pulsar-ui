@@ -3,7 +3,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Card, CardHeader, CardBody } from '@/components/atoms/Card/Card';
 import { Button } from '@/components/atoms/Button/Button';
 import { Pill } from '@/components/atoms/Pill/Pill';
+import { BookmarkMenu } from '@/components/atoms/BookmarkMenu/BookmarkMenu';
 import { TimeSeriesPoint } from '@/types/telemetry';
+import { BookmarkType } from '@/stores/pinned-metrics';
 import styles from './PlotCard.module.css';
 
 export interface PlotCardProps {
@@ -14,8 +16,8 @@ export interface PlotCardProps {
   data: TimeSeriesPoint[];
   color?: string;
   showTimeRange?: boolean;
-  isPinned?: boolean;
-  onTogglePin?: () => void;
+  bookmarkType?: BookmarkType;
+  onBookmark?: (type: BookmarkType) => void;
   className?: string;
 }
 
@@ -39,8 +41,8 @@ export function PlotCard({
   data,
   color = '#3b82f6', // Use actual hex instead of CSS variable
   showTimeRange = true,
-  isPinned = false,
-  onTogglePin,
+  bookmarkType,
+  onBookmark,
   className,
 }: PlotCardProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('15m');
@@ -104,14 +106,11 @@ export function PlotCard({
           <div className={styles.titleRow}>
             <h3 className={styles.title}>{title}</h3>
             <Pill size="sm">{metric}</Pill>
-            {onTogglePin && (
-              <button
-                className={`${styles.pinBtn} ${isPinned ? styles.pinned : ''}`}
-                onClick={onTogglePin}
-                title={isPinned ? 'Unpin from main view' : 'Pin to main view'}
-              >
-                {isPinned ? '⭐' : '☆'}
-              </button>
+            {onBookmark && (
+              <BookmarkMenu
+                currentType={bookmarkType || null}
+                onBookmark={onBookmark}
+              />
             )}
           </div>
 

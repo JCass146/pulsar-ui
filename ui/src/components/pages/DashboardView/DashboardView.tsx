@@ -1,20 +1,23 @@
 import { useTelemetry } from '@/stores/telemetry';
 import { useDeviceRegistry } from '@/stores/device-registry';
 import { usePinnedMetrics } from '@/stores/pinned-metrics';
+import { TabBar } from '@/components/atoms/Tab/Tab';
 import { DeviceHealth } from '@/types/device';
 import { PlotCard } from '@/components/organisms/PlotCard/PlotCard';
 import { Sparkline } from '@/components/atoms/Sparkline/Sparkline';
 import { Card, CardBody } from '@/components/atoms/Card/Card';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import styles from './DashboardView.module.css';
 
 export function DashboardView() {
   const buffers = useTelemetry((state) => state.buffers);
   const getPoints = useTelemetry((state) => state.getPoints);
   const devicesMap = useDeviceRegistry((state) => state.devices);
-  const pinnedMetrics = usePinnedMetrics((state) => state.pinnedMetrics);
-  const togglePin = usePinnedMetrics((state) => state.togglePin);
-  const isPinned = usePinnedMetrics((state) => state.isPinned);
+  const bookmarks = usePinnedMetrics((state) => state.bookmarks);
+  const setBookmark = usePinnedMetrics((state) => state.setBookmark);
+  const getBookmarkType = usePinnedMetrics((state) => state.getBookmarkType);
+
+  const [liveMetricsTab, setLiveMetricsTab] = useState<'featured' | 'all'>('featured');
 
   // Collect all device/metric combinations with data
   const allMetricsWithData = useMemo(() => {
@@ -30,14 +33,26 @@ export function DashboardView() {
     return metrics;
   }, [buffers]);
 
-  // Separate pinned and unpinned metrics
-  const pinnedList = useMemo(() => {
-    return allMetricsWithData.filter(m => isPinned(m.deviceId, m.metric));
-  }, [allMetricsWithData, isPinned]);
+  // Separate bookmarked to main, bookmarked to live, and unbooked
+  const mainPinnedList = useMemo(() => {
+    return allMetricsWithData.filter(m => getBookmarkType(m.deviceId, m.metric) === 'main');
+  }, [allMetricsWithData, getBookmarkType]);
 
-  const sparklineMetrics = useMemo(() => {
-    return allMetricsWithData.filter(m => !isPinned(m.deviceId, m.metric));
-  }, [allMetricsWithData, isPinned]);
+  const liveFeaturedList = useMemo(() => {
+    return allMetricsWithData.filter(m => getBookmarkType(m.deviceId, m.metric) === 'live');
+  }, [allMetricsWithData, getBookmarkType]);
+
+  const allUnbookedMetrics = useMemo(() => {
+    return allMetricsWithData.filter(m => getBookmarkType(m.deviceId, m.metric) === null);
+  }, [allMetricsWithData, getBookmarkType]);
+
+  // Show featured or all based on active tab
+  const sparklineMetricsToShow = useMemo(() => {
+    if (liveMetricsTab === 'featured') {
+      return liveFeaturedList;
+    }
+    return allUnbookedMetrics;
+  }, [liveMetricsTab, liveFeaturedList, allUnbookedMetrics]);
 
   // Generate chart color based on metric index
   const getChartColor = (index: number) => {
@@ -76,9 +91,9 @@ export function DashboardView() {
   return (
     <div className={styles.dashboard}>
       <div className={styles.mainContent}>
-        {pinnedList.length > 0 ? (
+        {mainPinnedList.length > 0 ? (
           <div className={styles.chartsGrid}>
-            {pinnedList.map((item, index) => {
+            {mainPinnedList.map((item, index) => {
               const { title, unit } = getMetricLabel(item.metric);
               const data = getPoints(item.deviceId, item.metric);
               const device = devicesMap.get(item.deviceId);
@@ -92,8 +107,8 @@ export function DashboardView() {
                   unit={unit}
                   data={data}
                   color={getChartColor(index)}
-                  isPinned={true}
-                  onTogglePin={() => togglePin(item.deviceId, item.metric)}
+                  bookmarkType={getBookmarkType(item.deviceId, item.metric)}
+                  onBookmark={(type) => setBookmark(item.deviceId, item.metric, type)}
                 />
               );
             })}
@@ -103,9 +118,9 @@ export function DashboardView() {
             <CardBody>
               <div className={styles.emptyState}>
                 <div className={styles.emptyIcon}>📊</div>
-                <p className={styles.emptyTitle}>No pinned plots</p>
+                <p className={styles.emptyTitle}>No main plots</p>
                 <p className={styles.emptyText}>
-                  Star plots on the right sidebar to display them here
+                  Bookmark plots from Live Metrics to display them here
                 </p>
               </div>
             </CardBody>
@@ -114,10 +129,22 @@ export function DashboardView() {
       </div>
 
       <aside className={styles.sparklineSidebar}>
-        <h3 className={styles.sidebarTitle}>All Metrics</h3>
+        <div className={styles.sidebarHeader}>
+          <h3 className={styles.sidebarTitle}>Live Metrics</h3>
+        </div>
+
+        <TabBar
+          tabs={[
+            { label: 'Featured', isActive: liveMetricsTab === 'featured', onClick: () => {} },
+            { label: 'All', isActive: liveMetricsTab === 'all', onClick: () => {} },
+          ]}
+          value={liveMetricsTab}
+          onChange={(tab) => setLiveMetricsTab(tab as 'featured' | 'all')}
+        />
+
         <div className={styles.sparklineGrid}>
-          {sparklineMetrics.length > 0 ? (
-            sparklineMetrics.map((item, index) => {
+          {sparklineMetricsToShow.length > 0 ? (
+            sparklineMetricsToShow.map((item, index) => {
               const { title } = getMetricLabel(item.metric);
               const data = getPoints(item.deviceId, item.metric);
               const device = devicesMap.get(item.deviceId);
@@ -133,15 +160,19 @@ export function DashboardView() {
                   <Sparkline
                     data={data}
                     color={getChartColor(index)}
-                    isPinned={false}
-                    onTogglePin={() => togglePin(item.deviceId, item.metric)}
+                    bookmarkType={getBookmarkType(item.deviceId, item.metric)}
+                    onBookmark={(type) => setBookmark(item.deviceId, item.metric, type)}
                   />
                 </div>
               );
             })
           ) : (
             <div className={styles.emptySparklines}>
-              <p>All metrics are pinned!</p>
+              <p>
+                {liveMetricsTab === 'featured'
+                  ? 'No featured metrics. Bookmark metrics to see them here!'
+                  : 'All metrics are bookmarked!'}
+              </p>
             </div>
           )}
         </div>
