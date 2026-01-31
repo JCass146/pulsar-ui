@@ -21,7 +21,9 @@ export function DashboardView() {
     if (!selectedLocalId) return [];
     const deviceBuffers = buffers.get(selectedLocalId);
     if (!deviceBuffers) return [];
-    return Array.from(deviceBuffers.keys());
+    const metrics = Array.from(deviceBuffers.keys());
+    console.log('[DashboardView] Available metrics for', selectedLocalId, ':', metrics);
+    return metrics;
   }, [selectedLocalId, buffers]);
 
   // Generate chart color based on metric index
@@ -72,21 +74,23 @@ export function DashboardView() {
         {selectedLocalId ? (
           <>
             {availableMetrics.length > 0 ? (
-              availableMetrics.map((metric, index) => {
-                const { title, unit } = getMetricLabel(metric);
-                const data = getPoints(selectedLocalId, metric);
-                
-                return (
-                  <PlotCard
-                    key={metric}
-                    title={title}
-                    metric={metric}
-                    unit={unit}
-                    data={data}
-                    color={getChartColor(index)}
-                  />
-                );
-              })
+              <div className={styles.chartsGrid}>
+                {availableMetrics.map((metric, index) => {
+                  const { title, unit } = getMetricLabel(metric);
+                  const data = getPoints(selectedLocalId, metric);
+                  
+                  return (
+                    <PlotCard
+                      key={metric}
+                      title={title}
+                      metric={metric}
+                      unit={unit}
+                      data={data}
+                      color={getChartColor(index)}
+                    />
+                  );
+                })}
+              </div>
             ) : (
               <Card>
                 <CardBody>
