@@ -48,13 +48,24 @@ export function PlotCard({
     return data.filter((point) => point.ts >= cutoffTime);
   }, [data, timeRange]);
 
+  // Format relative time based on time range
+  const formatRelativeTime = (ts: number) => {
+    const rangeMs = TIME_RANGE_MS[timeRange];
+    if (rangeMs === null) {
+      return new Date(ts).toLocaleTimeString();
+    }
+    const msAgo = Date.now() - ts;
+    if (msAgo < 60000) return `-${Math.round(msAgo / 1000)}s`;
+    if (msAgo < 3600000) return `-${Math.round(msAgo / 60000)}m`;
+    return `-${Math.round(msAgo / 3600000)}h`;
+  };
+
   // Format data for Recharts
   const chartData = useMemo(
     () =>
       filteredData.map((point) => ({
         timestamp: point.ts,
         value: point.value,
-        // Format time for tooltip
         time: new Date(point.ts).toLocaleTimeString(),
       })),
     [filteredData]
@@ -138,7 +149,7 @@ export function PlotCard({
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-divider)" />
                 <XAxis
                   dataKey="timestamp"
-                  tickFormatter={(ts) => new Date(ts).toLocaleTimeString()}
+                  tickFormatter={(ts) => formatRelativeTime(ts)}
                   stroke="var(--text-secondary)"
                   style={{ fontSize: '0.75rem' }}
                 />

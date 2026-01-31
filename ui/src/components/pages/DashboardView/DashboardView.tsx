@@ -1,20 +1,23 @@
-import { useNavigation } from '@/stores/navigation';
-import { useDeviceRegistry } from '@/stores/device-registry';
 import { useTelemetry } from '@/stores/telemetry';
 import { DeviceHealth } from '@/types/device';
-import { DeviceList } from '@/components/organisms/DeviceList/DeviceList';
 import { PlotCard } from '@/components/organisms/PlotCard/PlotCard';
 import { Card, CardBody } from '@/components/atoms/Card/Card';
 import { useMemo, useState } from 'react';
 import styles from './DashboardView.module.css';
 
 export function DashboardView() {
-  const devicesMap = useDeviceRegistry((state) => state.devices);
-  const getPoints = useTelemetry((state) => state.getPoints);
   const buffers = useTelemetry((state) => state.buffers);
-  const [selectedLocalId, setSelectedLocalId] = useState<string | null>(null);
+  const getPoints = useTelemetry((state) => state.getPoints);
 
-  const devices = useMemo(() => Array.from(devicesMap.values()), [devicesMap]);
+  // Find first device with data (device-agnostic)
+  const firstDeviceWithData = useMemo(() => {
+    for (const [deviceId, buffer] of buffers.entries()) {
+      if (buffer.size > 0) return deviceId;
+    }
+    return null;
+  }, [buffers]);
+
+  const selectedLocalId = firstDeviceWithData;
 
   // Dynamically discover all metrics for the selected device
   const availableMetrics = useMemo(() => {
@@ -22,7 +25,6 @@ export function DashboardView() {
     const deviceBuffers = buffers.get(selectedLocalId);
     if (!deviceBuffers) return [];
     const metrics = Array.from(deviceBuffers.keys());
-    console.log('[DashboardView] Available metrics for', selectedLocalId, ':', metrics);
     return metrics;
   }, [selectedLocalId, buffers]);
 
@@ -62,34 +64,28 @@ export function DashboardView() {
 
   return (
     <div className={styles.dashboard}>
-      <div className={styles.sidebar}>
-        <DeviceList
-          devices={devices}
-          selectedDeviceId={selectedLocalId}
-          onDeviceSelect={setSelectedLocalId}
-        />
-      </div>
-
       <div className={styles.mainContent}>
         {selectedLocalId ? (
           <>
             {availableMetrics.length > 0 ? (
               <div className={styles.chartsGrid}>
-                {availableMetrics.map((metric, index) => {
-                  const { title, unit } = getMetricLabel(metric);
-                  const data = getPoints(selectedLocalId, metric);
-                  
-                  return (
-                    <PlotCard
-                      key={metric}
-                      title={title}
-                      metric={metric}
-                      unit={unit}
-                      data={data}
-                      color={getChartColor(index)}
-                    />
-                  );
-                })}
+                {availableMetrics
+                  .filter(m => !m.startsWith('relay_') && m !== 'health')
+                  .map((metric, index) => {
+                    const { title, unit } = getMetricLabel(metric);
+                    const data = getPoints(selectedLocalId, metric);
+                    
+                    return (
+                      <PlotCard
+                        key={metric}
+                        title={title}
+                        metric={metric}
+                        unit={unit}
+                        data={data}
+                        color={getChartColor(index)}
+                      />
+                    );
+                  })}
               </div>
             ) : (
               <Card>
@@ -98,7 +94,7 @@ export function DashboardView() {
                     <div className={styles.emptyIcon}>📊</div>
                     <p className={styles.emptyTitle}>No telemetry data</p>
                     <p className={styles.emptyText}>
-                      Waiting for data from {devicesMap.get(selectedLocalId)?.id || selectedLocalId}
+                      Waiting for data from devices...
                     </p>
                   </div>
                 </CardBody>
@@ -110,9 +106,9 @@ export function DashboardView() {
             <CardBody>
               <div className={styles.emptyState}>
                 <div className={styles.emptyIcon}>📊</div>
-                <p className={styles.emptyTitle}>No device selected</p>
+                <p className={styles.emptyTitle}>No devices with data</p>
                 <p className={styles.emptyText}>
-                  Select a device from the list to view telemetry charts
+                  Waiting for telemetry from connected devices...
                 </p>
               </div>
             </CardBody>
